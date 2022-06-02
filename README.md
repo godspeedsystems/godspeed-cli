@@ -1,7 +1,3 @@
-# Pizza CLI
+# Godspeed CLI
 
-Example TypeScript CLI with Node.js
-
-## Credits
-
-[Pizza CLI](https://github.com/tj/commander.js/blob/master/examples/pizza)
+Godspeed CLI to initialize a project from scratch.

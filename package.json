@@ -1,35 +1,29 @@
 {
-  "name": "pizza-cli",
-  "description": "An example CLI for ordering pizza's",
-  "license": "MIT",
-  "author": "Jeroen Ouwehand",
-  "version": "0.0.3",
+  "name": "godspeed-cli",
+  "description": "Godspeed CLI",
+  "version": "1.0",
   "main": "./lib/index.js",
   "bin": {
-    "pizza": "./lib/index.js"
+    "godspeed": "./lib/index.js"
   },
   "scripts": {
-    "audit": "lerna run audit --stream",
-    "audit:depcheck": "lerna run audit:depcheck --stream",
-    "audit:npm-check-updates": "npx npm-check-updates --errorLevel 1",
     "build": "tsc -p .",
-    "create": "npm run build && npm run test",
-    "local": "sudo npm uninstall -g && sudo npm install -g && pizza",
-    "npm:format": "npx prettier-package-json --write package.json",
-    "npm:upgrade": "npx npm-check-updates -iu",
-    "refresh": "rm -rf ./node_modules ./package-lock.json && npm install",
+    "local": "sudo npm uninstall -g && sudo npm install -g && godspeed",
     "start": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
-    "test": "sudo npm i -g && pizza"
+    "test": "sudo npm i -g && godspeed"
   },
   "dependencies": {
     "chalk": "^4.1.0",
     "clear": "^0.1.0",
     "commander": "^7.1.0",
     "figlet": "^1.5.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "prompt-sync": "^4.2.0"
   },
   "devDependencies": {
+    "@types/figlet": "^1.5.4",
     "@types/node": "^14.14.33",
+    "@types/prompt-sync": "^4.1.1",
     "depcheck": "^1.4.0",
     "lerna": "^4.0.0",
     "nodemon": "^2.0.7",
@@ -39,7 +33,7 @@
   "keywords": [
     "cli",
     "nodejs",
-    "pizza",
+    "godspeed",
     "typescript"
   ]
 }
