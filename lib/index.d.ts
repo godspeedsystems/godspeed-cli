@@ -5,4 +5,3 @@ declare const figlet: any;
 declare const path: any;
 declare const program: any;
 declare const options: any;
-declare const cheese: string;
