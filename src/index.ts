@@ -8,6 +8,7 @@ import { exec } from 'child_process';
 import dockerCompose from 'docker-compose';
 import createDockerCompose from './dockerCompose';
 import createDevContainerJson from './devContainerJson';
+import createMongodbRsInit from './mongodb_rs_init';
 
 const git = simpleGit();
 
@@ -44,12 +45,24 @@ async function GSInit(projectName: string) {
   // Create docker-compose.yml file  
   createDockerCompose(projectName, devcontainerDir);
 
+  // Create mongodb_rs_init.sh file  
+  createMongodbRsInit(projectName, devcontainerDir);
+
   // Start .devcontainer
   await dockerCompose.upAll({ cwd: devcontainerDir, log: true })
     .then(
       () => { console.log('"docker-compose up -d" done')},
       err => { console.log('Error in "docker-compose up -d":', err.message)}
     );
+
+  // Execute Mongodb user creation scripts if mongodb container is present
+  const res = await dockerCompose.ps({ cwd: devcontainerDir, log: true });
+  if (res.out.includes('mongodb1')) {
+    console.log('Creating replica set for mongodb');
+    await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true });
+  }
+
+  console.log('\n','godspeed --init <projectName> is done.');
 }
 
 /*
