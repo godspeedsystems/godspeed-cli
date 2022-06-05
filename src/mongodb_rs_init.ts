@@ -35,7 +35,9 @@ rs.status();
 exit
 EOF
 
+echo "Bootstrapping Mongodb cluster";
 sleep 10
+echo "Bootstrapping complete";
 mongosh <<EOF
     use admin;
     admin = db.getSiblingDB("admin");

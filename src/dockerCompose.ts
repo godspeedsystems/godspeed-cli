@@ -122,6 +122,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
           `${projectName}_network`
         ]
       };
+      dockerComposeJson.services[`${projectName}_node`].environment.push(`MONGO_TEST_URL=mongodb://admin:mindgrep@${projectName}_mongodb1,${projectName}_mongodb2,${projectName}_mongodb3:27017/test`); 
       volumeObj[`${projectName}_mongodb1-data`] = null;
       volumeObj[`${projectName}_mongodb2-data`] = null;
       volumeObj[`${projectName}_mongodb3-data`] = null;
@@ -148,6 +149,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
           `${projectName}_network`
         ]
       };
+      dockerComposeJson.services[`${projectName}_node`].environment.push(`POSTGRES_URL=postgresql://postgres:postgres@${projectName}_postgresdb:5432/emp`); 
       volumeObj[`${projectName}_postgresql-data`] = null;
     }
   
@@ -174,9 +176,9 @@ export default function createDockerCompose(projectName: string, devcontainerDir
           "9092:9092"
         ],
         "environment": [
-          "KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181",
+          `KAFKA_CFG_ZOOKEEPER_CONNECT=${projectName}_zookeeper:2181`,
           "ALLOW_PLAINTEXT_LISTENER=yes",
-          "KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181",
+          `KAFKA_ZOOKEEPER_CONNECT=${projectName}_zookeeper:2181`,
           "KAFKA_LISTENERS=INTERNAL://0.0.0.0:9092,OUTSIDE://0.0.0.0:9094",
           "KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:9092,OUTSIDE://localhost:9094",
           "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT",

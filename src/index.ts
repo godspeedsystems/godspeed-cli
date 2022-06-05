@@ -19,8 +19,9 @@ const git = simpleGit();
 *   - Create docker-compose.yml file after getting information from user by prompt (mongodb, postgresdb, elasticsearch, kafka, redis)
 */
 async function GSInit(projectName: string) {
-  const projectDir = path.resolve(__dirname, '../', projectName);
+  const projectDir = path.resolve(process.cwd(), projectName);
   const devcontainerDir = path.resolve(projectDir, '.devcontainer');
+  console.log('projectDir: ',projectDir);
 
   // Clone gs_project_template GIT repo
   const REPO = 'https://github.com/Mindgreppers/gs_project_template.git';
@@ -32,7 +33,7 @@ async function GSInit(projectName: string) {
     });
 
   //Set permissions of mongo-keyfile to 0600 to avoid "Unable to acquire security key[s]" in mongodb
-  exec(`chmod 0600 ${devcontainerDir}/mongo-keyfile`, (error) => {
+  await exec(`chmod 0600 ${devcontainerDir}/mongo-keyfile`, (error) => {
     if (error) {
         console.log(`error in setting permissions of ${devcontainerDir}/mongo-keyfile: ${error.message}`);
         return;
@@ -61,6 +62,13 @@ async function GSInit(projectName: string) {
     console.log('Creating replica set for mongodb');
     await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true });
   }
+
+  // Stop .devcontainer
+  await dockerCompose.down({ cwd: devcontainerDir, log: true })
+    .then(
+      () => { console.log('"docker-compose down" done')},
+      err => { console.log('Error in "docker-compose down":', err.message)}
+    );
 
   console.log('\n','godspeed --init <projectName> is done.');
 }
