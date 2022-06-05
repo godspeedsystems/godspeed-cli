@@ -2,7 +2,7 @@ import { PlainObject } from './common';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import path from 'path';
-import { ask } from './utils';
+import { ask, prompt } from './utils';
 
 /*
 * function to create docker-compose.yml file inside projectName/.devcontainer/ directory
@@ -48,6 +48,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
     // Ask and check if mongodb is required. If yes, then add mongodb configuration in dockerComposeJson else skip it.
     const incMongo = ask('Do you need mongodb? [y/n] ');
     if (incMongo) {
+      const mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
       dockerComposeJson.services[`${projectName}_mongodb1`] = {
         "container_name": `${projectName}_mongodb1`,
         "image": "mongo:5.0",
@@ -122,7 +123,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
           `${projectName}_network`
         ]
       };
-      dockerComposeJson.services[`${projectName}_node`].environment.push(`MONGO_TEST_URL=mongodb://admin:mindgrep@${projectName}_mongodb1,${projectName}_mongodb2,${projectName}_mongodb3:27017/test`); 
+      dockerComposeJson.services[`${projectName}_node`].environment.push(`MONGO_TEST_URL=mongodb://admin:mindgrep@${projectName}_mongodb1,${projectName}_mongodb2,${projectName}_mongodb3:27017/${mongoDbName}`); 
       volumeObj[`${projectName}_mongodb1-data`] = null;
       volumeObj[`${projectName}_mongodb2-data`] = null;
       volumeObj[`${projectName}_mongodb3-data`] = null;
@@ -131,6 +132,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
     // Ask and check if postgresdb is required. If yes, then add postgresdb configuration in dockerComposeJson else skip it.
     const incPostgres = ask('Do you need postgresdb? [y/n] ');
     if (incPostgres) {
+      const postgresDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
       dockerComposeJson.services[`${projectName}_postgresdb`] = {
         "container_name": `${projectName}_postgresdb`,
         "image": "postgres:14.1-alpine",
@@ -149,7 +151,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
           `${projectName}_network`
         ]
       };
-      dockerComposeJson.services[`${projectName}_node`].environment.push(`POSTGRES_URL=postgresql://postgres:postgres@${projectName}_postgresdb:5432/emp`); 
+      dockerComposeJson.services[`${projectName}_node`].environment.push(`POSTGRES_URL=postgresql://postgres:postgres@${projectName}_postgresdb:5432/${postgresDbName}`); 
       volumeObj[`${projectName}_postgresql-data`] = null;
     }
   
