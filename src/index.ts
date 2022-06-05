@@ -64,11 +64,11 @@ async function GSInit(projectName: string) {
   }
 
   // Stop .devcontainer
-  // await dockerCompose.down({ cwd: devcontainerDir, log: true })
-  //   .then(
-  //     () => { console.log('"docker-compose down" done')},
-  //     err => { console.log('Error in "docker-compose down":', err.message)}
-  //   );
+  await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('"docker-compose stop" done')},
+      err => { console.log('Error in "docker-compose stop":', err.message)}
+    );
 
   console.log('\n','godspeed --init <projectName> is done.');
 }
