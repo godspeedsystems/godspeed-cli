@@ -4,7 +4,7 @@ import figlet from 'figlet';
 import program from 'commander';
 import path from 'path';
 import simpleGit from 'simple-git';
-import { exec, execSync } from 'child_process';
+import { exec, execSync, spawn } from 'child_process';
 import dockerCompose from 'docker-compose';
 import { createDockerCompose } from './dockerCompose';
 import createDevContainerJson from './devContainerJson';
@@ -27,21 +27,21 @@ async function GSCreate(projectName: string) {
   const REPO = 'https://github.com/Mindgreppers/gs_project_template.git';
   await git.clone(REPO, projectName)
     .then(() => console.log('project created'))
-    .catch((err) => { 
+    .catch((err) => {
       console.error('error in project creation, not able to clone repo. Error Message: ', err);
-      process.exit(1);  
+      process.exit(1);
     });
 
   //Set permissions of mongo-keyfile to 0600 to avoid "Unable to acquire security key[s]" in mongodb
   const execRes = execSync(`chmod 0600 ${devcontainerDir}/scripts/mongo-keyfile`);
 
-  // Create devcontainer.json file  
+  // Create devcontainer.json file
   createDevContainerJson(projectName, devcontainerDir);
 
-  // Create docker-compose.yml file  
+  // Create docker-compose.yml file
   createDockerCompose(projectName, devcontainerDir);
 
-  // Create mongodb_rs_init.sh file  
+  // Create mongodb_rs_init.sh file
   createMongodbRsInit(projectName, devcontainerDir);
 
   // Start .devcontainer
@@ -72,56 +72,25 @@ async function GSCreate(projectName: string) {
   console.log('\n',`godspeed create ${projectName} is done.`);
 }
 
-/*
-* function to build GS project
-*/
-function GSBuild() {
-  exec(`npm run build`, (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error in godspeed build: ${error.message}`);
-        return;
-    }
-    console.log(`godspeed build is done: ${stdout}`);
-  });
-  
-}
-
-/*
-* function to run GS project
-*/
-function GSDev() {
-  exec(`npm run dev`, (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error in godspeed dev: ${error.message}`);
-        return;
-    }
-    console.log(`godspeed dev is done: ${stdout}`);
-  });
-  
-}
-
-/*
-* function to clean GS project
-*/
-function GSClean() {
-  exec(`npm run clean`, (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error in godspeed clean: ${error.message}`);
-        return;
-    }
-    console.log(`godspeed dev is clean: ${stdout}`);
-  });
-  
-}
-
 /************************************************/
 async function main() {
     console.log(chalk.red(figlet.textSync('godspeed-cli', { horizontalLayout: 'full' })));
 
-    program.command('build').action(() => { GSBuild(); });
-    program.command('dev').action(() => { GSDev(); });
+    if (process.argv[2] ==  'prisma') {
+        return spawn('npx', ['prisma'].concat(process.argv.slice(3)),{
+          stdio: 'inherit'
+        });
+    }
+
     program.command('create <projectName>').action((projectName) => { GSCreate(projectName); });
-    program.command('build').action(() => { GSBuild(); });
+
+    program
+    .command('*')
+    .action((options, command) => {
+      spawn('npm', ['run'].concat(command.args), {
+        stdio: 'inherit'
+      });
+    });
 
     const version:string = process.env.npm_package_version || '0.0.1';
     program.version(version).parse(process.argv);
