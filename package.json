@@ -1,7 +1,7 @@
 {
   "name": "godspeed-cli",
   "description": "Godspeed CLI",
-  "version": "1.0",
+  "version": "0.0.1",
   "main": "./lib/index.js",
   "bin": {
     "godspeed": "./lib/index.js"
