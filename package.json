@@ -1,7 +1,7 @@
 {
   "name": "@mindgrep/godspeed",
   "description": "Godspeed CLI",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "main": "./lib/index.js",
   "bin": {
     "godspeed": "./lib/index.js"
@@ -20,9 +20,7 @@
     "simple-git": "^3.7.1",
     "docker-compose": "^0.23.17",
     "prompt-sync": "^4.2.0",
-    "depcheck": "^1.4.0",
     "js-yaml": "^4.1.0",
-    "lerna": "^4.0.0",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   },
@@ -30,12 +28,7 @@
     "@types/figlet": "^1.5.4",
     "@types/js-yaml": "^4.0.5",
     "@types/node": "^14.14.33",
-    "@types/prompt-sync": "^4.1.1",
-    "depcheck": "^1.4.0",
-    "js-yaml": "^4.1.0",
-    "lerna": "^4.0.0",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.3"
+    "@types/prompt-sync": "^4.1.1"
   },
   "keywords": [
     "cli",

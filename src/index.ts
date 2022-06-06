@@ -18,7 +18,7 @@ const git = simpleGit();
 *   - Clone gs_project_template GIT repo into projectName
 *   - Create docker-compose.yml file after getting information from user by prompt (mongodb, postgresdb, elasticsearch, kafka, redis)
 */
-async function GSInit(projectName: string) {
+async function GSCreate(projectName: string) {
   const projectDir = path.resolve(process.cwd(), projectName);
   const devcontainerDir = path.resolve(projectDir, '.devcontainer');
   console.log('projectDir: ',projectDir);
@@ -118,15 +118,23 @@ function GSClean() {
 async function main() {
     console.log(chalk.red(figlet.textSync('godspeed-cli', { horizontalLayout: 'full' })));
 
-    program
+    program.command('build').action(() => {
+        GSBuild();
+      });
+
+      program.command('dev').action(() => {
+        GSDev();
+      });
+      program.command('create <projectName>').action((projectName) => {
+        GSCreate(projectName);
+      });
+      program.command('build').action(() => {
+        GSBuild();
+      });
+
+      program
       .version('1.0')
       .description("Godspeed CLI")
-      .option('-b, --build', 'To build the project')
-      .option('-c, --clean', 'To clean the project')
-      .option('-d, --dev', 'To run the project')
-      .option('-i, --init <projectName>', 'To initialize a project')
-      .option('--test', 'To run the unit tests')
-      .option('--test-cov', 'To find the unit test coverage')
       .parse(process.argv);
 
     const options = program.opts();
@@ -153,7 +161,7 @@ async function main() {
     // init option
     if (options.init) {
       const projectName: string = options.init;
-      GSInit(projectName);
+      GSCreate(projectName);
     }
 }
 
