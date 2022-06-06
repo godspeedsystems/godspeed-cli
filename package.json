@@ -1,5 +1,5 @@
 {
-  "name": "godspeed-cli",
+  "name": "@mindgrep/godspeed",
   "description": "Godspeed CLI",
   "version": "0.0.1",
   "main": "./lib/index.js",
@@ -9,7 +9,6 @@
   "scripts": {
     "build": "tsc -p .",
     "local": "sudo npm uninstall -g && sudo npm install -g && godspeed",
-    "start": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
     "test": "sudo npm i -g && godspeed"
   },
   "dependencies": {
@@ -18,7 +17,14 @@
     "commander": "^7.1.0",
     "figlet": "^1.5.0",
     "path": "^0.12.7",
-    "prompt-sync": "^4.2.0"
+    "simple-git": "^3.7.1",
+    "docker-compose": "^0.23.17",
+    "prompt-sync": "^4.2.0",
+    "depcheck": "^1.4.0",
+    "js-yaml": "^4.1.0",
+    "lerna": "^4.0.0",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
   },
   "devDependencies": {
     "@types/figlet": "^1.5.4",
@@ -26,11 +32,8 @@
     "@types/node": "^14.14.33",
     "@types/prompt-sync": "^4.1.1",
     "depcheck": "^1.4.0",
-    "docker-compose": "^0.23.17",
     "js-yaml": "^4.1.0",
     "lerna": "^4.0.0",
-    "nodemon": "^2.0.7",
-    "simple-git": "^3.7.1",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   },

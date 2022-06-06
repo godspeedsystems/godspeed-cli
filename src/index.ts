@@ -76,17 +76,40 @@ async function GSInit(projectName: string) {
 * function to build GS project
 */
 function GSBuild() {
-  console.log('This is GSBuild.');
   exec(`npm run build`, (error, stdout, stderr) => {
     if (error) {
-        console.log(`error: ${error.message}`);
+        console.log(`error in godspeed build: ${error.message}`);
         return;
     }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
+    console.log(`godspeed build is done: ${stdout}`);
+  });
+  
+}
+
+/*
+* function to run GS project
+*/
+function GSDev() {
+  exec(`npm run dev`, (error, stdout, stderr) => {
+    if (error) {
+        console.log(`error in godspeed dev: ${error.message}`);
         return;
     }
-    console.log(`godspeed -b is done: ${stdout}`);
+    console.log(`godspeed dev is done: ${stdout}`);
+  });
+  
+}
+
+/*
+* function to clean GS project
+*/
+function GSClean() {
+  exec(`npm run clean`, (error, stdout, stderr) => {
+    if (error) {
+        console.log(`error in godspeed clean: ${error.message}`);
+        return;
+    }
+    console.log(`godspeed dev is clean: ${stdout}`);
   });
   
 }
@@ -99,7 +122,11 @@ async function main() {
       .version('1.0')
       .description("Godspeed CLI")
       .option('-b, --build', 'To build the project')
+      .option('-c, --clean', 'To clean the project')
+      .option('-d, --dev', 'To run the project')
       .option('-i, --init <projectName>', 'To initialize a project')
+      .option('--test', 'To run the unit tests')
+      .option('--test-cov', 'To find the unit test coverage')
       .parse(process.argv);
 
     const options = program.opts();
@@ -111,6 +138,16 @@ async function main() {
     // build option
     if (options.build) {
       GSBuild();
+    }
+
+    // clean option
+    if (options.clean) {
+      GSClean();
+    }
+
+    // dev option
+    if (options.dev) {
+      GSDev();
     }
 
     // init option
