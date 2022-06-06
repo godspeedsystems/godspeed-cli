@@ -69,7 +69,7 @@ async function GSCreate(projectName: string) {
       err => { console.log('Error in "docker-compose stop":', err.message)}
     );
 
-  console.log('\n','godspeed --init <projectName> is done.');
+  console.log('\n',`godspeed create ${projectName} is done.`);
 }
 
 /*
@@ -118,51 +118,13 @@ function GSClean() {
 async function main() {
     console.log(chalk.red(figlet.textSync('godspeed-cli', { horizontalLayout: 'full' })));
 
-    program.command('build').action(() => {
-        GSBuild();
-      });
+    program.command('build').action(() => { GSBuild(); });
+    program.command('dev').action(() => { GSDev(); });
+    program.command('create <projectName>').action((projectName) => { GSCreate(projectName); });
+    program.command('build').action(() => { GSBuild(); });
 
-      program.command('dev').action(() => {
-        GSDev();
-      });
-      program.command('create <projectName>').action((projectName) => {
-        GSCreate(projectName);
-      });
-      program.command('build').action(() => {
-        GSBuild();
-      });
-
-      program
-      .version('1.0')
-      .description("Godspeed CLI")
-      .parse(process.argv);
-
-    const options = program.opts();
-
-    if (!process.argv.slice(2).length) {
-      program.outputHelp();
-    }
-
-    // build option
-    if (options.build) {
-      GSBuild();
-    }
-
-    // clean option
-    if (options.clean) {
-      GSClean();
-    }
-
-    // dev option
-    if (options.dev) {
-      GSDev();
-    }
-
-    // init option
-    if (options.init) {
-      const projectName: string = options.init;
-      GSCreate(projectName);
-    }
+    const version:string = process.env.npm_package_version || '0.0.1';
+    program.version(version).parse(process.argv);
 }
 
 main();
