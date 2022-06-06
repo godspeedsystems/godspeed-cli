@@ -7,7 +7,6 @@ import { mongoDbName } from './dockerCompose';
 */
 export default function createMongodbRsInit(projectName: string, devcontainerDir: string) {
     const mongodbRsInitPath = path.join(devcontainerDir,'/scripts/mongodb_rs_init.sh');
-    console.log('mongodbRsInitPath: ',mongodbRsInitPath);
     let mongodbRsInitString: string = `#!/bin/bash
 mongosh <<EOF
 var config = {
@@ -47,14 +46,30 @@ mongosh <<EOF
         user: "admin",
         pwd: "mindgrep",
         roles: [
-            "userAdminAnyDatabase", "dbAdminAnyDatabase", "readWriteAnyDatabase",
-             { role: "clusterManager", db: "admin" } ,
-             { role: "readWrite", db: "${mongoDbName}" } 
+             "clusterAdmin",
+             { role: "root", db: "admin" }
             ]
         });
         db.getSiblingDB("admin").auth("admin", "mindgrep");
         rs.status();
         exit
+EOF
+
+mongosh  mongodb://admin:mindgrep@${projectName}_mongodb1,${projectName}_mongodb2,${projectName}_mongodb3/admin <<EOF
+    use ${mongoDbName};
+    db.collection.insertOne({});
+EOF
+
+mongosh  mongodb://admin:mindgrep@${projectName}_mongodb1,${projectName}_mongodb2,${projectName}_mongodb3/admin <<EOF
+   use ${mongoDbName};
+   ${mongoDbName} = db.getSiblingDB("${mongoDbName}");
+   ${mongoDbName}.createUser(
+     {
+	user: "admin",
+        pwd: "mindgrep",
+        roles: [ { role: "readWrite", db: "${mongoDbName}" }]
+     });
+     exit
 EOF
 `;    
     fs.writeFileSync(mongodbRsInitPath,mongodbRsInitString, 'utf8');
