@@ -1,12 +1,13 @@
-import { PlainObject } from './common';
 import fs from 'fs';
 import path from 'path';
+import { mongoDbName } from './dockerCompose';
 
 /*
 * function to create mongodb_rs_init.sh file inside projectName/.devcontainer/ directory
 */
 export default function createMongodbRsInit(projectName: string, devcontainerDir: string) {
-    const mongodbRsInitPath = path.resolve(devcontainerDir,'mongodb_rs_init.sh');
+    const mongodbRsInitPath = path.join(devcontainerDir,'/scripts/mongodb_rs_init.sh');
+    console.log('mongodbRsInitPath: ',mongodbRsInitPath);
     let mongodbRsInitString: string = `#!/bin/bash
 mongosh <<EOF
 var config = {
@@ -43,16 +44,19 @@ mongosh <<EOF
     admin = db.getSiblingDB("admin");
     admin.createUser(
         {
-    user: "admin",
+        user: "admin",
         pwd: "mindgrep",
-        roles: [ { role: "clusterManager", db: "admin" } ]
+        roles: [
+            "userAdminAnyDatabase", "dbAdminAnyDatabase", "readWriteAnyDatabase",
+             { role: "clusterManager", db: "admin" } ,
+             { role: "readWrite", db: "${mongoDbName}" } 
+            ]
         });
         db.getSiblingDB("admin").auth("admin", "mindgrep");
         rs.status();
         exit
 EOF
-`;
-    
+`;    
     fs.writeFileSync(mongodbRsInitPath,mongodbRsInitString, 'utf8');
   
 }

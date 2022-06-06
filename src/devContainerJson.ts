@@ -6,7 +6,7 @@ import path from 'path';
 * function to create devcontainer.json file inside projectName/.devcontainer/ directory
 */
 export default function createDevContainerJson(projectName: string, devcontainerDir: string) {
-    const devcontainerPath = path.resolve(devcontainerDir,'devcontainer.json');
+    const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json');
     let devContainerJson: PlainObject = {
         "name": `${projectName}`,
         "forwardPorts": [3000],

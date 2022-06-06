@@ -4,10 +4,13 @@ import fs from 'fs';
 import path from 'path';
 import { ask, prompt } from './utils';
 
+let mongoDbName:string = 'test';
+let postgresDbName:string = 'test';
+
 /*
 * function to create docker-compose.yml file inside projectName/.devcontainer/ directory
 */
-export default function createDockerCompose(projectName: string, devcontainerDir: string) {
+export function createDockerCompose(projectName: string, devcontainerDir: string) {
     let dockerComposeJson: PlainObject;
     const volumeObj: PlainObject = {};
     const dockerComposePath = path.resolve(devcontainerDir,'docker-compose.yml');
@@ -27,7 +30,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
           ],
           "volumes": [
             "..:/workspace/development/app:cached",
-            "./node_init.sh:/scripts/node_init.sh"
+            "./scripts:/scripts"
           ],
           "working_dir": "/workspace/development/app",
           "ports": [
@@ -48,14 +51,13 @@ export default function createDockerCompose(projectName: string, devcontainerDir
     // Ask and check if mongodb is required. If yes, then add mongodb configuration in dockerComposeJson else skip it.
     const incMongo = ask('Do you need mongodb? [y/n] ');
     if (incMongo) {
-      const mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
+      mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
       dockerComposeJson.services[`${projectName}_mongodb1`] = {
         "container_name": `${projectName}_mongodb1`,
         "image": "mongo:5.0",
         "volumes": [
           `${projectName}_mongodb1-data:/data/db`,
-          "./mongodb_rs_init.sh:/scripts/mongodb_rs_init.sh",
-          "./mongo-keyfile:/data/key/mongo-keyfile"
+          "./scripts:/scripts"
         ],
         "ports": [
           "27017:27017"
@@ -68,7 +70,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
         "entrypoint": [
           "/usr/bin/mongod",
           "--keyFile",
-          "/data/key/mongo-keyfile",
+          "/scripts/mongo-keyfile",
           "--bind_ip_all",
           "--replSet",
           "gs_service"
@@ -82,7 +84,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
         "image": "mongo:5.0",
         "volumes": [
           `${projectName}_mongodb2-data:/data/db`,
-          "./mongo-keyfile:/data/key/mongo-keyfile"
+          "./scripts:/scripts"
         ],
         "ports": [
           "27018:27017"
@@ -91,7 +93,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
         "entrypoint": [
           "/usr/bin/mongod",
           "--keyFile",
-          "/data/key/mongo-keyfile",
+          "/scripts/mongo-keyfile",
           "--bind_ip_all",
           "--replSet",
           "gs_service"
@@ -105,7 +107,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
         "image": "mongo:5.0",
         "volumes": [
           `${projectName}_mongodb3-data:/data/db`,
-          "./mongo-keyfile:/data/key/mongo-keyfile"
+          "./scripts:/scripts"
         ],
         "ports": [
           "27019:27017"
@@ -114,7 +116,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
         "entrypoint": [
           "/usr/bin/mongod",
           "--keyFile",
-          "/data/key/mongo-keyfile",
+          "/scripts/mongo-keyfile",
           "--bind_ip_all",
           "--replSet",
           "gs_service"
@@ -132,7 +134,7 @@ export default function createDockerCompose(projectName: string, devcontainerDir
     // Ask and check if postgresdb is required. If yes, then add postgresdb configuration in dockerComposeJson else skip it.
     const incPostgres = ask('Do you need postgresdb? [y/n] ');
     if (incPostgres) {
-      const postgresDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
+      postgresDbName = prompt('Please enter name of the postgres database [default: test] ') || 'test';
       dockerComposeJson.services[`${projectName}_postgresdb`] = {
         "container_name": `${projectName}_postgresdb`,
         "image": "postgres:14.1-alpine",
@@ -252,4 +254,6 @@ export default function createDockerCompose(projectName: string, devcontainerDir
     //console.log(yamlStr.replaceAll('null',''));
     fs.writeFileSync(dockerComposePath, yamlStr.replaceAll('null',''), 'utf8');
   }
+
+export { mongoDbName, postgresDbName };
   

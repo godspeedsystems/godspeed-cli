@@ -4,9 +4,9 @@ import figlet from 'figlet';
 import program from 'commander';
 import path from 'path';
 import simpleGit from 'simple-git';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import dockerCompose from 'docker-compose';
-import createDockerCompose from './dockerCompose';
+import { createDockerCompose } from './dockerCompose';
 import createDevContainerJson from './devContainerJson';
 import createMongodbRsInit from './mongodb_rs_init';
 
@@ -33,12 +33,7 @@ async function GSInit(projectName: string) {
     });
 
   //Set permissions of mongo-keyfile to 0600 to avoid "Unable to acquire security key[s]" in mongodb
-  await exec(`chmod 0600 ${devcontainerDir}/mongo-keyfile`, (error) => {
-    if (error) {
-        console.log(`error in setting permissions of ${devcontainerDir}/mongo-keyfile: ${error.message}`);
-        return;
-    }
-  });
+  const execRes = execSync(`chmod 0600 ${devcontainerDir}/scripts/mongo-keyfile`);
 
   // Create devcontainer.json file  
   createDevContainerJson(projectName, devcontainerDir);
@@ -60,7 +55,11 @@ async function GSInit(projectName: string) {
   const res = await dockerCompose.ps({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]});
   if (res.out.includes('mongodb1')) {
     console.log('Creating replica set for mongodb');
-    await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]});
+    await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('Creating replica set is done for mongodb')},
+      err => { console.log('Error in creating replica set for mongodb:', err.message)}
+    );
   }
 
   // Stop .devcontainer
@@ -87,7 +86,7 @@ function GSBuild() {
         console.log(`stderr: ${stderr}`);
         return;
     }
-    console.log(`stdout: ${stdout}`);
+    console.log(`godspeed -b is done: ${stdout}`);
   });
   
 }
