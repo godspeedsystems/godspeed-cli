@@ -50,22 +50,18 @@ async function GSCreate(projectName: string) {
   // If mongoDb is selected then start mongoDb containers and set mongo cluster. 
   if (incMongo) {
     // Start .devcontainer
-    await dockerCompose.upAll({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
+    await dockerCompose.upMany([`${projectName}_mongodb1`, `${projectName}_mongodb2`, `${projectName}_mongodb3`], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
       .then(
-        () => { console.log('"docker-compose up -d" done')},
-        err => { console.log('Error in "docker-compose up -d":', err.message)}
+        () => { console.log('mongodb containers started')},
+        err => { console.log('Error in starting mongodb containers:', err.message)}
       );
 
-    // Execute Mongodb user creation scripts if mongodb container is present
-    const res = await dockerCompose.ps({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]});
-    if (res.out.includes('mongodb1')) {
-      console.log('Creating replica set for mongodb');
-      await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
-      .then(
-        () => { console.log('Creating replica set is done for mongodb')},
-        err => { console.log('Error in creating replica set for mongodb:', err.message)}
-      );
-    }
+    console.log('Creating replica set for mongodb');
+    await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('Creating replica set is done for mongodb')},
+      err => { console.log('Error in creating replica set for mongodb:', err.message)}
+    );
 
     // Stop .devcontainer
     await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})

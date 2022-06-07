@@ -66,14 +66,7 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
           `${projectName}_mongodb3`
         ],
         "restart": "always",
-        "entrypoint": [
-          "/usr/bin/mongod",
-          "--keyFile",
-          "/scripts/mongo-keyfile",
-          "--bind_ip_all",
-          "--replSet",
-          "gs_service"
-        ],
+        "command": "bash -c \"/scripts/mongodb_init.sh\"",
         "networks": [
           `${projectName}_network`
         ]
@@ -88,14 +81,7 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
           "27018:27017"
         ],
         "restart": "always",
-        "entrypoint": [
-          "/usr/bin/mongod",
-          "--keyFile",
-          "/scripts/mongo-keyfile",
-          "--bind_ip_all",
-          "--replSet",
-          "gs_service"
-        ],
+        "command": "bash -c \"/scripts/mongodb_init.sh\"",
         "networks": [
           `${projectName}_network`
         ]
@@ -110,14 +96,7 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
           "27019:27017"
         ],
         "restart": "always",
-        "entrypoint": [
-          "/usr/bin/mongod",
-          "--keyFile",
-          "/scripts/mongo-keyfile",
-          "--bind_ip_all",
-          "--replSet",
-          "gs_service"
-        ],
+        "command": "bash -c \"/scripts/mongodb_init.sh\"",
         "networks": [
           `${projectName}_network`
         ]
