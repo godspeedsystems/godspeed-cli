@@ -6,10 +6,11 @@ import path from 'path';
 import simpleGit from 'simple-git';
 import { exec, execSync, spawn } from 'child_process';
 import dockerCompose from 'docker-compose';
-import { createDockerCompose, incMongo } from './dockerCompose';
-import createDevContainerJson from './devContainerJson';
-import createMongodbRsInit from './mongodb_rs_init';
+import { ask, prompt } from './utils';
+
 import fs from 'fs';
+
+import Handlebars from 'handlebars';
 
 const git = simpleGit();
 
@@ -39,16 +40,39 @@ async function GSCreate(projectName: string) {
     });
 
   // Create devcontainer.json file
-  createDevContainerJson(projectName, devcontainerDir);
+  const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json.hbs');
+  const devcontainerTemplate = Handlebars.compile(fs.readFileSync(devcontainerPath, 'utf-8'), { noEscape: true });
+  fs.writeFileSync(devcontainerPath.replace('.hbs', ''), devcontainerTemplate({ projectName }, {helpers: { json: JSON.stringify }}));
 
-  // Create docker-compose.yml file
-  createDockerCompose(projectName, devcontainerDir);
+  const mongodb = ask('Do you need mongodb? [y/n] ');
+  let mongoDbName;
 
-  // Create mongodb_rs_init.sh file
-  createMongodbRsInit(projectName, devcontainerDir);
+  if (mongodb) {
+    mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
+  }
+
+  const postgresql = ask('Do you need postgresdb? [y/n] ');
+  let postgresDbName;
+  if (postgresql) {
+    postgresDbName = prompt('Please enter name of the postgres database [default: test] ') || 'test';
+  }
+
+  const kafka = ask('Do you need kafka? [y/n] ');
+  const elastisearch = ask('Do you need elastisearch? [y/n] ');
+  const redis = true; //ask('Do you need redis? [y/n] ');
+
+  const dockerComposePath = path.resolve(devcontainerDir,'docker-compose.yml.hbs');
+  const dockerComposeTemplate = Handlebars.compile(fs.readFileSync(dockerComposePath, 'utf-8'), { noEscape: true });
+
+  fs.writeFileSync(dockerComposePath.replace('.hbs', ''), dockerComposeTemplate({ projectName, mongodb, mongoDbName,
+      postgresql, postgresDbName, kafka, elastisearch, redis }, {helpers: { json: JSON.stringify }}));
+
+  const mongodbRsInitPath = path.join(devcontainerDir,'/scripts/mongodb_rs_init.sh.hbs');
+  const mongodbRsInitPathTemplate = Handlebars.compile(fs.readFileSync(mongodbRsInitPath, 'utf-8'),{ noEscape: true });
+  fs.writeFileSync(mongodbRsInitPath.replace('.hbs', ''), mongodbRsInitPathTemplate({ projectName }, {helpers: { json: JSON.stringify }}));
 
   // If mongoDb is selected then start mongoDb containers and set mongo cluster. 
-  if (incMongo) {
+  if (mongodb) {
     // Start .devcontainer
     await dockerCompose.upMany([`${projectName}_mongodb1`, `${projectName}_mongodb2`, `${projectName}_mongodb3`], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
       .then(
