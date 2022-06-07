@@ -94,21 +94,26 @@ async function main() {
     .command('prisma')
     .allowUnknownOption()
 
-    const scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
+    try {
+      const scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
 
-    for (let script in scripts) {
-      program
-      .command(script)
-      .allowUnknownOption()
-      .addHelpText('after', `
-Will run:
-  $ ${scripts[script]}`)
-      .action(() => {
-        spawn('npm', ['run'].concat(process.argv.slice(2)), {
-          stdio: 'inherit'
+      for (let script in scripts) {
+        program
+        .command(script)
+        .allowUnknownOption()
+        .addHelpText('after', `
+  Will run:
+    $ ${scripts[script]}`)
+        .action(() => {
+          spawn('npm', ['run'].concat(process.argv.slice(2)), {
+            stdio: 'inherit'
+          });
         });
-      });
+      }
+    } catch(ex) {
+
     }
+    
     const version:string = process.env.npm_package_version || '0.0.1';
     program.version(version).parse(process.argv);
 }
