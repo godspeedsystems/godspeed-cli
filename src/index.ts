@@ -28,7 +28,7 @@ async function GSCreate(projectName: string) {
   const REPO = 'https://github.com/Mindgreppers/gs_project_template.git';
   await git.clone(REPO, projectName)
     .then(() => {
-      const p = require(`${projectName}/package.json`);
+      const p = require(path.resolve(process.cwd(),`${projectName}/package.json`));
       p.name = projectName
       fs.writeFileSync(`${projectName}/package.json`, JSON.stringify(p, null, 2));
     })
@@ -113,7 +113,7 @@ async function main() {
     } catch(ex) {
 
     }
-    
+
     const version:string = process.env.npm_package_version || '0.0.1';
     program.version(version).parse(process.argv);
 }
