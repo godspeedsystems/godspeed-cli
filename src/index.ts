@@ -9,6 +9,7 @@ import dockerCompose from 'docker-compose';
 import { createDockerCompose } from './dockerCompose';
 import createDevContainerJson from './devContainerJson';
 import createMongodbRsInit from './mongodb_rs_init';
+import fs from 'fs';
 
 const git = simpleGit();
 
@@ -26,6 +27,11 @@ async function GSCreate(projectName: string) {
   // Clone gs_project_template GIT repo
   const REPO = 'https://github.com/Mindgreppers/gs_project_template.git';
   await git.clone(REPO, projectName)
+    .then(() => {
+      const p = require(`${projectName}/package.json`);
+      p.name = projectName
+      fs.writeFileSync(`${projectName}/package.json`, JSON.stringify(p, null, 2));
+    })
     .then(() => console.log('project created'))
     .catch((err) => {
       console.error('error in project creation, not able to clone repo. Error Message: ', err);
@@ -82,16 +88,27 @@ async function main() {
         });
     }
 
+
     program.command('create <projectName>').action((projectName) => { GSCreate(projectName); });
-
     program
-    .command('*')
-    .action((options, command) => {
-      spawn('npm', ['run'].concat(command.args), {
-        stdio: 'inherit'
-      });
-    });
+    .command('prisma')
+    .allowUnknownOption()
 
+    const scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
+
+    for (let script in scripts) {
+      program
+      .command(script)
+      .allowUnknownOption()
+      .addHelpText('after', `
+Will run:
+  $ ${scripts[script]}`)
+      .action(() => {
+        spawn('npm', ['run'].concat(process.argv.slice(2)), {
+          stdio: 'inherit'
+        });
+      });
+    }
     const version:string = process.env.npm_package_version || '0.0.1';
     program.version(version).parse(process.argv);
 }
