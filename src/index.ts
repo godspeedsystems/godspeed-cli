@@ -109,7 +109,7 @@ async function main() {
 
     }
 
-    const version:string = process.env.npm_package_version || '0.0.1';
+    const version = require('../package.json').version;
     program.version(version).parse(process.argv);
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "@mindgrep/godspeed",
   "description": "Godspeed CLI",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "main": "./lib/index.js",
   "bin": {
     "godspeed": "./lib/index.js"
