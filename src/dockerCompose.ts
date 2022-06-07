@@ -6,6 +6,7 @@ import { ask, prompt } from './utils';
 
 let mongoDbName:string = 'test';
 let postgresDbName:string = 'test';
+let incMongo = false;
 
 /*
 * function to create docker-compose.yml file inside projectName/.devcontainer/ directory
@@ -20,7 +21,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
       "version": "3.7",
       "services": {
         [`${projectName}_node`]: {
-          "container_name": `${projectName}_node`,
           "command": "bash -c \"/scripts/node_init.sh && sleep infinity\"",
           "build": {
             "context": "./"
@@ -49,11 +49,10 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
     };
    
     // Ask and check if mongodb is required. If yes, then add mongodb configuration in dockerComposeJson else skip it.
-    const incMongo = ask('Do you need mongodb? [y/n] ');
+    incMongo = ask('Do you need mongodb? [y/n] ');
     if (incMongo) {
       mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
       dockerComposeJson.services[`${projectName}_mongodb1`] = {
-        "container_name": `${projectName}_mongodb1`,
         "image": "mongo:5.0",
         "volumes": [
           `${projectName}_mongodb1-data:/data/db`,
@@ -80,7 +79,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
         ]
       };
       dockerComposeJson.services[`${projectName}_mongodb2`] = {
-        "container_name": `${projectName}_mongodb2`,
         "image": "mongo:5.0",
         "volumes": [
           `${projectName}_mongodb2-data:/data/db`,
@@ -103,7 +101,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
         ]
       };
       dockerComposeJson.services[`${projectName}_mongodb3`] = {
-        "container_name": `${projectName}_mongodb3`,
         "image": "mongo:5.0",
         "volumes": [
           `${projectName}_mongodb3-data:/data/db`,
@@ -136,7 +133,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
     if (incPostgres) {
       postgresDbName = prompt('Please enter name of the postgres database [default: test] ') || 'test';
       dockerComposeJson.services[`${projectName}_postgresdb`] = {
-        "container_name": `${projectName}_postgresdb`,
         "image": "postgres:14.1-alpine",
         "restart": "always",
         "environment": [
@@ -161,7 +157,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
     const incKafka = ask('Do you need kafka? [y/n] ');
     if (incKafka) {
       dockerComposeJson.services[`${projectName}_zookeeper`] = {
-        "container_name": `${projectName}_zookeeper`,
         "image": "docker.io/bitnami/zookeeper:3.8",
         "ports": [
           "2181:2181"
@@ -174,7 +169,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
         ]
       };
       dockerComposeJson.services[`${projectName}_kafka`] = {
-        "container_name": `${projectName}_kafka`,
         "image": "docker.io/bitnami/kafka:3.1",
         "ports": [
           "9092:9092"
@@ -202,7 +196,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
     if (incElastisearch) {
       dockerComposeJson.services[`${projectName}_elasticsearch`] = {
         "image": "docker.elastic.co/elasticsearch/elasticsearch:7.14.0",
-        "container_name": `${projectName}_elasticsearch`,
         "environment": [
           "node.name=es01",
           "discovery.type=single-node",
@@ -232,7 +225,6 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
     const incRedis = ask('Do you need redis? [y/n] ');
     if (incRedis) {
       dockerComposeJson.services[`${projectName}_redis`] = {
-        "container_name": `${projectName}_redis`,
         "image": "redis:7.0",
         "environment": [
           "ALLOW_EMPTY_PASSWORD=yes",
@@ -255,5 +247,5 @@ export function createDockerCompose(projectName: string, devcontainerDir: string
     fs.writeFileSync(dockerComposePath, yamlStr.replaceAll('null',''), 'utf8');
   }
 
-export { mongoDbName, postgresDbName };
+export { incMongo, mongoDbName, postgresDbName };
   

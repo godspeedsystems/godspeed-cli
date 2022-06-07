@@ -6,7 +6,7 @@ import path from 'path';
 import simpleGit from 'simple-git';
 import { exec, execSync, spawn } from 'child_process';
 import dockerCompose from 'docker-compose';
-import { createDockerCompose } from './dockerCompose';
+import { createDockerCompose, incMongo } from './dockerCompose';
 import createDevContainerJson from './devContainerJson';
 import createMongodbRsInit from './mongodb_rs_init';
 import fs from 'fs';
@@ -38,9 +38,6 @@ async function GSCreate(projectName: string) {
       process.exit(1);
     });
 
-  //Set permissions of mongo-keyfile to 0600 to avoid "Unable to acquire security key[s]" in mongodb
-  const execRes = execSync(`chmod 0600 ${devcontainerDir}/scripts/mongo-keyfile`);
-
   // Create devcontainer.json file
   createDevContainerJson(projectName, devcontainerDir);
 
@@ -50,31 +47,33 @@ async function GSCreate(projectName: string) {
   // Create mongodb_rs_init.sh file
   createMongodbRsInit(projectName, devcontainerDir);
 
-  // Start .devcontainer
-  await dockerCompose.upAll({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
-    .then(
-      () => { console.log('"docker-compose up -d" done')},
-      err => { console.log('Error in "docker-compose up -d":', err.message)}
-    );
+  // If mongoDb is selected then start mongoDb containers and set mongo cluster. 
+  if (incMongo) {
+    // Start .devcontainer
+    await dockerCompose.upAll({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
+      .then(
+        () => { console.log('"docker-compose up -d" done')},
+        err => { console.log('Error in "docker-compose up -d":', err.message)}
+      );
 
-  // Execute Mongodb user creation scripts if mongodb container is present
-  const res = await dockerCompose.ps({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]});
-  if (res.out.includes('mongodb1')) {
-    console.log('Creating replica set for mongodb');
-    await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
-    .then(
-      () => { console.log('Creating replica set is done for mongodb')},
-      err => { console.log('Error in creating replica set for mongodb:', err.message)}
-    );
+    // Execute Mongodb user creation scripts if mongodb container is present
+    const res = await dockerCompose.ps({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]});
+    if (res.out.includes('mongodb1')) {
+      console.log('Creating replica set for mongodb');
+      await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+      .then(
+        () => { console.log('Creating replica set is done for mongodb')},
+        err => { console.log('Error in creating replica set for mongodb:', err.message)}
+      );
+    }
+
+    // Stop .devcontainer
+    await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+      .then(
+        () => { console.log('"docker-compose stop" done')},
+        err => { console.log('Error in "docker-compose stop":', err.message)}
+      );
   }
-
-  // Stop .devcontainer
-  await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
-    .then(
-      () => { console.log('"docker-compose stop" done')},
-      err => { console.log('Error in "docker-compose stop":', err.message)}
-    );
-
   console.log('\n',`godspeed create ${projectName} is done.`);
 }
 
