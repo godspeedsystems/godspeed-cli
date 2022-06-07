@@ -1,7 +1,7 @@
 {
   "name": "@mindgrep/godspeed",
   "description": "Godspeed CLI",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "main": "./lib/index.js",
   "bin": {
     "godspeed": "./lib/index.js"
@@ -15,12 +15,13 @@
     "chalk": "^4.1.0",
     "clear": "^0.1.0",
     "commander": "^7.1.0",
-    "figlet": "^1.5.0",
-    "path": "^0.12.7",
-    "simple-git": "^3.7.1",
     "docker-compose": "^0.23.17",
-    "prompt-sync": "^4.2.0",
+    "figlet": "^1.5.0",
+    "handlebars": "^4.7.7",
     "js-yaml": "^4.1.0",
+    "path": "^0.12.7",
+    "prompt-sync": "^4.2.0",
+    "simple-git": "^3.7.1",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   },
