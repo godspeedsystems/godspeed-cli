@@ -69,19 +69,19 @@ async function GSCreate(projectName: string) {
 
   const mongodbRsInitPath = path.join(devcontainerDir,'/scripts/mongodb_rs_init.sh.hbs');
   const mongodbRsInitPathTemplate = Handlebars.compile(fs.readFileSync(mongodbRsInitPath, 'utf-8'),{ noEscape: true });
-  fs.writeFileSync(mongodbRsInitPath.replace('.hbs', ''), mongodbRsInitPathTemplate({ projectName }, {helpers: { json: JSON.stringify }}));
+  fs.writeFileSync(mongodbRsInitPath.replace('.hbs', ''), mongodbRsInitPathTemplate({ projectName, mongoDbName }, {helpers: { json: JSON.stringify }}));
 
   // If mongoDb is selected then start mongoDb containers and set mongo cluster. 
   if (mongodb) {
     // Start .devcontainer
-    await dockerCompose.upMany([`${projectName}_mongodb1`, `${projectName}_mongodb2`, `${projectName}_mongodb3`], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
+    await dockerCompose.upMany([`mongodb1`, `mongodb2`, `mongodb3`], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
       .then(
         () => { console.log('mongodb containers started')},
         err => { console.log('Error in starting mongodb containers:', err.message)}
       );
 
     console.log('Creating replica set for mongodb');
-    await dockerCompose.exec(`${projectName}_mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    await dockerCompose.exec(`mongodb1`, "bash /scripts/mongodb_rs_init.sh", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
     .then(
       () => { console.log('Creating replica set is done for mongodb')},
       err => { console.log('Error in creating replica set for mongodb:', err.message)}
