@@ -88,11 +88,28 @@ async function GSCreate(projectName: string) {
       err => { console.log('Error in creating replica set for mongodb:', err.message)}
     );
 
-    console.log('Starting npm install');
-    await dockerCompose.exec(`node`, "npm install --prefix /workspace/development/app/gs_service", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    // npm install in project directory
+    console.log('Starting npm install in project directory');
+    await dockerCompose.exec(`node`, ["/bin/bash","-c","npm install"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
     .then(
-      () => { console.log('npm install completed')},
-      err => { console.log('Error in executing "npm install":', err.message)}
+      () => { console.log('npm install is completed in project directory')},
+      err => { console.log('Error in executing "npm install" in project directory:', err.message)}
+    );
+
+    // prisma generate and db push in project directory
+    console.log('Starting "prisma generate and db push"');
+    await dockerCompose.exec(`node`, ["/bin/bash","-c","for f in src/datasources/*.prisma; do npx prisma generate --schema=$f; done && for f in src/datasources/*.prisma; do npx prisma db push --schema=$f; done"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+      .then(
+        () => { console.log('prisma generate and db push are completed')},
+        err => { console.log('Error in "prisma generate and db push":', err.message)}
+      );
+  
+    // npm install in gs_service
+    console.log('Starting npm install in gs_service');
+    await dockerCompose.exec(`node`, ["/bin/bash","-c","cd gs_service; npm install"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('npm install is completed in gs_service')},
+      err => { console.log('Error in executing "npm install" in gs_service:', err.message)}
     );
 
   } else {
@@ -103,12 +120,30 @@ async function GSCreate(projectName: string) {
         err => { console.log('Error in starting node container:', err.message)}
       );
 
-    console.log('Starting npm install');
-    await dockerCompose.exec(`node`, "npm install --prefix /workspace/development/app/gs_service", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    // npm install in project directory
+    console.log('Starting npm install in project directory');
+    await dockerCompose.exec(`node`, ["/bin/bash","-c","npm install"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
     .then(
-      () => { console.log('npm install completed')},
-      err => { console.log('Error in executing "npm install":', err.message)}
+      () => { console.log('npm install is completed in project directory')},
+      err => { console.log('Error in executing "npm install" in project directory:', err.message)}
     );
+
+    // prisma generate and db push in project directory
+    console.log('Starting "prisma generate and db push"');
+    await dockerCompose.exec(`node`, ["/bin/bash","-c","for f in src/datasources/*.prisma; do npx prisma generate --schema=$f; done && for f in src/datasources/*.prisma; do npx prisma db push --schema=$f; done"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+      .then(
+        () => { console.log('prisma generate and db push are completed')},
+        err => { console.log('Error in "prisma generate and db push":', err.message)}
+      );
+  
+    // npm install in gs_service
+    console.log('Starting npm install in gs_service');
+    await dockerCompose.exec(`node`, ["/bin/bash","-c","cd gs_service; npm install"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('npm install is completed in gs_service')},
+      err => { console.log('Error in executing "npm install" in gs_service:', err.message)}
+    );
+
   }
 
   // Stop .devcontainer
