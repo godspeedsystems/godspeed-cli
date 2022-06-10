@@ -71,13 +71,14 @@ async function GSCreate(projectName: string) {
   const mongodbRsInitPathTemplate = Handlebars.compile(fs.readFileSync(mongodbRsInitPath, 'utf-8'),{ noEscape: true });
   fs.writeFileSync(mongodbRsInitPath.replace('.hbs', ''), mongodbRsInitPathTemplate({ projectName, mongoDbName }, {helpers: { json: JSON.stringify }}));
 
-  // If mongoDb is selected then start mongoDb containers and set mongo cluster. 
+  // If mongoDb is selected then start mongoDb containers and set mongo cluster. Also, start node container to do npm install of gs_service.
+  // else start only node container to do npm install in gs_service
   if (mongodb) {
     // Start .devcontainer
-    await dockerCompose.upMany([`mongodb1`, `mongodb2`, `mongodb3`], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
+    await dockerCompose.upMany([`node`,`mongodb1`, `mongodb2`, `mongodb3`], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
       .then(
-        () => { console.log('mongodb containers started')},
-        err => { console.log('Error in starting mongodb containers:', err.message)}
+        () => { console.log('mongodb and node containers started')},
+        err => { console.log('Error in starting mongodb and node containers:', err.message)}
       );
 
     console.log('Creating replica set for mongodb');
@@ -87,13 +88,36 @@ async function GSCreate(projectName: string) {
       err => { console.log('Error in creating replica set for mongodb:', err.message)}
     );
 
-    // Stop .devcontainer
-    await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    console.log('Starting npm install');
+    await dockerCompose.exec(`node`, "npm install --prefix /workspace/development/app/gs_service", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('npm install completed')},
+      err => { console.log('Error in executing "npm install":', err.message)}
+    );
+
+  } else {
+    // Start .devcontainer
+    await dockerCompose.upMany([`node`], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
       .then(
-        () => { console.log('"docker-compose stop" done')},
-        err => { console.log('Error in "docker-compose stop":', err.message)}
+        () => { console.log('node container started')},
+        err => { console.log('Error in starting node container:', err.message)}
       );
+
+    console.log('Starting npm install');
+    await dockerCompose.exec(`node`, "npm install --prefix /workspace/development/app/gs_service", { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('npm install completed')},
+      err => { console.log('Error in executing "npm install":', err.message)}
+    );
   }
+
+  // Stop .devcontainer
+  await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]})
+    .then(
+      () => { console.log('"docker-compose stop" done')},
+      err => { console.log('Error in "docker-compose stop":', err.message)}
+    );
+
   console.log('\n',`godspeed create ${projectName} is done.`);
 }
 
