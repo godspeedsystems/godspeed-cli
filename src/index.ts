@@ -216,17 +216,29 @@ async function main() {
   });
 
   program.command('version <version>').action((version) => {
+    let gs: any;
+    try {
+      gs = require('.godspeed')
+    } catch(ex) {
+      console.log('Run version command from Project Root');
+      process.exit(1);
+    }
     replaceInFile(
       {
-        files: '.devcontainer/docker-compose.yml',
+        files: '.devcontainer/Dockerfile',
         from: /adminmindgrep\/gs_service:.*/,
         to: `adminmindgrep/gs_service:${version}`,
       }
     )
-    .then((changedFiles) => {
+    .then(async(changedFiles) => {
       if (!changedFiles[0].hasChanged) {
         console.log(`Version Not changed to ${version}`);
       } else {
+        try {
+          await prepareContainers(gs.projectName, '.', '.devcontainer', gs.mongodb, gs.postgresql);
+        } catch(ex) {
+          console.log('Run prepare command from Project Root');
+        }
         console.log(`Version changed to ${version}`);
       }
     })
