@@ -200,7 +200,9 @@ async function main() {
     .allowUnknownOption()
 
 
-  program.command('versions', 'List all the available versions of gs_service').action(() => {
+  program.command('versions')
+    .description('List all the available versions of gs_service')
+    .action(() => {
     axios
       .get('https://registry.hub.docker.com/v1/repositories/adminmindgrep/gs_service/tags')
       .then(res => {
@@ -209,7 +211,7 @@ async function main() {
       .catch(error => {
         console.error(error)
       })
-   });
+    });
 
   program.command('prepare', 'prepare the containers, before launch or after cleaning the containers').action(async () => {
     try {
