@@ -39,15 +39,26 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
     fs.rmSync(path.join(projectDir, 'src/events/cross_db_join.yaml'));
   }
 
+  if (mongodb || postgresql) {
+    console.log('Generating prisma modules');
+    await dockerCompose.run('node', ['/bin/bash', '-c', "for i in src/datasources/*.prisma; do npx --yes prisma generate --schema $i && npx --yes prisma db push --schema $i; done"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
+      .then(
+        () => { console.log('prisma modules generated') },
+        err => { console.log('Error in generating prisma clients:', err.message) }
+      );
+  }
+
   console.log('Installing godspeed');
-  const cmd = spawnSync( 'id', [ '-u' ] );
 
   let commandOptions: string[] = [];
-  const uid = cmd.stdout.toString().trim()
+  if (process.platform == 'linux') {
+    const cmd = spawnSync( 'id', [ '-u' ] );
+    const uid = cmd.stdout?.toString().trim()
 
-  if (uid != '') {
-    console.log('Setting container uid', uid);
-    commandOptions = ['--build-arg', `USER_UID=${uid}`];
+    if (uid) {
+      console.log('Setting container uid', uid);
+      commandOptions = ['--build-arg', `USER_UID=${uid}`];
+    }
   }
 
   await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
@@ -62,15 +73,6 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
   //     err => { console.log('Error in installing godspeed:', err.message) }
   //   );
 
-
-  if (mongodb || postgresql) {
-    console.log('Generating prisma modules');
-    await dockerCompose.run('node', ['/bin/bash', '-c', "for i in src/datasources/*.prisma; do npx --yes prisma generate --schema $i && npx --yes prisma db push --schema $i; done"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
-      .then(
-        () => { console.log('prisma modules generated') },
-        err => { console.log('Error in generating prisma clients:', err.message) }
-      );
-  }
 }
 
 /*
@@ -152,6 +154,9 @@ async function GSCreate(projectName: string, options: any) {
       () => { console.log('"docker-compose down" done') },
       err => { console.log('Error in "docker-compose down":', err.message) }
     );
+
+    // // docker kill `docker ps -q`
+    // await spawnSync('docker kill `docker ps -q`')
 
     await prepareContainers(projectName, projectName, devcontainerDir, mongodb, postgresql);
 
