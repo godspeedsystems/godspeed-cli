@@ -33,10 +33,6 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
         err => { console.log('Error in creating replica set for mongodb:', err.message) }
       );
 
-  } else {
-    fs.rmSync(path.join(projectDir, 'src/datasources/mongo.prisma'));
-    fs.rmSync(path.join(projectDir, 'src/functions/com/biz/ds/cross_db_join.yaml'));
-    fs.rmSync(path.join(projectDir, 'src/events/cross_db_join.yaml'));
   }
 
   if (mongodb || postgresql) {
@@ -122,6 +118,14 @@ async function GSCreate(projectName: string, options: any) {
 
     if (mongodb) {
       mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
+    } else {
+      try {
+        fs.rmSync(path.join(projectDir, 'src/datasources/mongo.prisma'));
+        fs.rmSync(path.join(projectDir, 'src/functions/com/biz/ds/cross_db_join.yaml'));
+        fs.rmSync(path.join(projectDir, 'src/events/cross_db_join.yaml'));  
+      } catch(ex) {
+  
+      }
     }
 
     const postgresql = ask('Do you need postgresdb? [y/n] ');
@@ -146,7 +150,7 @@ async function GSCreate(projectName: string, options: any) {
 
     const mongodbRsInitPath = path.join(devcontainerDir, '/scripts/mongodb_rs_init.sh.ejs');
     const mongodbRsInitPathTemplate = ejs.compile(fs.readFileSync(mongodbRsInitPath, 'utf-8'));
-    fs.writeFileSync(mongodbRsInitPath.replace('.ejs', ''), mongodbRsInitPathTemplate({ projectName, mongoDbName }));
+    fs.writeFileSync(mongodbRsInitPath.replace('.ejs', ''), mongodbRsInitPathTemplate({ projectName, mongoDbName }),'utf-8');
 
     // docker-compose -p <projectname_devcontainer> down -v --remove-orphans
     await dockerCompose.down({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions:['--remove-orphans', '-v']})
@@ -185,7 +189,7 @@ async function GSCreate(projectName: string, options: any) {
 
 /************************************************/
 async function main() {
-  console.log(chalk.red(figlet.textSync('godspeed-cli', { horizontalLayout: 'full' })));
+  console.log(chalk.green(figlet.textSync('godspeed-cli', { horizontalLayout: 'full' })));
 
   if (process.argv[2] == 'prisma') {
     return spawn('npx', ['prisma'].concat(process.argv.slice(3)), {
@@ -215,7 +219,7 @@ async function main() {
 
   program.command('prepare', 'prepare the containers, before launch or after cleaning the containers').action(async () => {
     try {
-      const gs = require('.godspeed')
+      const gs = JSON.parse(fs.readFileSync(path.join(process.cwd(),'.godspeed'),'utf-8'));
       await prepareContainers(gs.projectName, '.', '.devcontainer', gs.mongodb, gs.postgresql);
     } catch(ex) {
       console.log('Run prepare command from Project Root');
@@ -225,9 +229,9 @@ async function main() {
   program.command('version <version>').action((version) => {
     let gs: any;
     try {
-      gs = require('.godspeed')
+      gs = JSON.parse(fs.readFileSync(path.join(process.cwd(),'.godspeed'),'utf-8'));
     } catch(ex) {
-      console.log('Run version command from Project Root');
+      console.error('Run version command from Project Root',ex);
       process.exit(1);
     }
     replaceInFile(
@@ -242,9 +246,10 @@ async function main() {
         console.log(`Version Not changed to ${version}`);
       } else {
         try {
+          console.log('gs: ',gs);
           await prepareContainers(gs.projectName, '.', '.devcontainer', gs.mongodb, gs.postgresql);
         } catch(ex) {
-          console.log('Run prepare command from Project Root');
+          console.error('Run prepare command from Project Root',ex);
         }
         console.log(`Version changed to ${version}`);
       }
