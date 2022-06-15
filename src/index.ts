@@ -4,7 +4,7 @@ import figlet from 'figlet';
 import program from 'commander';
 import path from 'path';
 import simpleGit from 'simple-git';
-import { exec, execSync, spawn, spawnSync } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import dockerCompose from 'docker-compose';
 import { ask, prompt } from './utils';
 import axios from 'axios';
@@ -142,6 +142,7 @@ async function GSCreate(projectName: string, options: any) {
 
     const kafka = ask('Do you need kafka? [y/n] ');
     const elasticsearch = ask('Do you need elastisearch? [y/n] ');
+    const svcPort: Number = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || 3000);
     const redis = false; //ask('Do you need redis? [y/n] ');
 
     const dockerComposePath = path.resolve(devcontainerDir, 'docker-compose.yml.ejs');
@@ -149,12 +150,20 @@ async function GSCreate(projectName: string, options: any) {
 
     fs.writeFileSync(dockerComposePath.replace('.ejs', ''), dockerComposeTemplate({
       projectName, mongodb, mongoDbName,
-      postgresql, postgresDbName, kafka, elasticsearch, redis
+      postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort
     }));
 
     const mongodbRsInitPath = path.join(devcontainerDir, '/scripts/mongodb_rs_init.sh.ejs');
     const mongodbRsInitPathTemplate = ejs.compile(fs.readFileSync(mongodbRsInitPath, 'utf-8'));
     fs.writeFileSync(mongodbRsInitPath.replace('.ejs', ''), mongodbRsInitPathTemplate({ projectName, mongoDbName }),'utf-8');
+    
+    await replaceInFile(
+      {
+        files: devcontainerDir + '/scripts/mongodb_rs_init.sh',
+        from: /\r\n/g,
+        to: '\n',
+      }
+    )
 
     // docker-compose -p <projectname_devcontainer> down -v --remove-orphans
     await dockerCompose.down({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions:['--remove-orphans', '-v']})
