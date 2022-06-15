@@ -10,7 +10,7 @@ import { ask, prompt } from './utils';
 import axios from 'axios';
 import {replaceInFile} from 'replace-in-file';
 import ejs from 'ejs';
-
+import glob from 'glob';
 import fs from 'fs';
 
 const git = simpleGit();
@@ -82,6 +82,14 @@ async function GSCreate(projectName: string, options: any) {
   const devcontainerDir = path.resolve(projectDir, '.devcontainer');
   console.log('projectDir: ', projectDir, 'projectTemplateDir', options.directory);
 
+  if (fs.existsSync(projectName)) {
+    let overwrite = ask(`${projectName} exists do you want overwrite? [y/n] `);
+    if (!overwrite) {
+      process.exit(0)
+    }
+    fs.rmSync(projectName, {recursive: true, force: true})
+  }
+
   if (!options.directory) {
   // Clone gs_project_template GIT repo
   const REPO = 'https://github.com/Mindgreppers/gs_project_template.git';
@@ -97,16 +105,12 @@ async function GSCreate(projectName: string, options: any) {
       process.exit(1);
     });
   } else {
-    if (fs.existsSync(projectName)) {
-      let overwrite = ask(`${projectName} exists do you want overwrite? [y/n] `);
-      if (!overwrite) {
-        process.exit(0)
-      }
-      fs.rmSync(projectName, {recursive: true, force: true})
-    }
-    fs.cpSync(options.directory, projectName, {recursive: true})
+    fs.cpSync(options.directory, projectDir, {recursive: true})
   }
 
+  if (options.noexamples) {
+    glob.sync(path.join(projectDir, 'src/{datasources,functions,events}/*')).map((f: string) => fs.unlinkSync(f));
+  }
   // Create devcontainer.json file
   const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json.ejs');
   const devcontainerTemplate = ejs.compile(fs.readFileSync(devcontainerPath, 'utf-8'));
@@ -170,7 +174,7 @@ async function GSCreate(projectName: string, options: any) {
       () => { console.log('"docker-compose stop" done') },
       err => { console.log('Error in "docker-compose stop":', err.message) }
     );
-    
+
     fs.writeFileSync(`${projectName}/.godspeed`, JSON.stringify({
       projectName,
       mongodb,
@@ -197,8 +201,8 @@ async function main() {
     });
   }
 
+  program.command('create <projectName>').option('-n, --noexamples', 'create blank project without examples').option('-d, --directory <projectTemplateDir>', 'local project template dir').action((projectName, options) => { GSCreate(projectName, options); });
 
-  program.command('create <projectName>').option('-d, --directory <projectTemplateDir>', 'local project template dir').action((projectName, options) => { GSCreate(projectName, options); });
   program
     .command('prisma')
     .allowUnknownOption()
