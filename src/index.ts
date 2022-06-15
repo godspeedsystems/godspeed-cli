@@ -159,7 +159,7 @@ async function GSCreate(projectName: string, options: any) {
     
     await replaceInFile(
       {
-        files: devcontainerDir + '/scripts/mongodb_rs_init.sh',
+        files: devcontainerDir + '/*',
         from: /\r\n/g,
         to: '\n',
       }
