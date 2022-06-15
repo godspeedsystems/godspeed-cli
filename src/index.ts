@@ -111,10 +111,6 @@ async function GSCreate(projectName: string, options: any) {
   if (options.noexamples) {
     glob.sync(path.join(projectDir, 'src/{datasources,functions,events}/*')).map((f: string) => fs.unlinkSync(f));
   }
-  // Create devcontainer.json file
-  const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json.ejs');
-  const devcontainerTemplate = ejs.compile(fs.readFileSync(devcontainerPath, 'utf-8'));
-  fs.writeFileSync(devcontainerPath.replace('.ejs', ''), devcontainerTemplate({ projectName }));
 
   try {
     const mongodb = ask('Do you need mongodb? [y/n] ');
@@ -142,8 +138,28 @@ async function GSCreate(projectName: string, options: any) {
 
     const kafka = ask('Do you need kafka? [y/n] ');
     const elasticsearch = ask('Do you need elastisearch? [y/n] ');
-    const svcPort: Number = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || 3000);
     const redis = false; //ask('Do you need redis? [y/n] ');
+    const svcPort: Number = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || 3000);
+
+    // Ask user about release version information of gs_service and change version in Dockerfile
+    console.log('Fetching release version information...');
+    const versions = await axios.get('https://registry.hub.docker.com/v1/repositories/adminmindgrep/gs_service/tags')
+    const availableVersions = versions.data.map((s:any) => s.name).join('\n');
+    console.log(`Please select release version of gs_service from the available list:\n${availableVersions}`);
+    const gsServiceVersion = prompt('Enter your version [default: latest] ') || 'latest';
+    console.log(`Selected version ${gsServiceVersion}`);
+    await replaceInFile(
+      {
+        files: devcontainerDir + '/Dockerfile',
+        from: /adminmindgrep\/gs_service:.*/,
+        to: `adminmindgrep/gs_service:${gsServiceVersion}`,
+      }
+    )
+
+    // Create devcontainer.json file
+    const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json.ejs');
+    const devcontainerTemplate = ejs.compile(fs.readFileSync(devcontainerPath, 'utf-8'));
+    fs.writeFileSync(devcontainerPath.replace('.ejs', ''), devcontainerTemplate({ projectName, svcPort }));
 
     const dockerComposePath = path.resolve(devcontainerDir, 'docker-compose.yml.ejs');
     const dockerComposeTemplate = ejs.compile(fs.readFileSync(dockerComposePath, 'utf-8'));
@@ -159,7 +175,7 @@ async function GSCreate(projectName: string, options: any) {
     
     await replaceInFile(
       {
-        files: devcontainerDir + '/*',
+        files: devcontainerDir + '/scripts/*',
         from: /\r\n/g,
         to: '\n',
       }
@@ -198,6 +214,38 @@ async function GSCreate(projectName: string, options: any) {
     console.log('\n', `godspeed create ${projectName} is failed cleaning up...`);
     fs.rmSync(projectName, { recursive: true, force: true });
   }
+}
+
+async function changeVersion(version: string) {
+  let gs: any;
+  try {
+    gs = JSON.parse(fs.readFileSync(path.join(process.cwd(),'.godspeed'),'utf-8'));
+  } catch(ex) {
+    console.error('Run version command from Project Root',ex);
+    process.exit(1);
+  }
+  replaceInFile(
+    {
+      files: '.devcontainer/Dockerfile',
+      from: /adminmindgrep\/gs_service:.*/,
+      to: `adminmindgrep/gs_service:${version}`,
+    }
+  )
+  .then(async(changedFiles) => {
+    if (!changedFiles[0].hasChanged) {
+      console.log(`Version Not changed to ${version}`);
+    } else {
+      try {
+        await prepareContainers(gs.projectName, '.', '.devcontainer', gs.mongodb, gs.postgresql);
+      } catch(ex) {
+        console.error('Run prepare command from Project Root',ex);
+      }
+      console.log(`Version changed to ${version}`);
+    }
+  })
+  .catch((error:Error) => {
+    console.error('Error occurred:', error);
+  });
 }
 
 /************************************************/
@@ -239,38 +287,7 @@ async function main() {
     }
   });
 
-  program.command('version <version>').action((version) => {
-    let gs: any;
-    try {
-      gs = JSON.parse(fs.readFileSync(path.join(process.cwd(),'.godspeed'),'utf-8'));
-    } catch(ex) {
-      console.error('Run version command from Project Root',ex);
-      process.exit(1);
-    }
-    replaceInFile(
-      {
-        files: '.devcontainer/Dockerfile',
-        from: /adminmindgrep\/gs_service:.*/,
-        to: `adminmindgrep/gs_service:${version}`,
-      }
-    )
-    .then(async(changedFiles) => {
-      if (!changedFiles[0].hasChanged) {
-        console.log(`Version Not changed to ${version}`);
-      } else {
-        try {
-          console.log('gs: ',gs);
-          await prepareContainers(gs.projectName, '.', '.devcontainer', gs.mongodb, gs.postgresql);
-        } catch(ex) {
-          console.error('Run prepare command from Project Root',ex);
-        }
-        console.log(`Version changed to ${version}`);
-      }
-    })
-    .catch((error:Error) => {
-      console.error('Error occurred:', error);
-    });
-  });
+  program.command('version <version>').action((version) => { changeVersion(version) });
 
   program
     .command('prisma')
