@@ -41,9 +41,8 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
     const uid = cmd.stdout?.toString().trim()
 
     if (uid) {
-      console.log('Setting container uid', uid);
-      commandOptions = ['--build-arg', `USER_UID=${uid}`];
-      console.log('Setting uid/gid');
+      commandOptions = commandOptions.concat(['--build-arg', `USER_UID=${uid}`]);
+      console.log('Setting uid/gid', uid);
       await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
       .then(
         () => { },
