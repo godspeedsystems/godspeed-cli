@@ -60,12 +60,6 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
       );
   }
 
-  // await dockerCompose.run('node', ['/bin/bash','-c', 'sudo npm i -g @mindgrep/godspeed && godspeed'], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
-  //   .then(
-  //     () => { console.log('godspeed installed') },
-  //     err => { console.log('Error in installing godspeed:', err.message) }
-  //   );
-
 }
 
 /*
@@ -247,7 +241,7 @@ async function changeVersion(version: string) {
 
 /************************************************/
 async function main() {
-  console.log(chalk.green(figlet.textSync('godspeed-cli', { horizontalLayout: 'full' })));
+  console.log(chalk.green(figlet.textSync('godspeed', { horizontalLayout: 'full' })));
 
   if (process.argv[2] == 'prisma') {
     return spawn('npx', ['prisma'].concat(process.argv.slice(3)), {
@@ -256,11 +250,6 @@ async function main() {
   }
 
   program.command('create <projectName>').option('-n, --noexamples', 'create blank project without examples').option('-d, --directory <projectTemplateDir>', 'local project template dir').action((projectName, options) => { GSCreate(projectName, options); });
-
-  program
-    .command('prisma')
-    .allowUnknownOption()
-
 
   program.command('versions')
     .description('List all the available versions of gs_service')
@@ -275,8 +264,10 @@ async function main() {
       })
     });
 
-  program.command('prepare', 'prepare the containers, before launch or after cleaning the containers').action(async () => {
-    try {
+    program.command('prepare')
+    .description('prepare the containers, before launch or after cleaning the containers')
+    .action(async () => {
+      try {
       const gs = JSON.parse(fs.readFileSync(path.join(process.cwd(),'.godspeed'),'utf-8'));
       await prepareContainers(gs.projectName, '.', '.devcontainer', gs.mongodb, gs.postgresql);
     } catch(ex) {
@@ -285,11 +276,8 @@ async function main() {
   });
 
   program.command('version <version>').action((version) => { changeVersion(version) });
-
-  program
-    .command('prisma')
-    .allowUnknownOption()
-
+  const version = require('../package.json').version;
+  program.version(version,'-v, --version').parse(process.argv);
 
   try {
     const scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
@@ -308,11 +296,12 @@ async function main() {
         });
     }
   } catch (ex) {
-
   }
 
-  const version = require('../package.json').version;
-  program.version(version).parse(process.argv);
+  if (process.argv.length < 3) {
+    program.help();
+  }
+
 }
 
 main();
