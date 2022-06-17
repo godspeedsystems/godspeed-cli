@@ -35,6 +35,23 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
 
   }
 
+  let commandOptions: string[] = ['--pull'];
+  if (process.platform == 'linux') {
+    const cmd = spawnSync( 'id', [ '-u' ] );
+    const uid = cmd.stdout?.toString().trim()
+
+    if (uid) {
+      console.log('Setting container uid', uid);
+      commandOptions = ['--build-arg', `USER_UID=${uid}`];
+      console.log('Setting uid/gid');
+      await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
+      .then(
+        () => { },
+        err => { console.log('Error in building container:', err.message) }
+      );
+    }
+  }
+
   if (mongodb || postgresql) {
     console.log('Generating prisma modules');
     await dockerCompose.run('node', ['/bin/bash', '-c', "for i in src/datasources/*.prisma; do npx --yes prisma generate --schema $i && npx --yes prisma db push --schema $i; done"], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
@@ -43,25 +60,6 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
         err => { console.log('Error in generating prisma clients:', err.message) }
       );
   }
-
-  console.log('Installing godspeed');
-
-  let commandOptions: string[] = [];
-  if (process.platform == 'linux') {
-    const cmd = spawnSync( 'id', [ '-u' ] );
-    const uid = cmd.stdout?.toString().trim()
-
-    if (uid) {
-      console.log('Setting container uid', uid);
-      commandOptions = ['--build-arg', `USER_UID=${uid}`];
-    }
-  }
-
-  await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
-  .then(
-    () => { },
-    err => { console.log('Error in building container:', err.message) }
-  );
 
   // await dockerCompose.run('node', ['/bin/bash','-c', 'sudo npm i -g @mindgrep/godspeed && godspeed'], { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
   //   .then(
