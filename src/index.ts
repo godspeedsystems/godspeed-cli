@@ -242,7 +242,6 @@ async function changeVersion(version: string) {
 /************************************************/
 async function main() {
   console.log(chalk.green(figlet.textSync('godspeed', { horizontalLayout: 'full' })));
-
   if (process.argv[2] == 'prisma') {
     return spawn('npx', ['prisma'].concat(process.argv.slice(3)), {
       stdio: 'inherit'
@@ -276,12 +275,9 @@ async function main() {
   });
 
   program.command('version <version>').action((version) => { changeVersion(version) });
-  const version = require('../package.json').version;
-  program.version(version,'-v, --version').parse(process.argv);
 
   try {
     const scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
-
     for (let script in scripts) {
       program
         .command(script)
@@ -297,6 +293,9 @@ async function main() {
     }
   } catch (ex) {
   }
+
+  const version = require('../package.json').version;
+  program.version(version,'-v, --version').parse(process.argv);
 
   if (process.argv.length < 3) {
     program.help();
