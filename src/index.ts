@@ -69,6 +69,126 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
 }
 
 /*
+* function to update GS Project
+* This function has below main steps:
+*   - Create docker-compose.yml file after getting information from user by prompt (mongodb, postgresdb, elasticsearch, kafka, redis)
+*/
+async function GSUpdate() {
+  let gs: any;
+  try {
+    gs = JSON.parse(fs.readFileSync(path.join(process.cwd(),'.godspeed'),'utf-8'));
+
+    const projectDir = process.cwd();
+    const devcontainerDir = path.resolve(projectDir, '.devcontainer');
+
+    let {projectName, mongodb, mongoDbName,
+      postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort} = gs;
+
+    try {
+      if (!gs.mongodb) {
+        mongodb = ask('Do you need mongodb? [y/n] ');
+        if (mongodb) {
+          mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
+        }
+      }
+
+      if (!gs.postgresql) {
+        postgresql = ask('Do you need postgresdb? [y/n] ');
+        postgresDbName;
+        if (postgresql) {
+          postgresDbName = prompt('Please enter name of the postgres database [default: test] ') || 'test';
+        }
+      }
+
+      if (!gs.kafka) {
+        kafka = ask('Do you need kafka? [y/n] ');
+      }
+
+      if (!gs.elasticsearch) {
+        elasticsearch = ask('Do you need elastisearch? [y/n] ');
+      }
+
+      redis = false; //ask('Do you need redis? [y/n] ');
+
+      svcPort = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || gs.svcPort);
+
+      // Ask user about release version information of gs_service and change version in Dockerfile
+      console.log('Fetching release version information...');
+      const versions = await axios.get('https://registry.hub.docker.com/v1/repositories/adminmindgrep/gs_service/tags')
+      const availableVersions = versions.data.map((s:any) => s.name).join('\n');
+      console.log(`Please select release version of gs_service from the available list:\n${availableVersions}`);
+      const gsServiceVersion = prompt('Enter your version [default: latest] ') || 'latest';
+      console.log(`Selected version ${gsServiceVersion}`);
+      await replaceInFile(
+        {
+          files: devcontainerDir + '/Dockerfile',
+          from: /adminmindgrep\/gs_service:.*/,
+          to: `adminmindgrep/gs_service:${gsServiceVersion}`,
+        }
+      )
+
+      // Create devcontainer.json file
+      const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json.ejs');
+      const devcontainerTemplate = ejs.compile(fs.readFileSync(devcontainerPath, 'utf-8'));
+      fs.writeFileSync(devcontainerPath.replace('.ejs', ''), devcontainerTemplate({ projectName, svcPort }));
+
+      const dockerComposePath = path.resolve(devcontainerDir, 'docker-compose.yml.ejs');
+      const dockerComposeTemplate = ejs.compile(fs.readFileSync(dockerComposePath, 'utf-8'));
+
+      fs.writeFileSync(dockerComposePath.replace('.ejs', ''), dockerComposeTemplate({
+        projectName, mongodb, mongoDbName,
+        postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort
+      }));
+
+      const mongodbRsInitPath = path.join(devcontainerDir, '/scripts/mongodb_rs_init.sh.ejs');
+      const mongodbRsInitPathTemplate = ejs.compile(fs.readFileSync(mongodbRsInitPath, 'utf-8'));
+      fs.writeFileSync(mongodbRsInitPath.replace('.ejs', ''), mongodbRsInitPathTemplate({ projectName, mongoDbName }),'utf-8');
+
+      await replaceInFile(
+        {
+          files: devcontainerDir + '/scripts/*',
+          from: /\r\n/g,
+          to: '\n',
+        }
+      )
+
+      // docker-compose -p <projectname_devcontainer> down -v --remove-orphans
+      await dockerCompose.down({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions:['--remove-orphans', '-v']})
+      .then(
+        () => { console.log('"docker-compose down" done') },
+        err => { console.log('Error in "docker-compose down":', err.message) }
+      );
+
+      // // docker kill `docker ps -q`
+      // await spawnSync('docker kill `docker ps -q`')
+
+      await prepareContainers(projectName, projectName, devcontainerDir, mongodb, postgresql);
+
+      // docker-compose -p <projectname_devcontainer> stop
+      await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
+      .then(
+        () => { console.log('"docker-compose stop" done') },
+        err => { console.log('Error in "docker-compose stop":', err.message) }
+      );
+
+      fs.writeFileSync(`.godspeed`, JSON.stringify({
+        projectName, mongodb, mongoDbName,
+        postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort
+      }))
+
+      console.log('\n', `godspeed update ${projectName} is done.`);
+    } catch (ex) {
+      console.error((ex as Error).message);
+      console.log('\n', `godspeed update ${projectName} is failed cleaning up...`);
+    }
+  } catch(ex) {
+    console.error('Run update command from Project Root',ex);
+    process.exit(1);
+  }
+}
+
+
+/*
 * function to init GS Project
 * This function has below main steps:
 *   - Clone gs_project_template GIT repo into projectName
@@ -119,9 +239,9 @@ async function GSCreate(projectName: string, options: any) {
       try {
         fs.rmSync(path.join(projectDir, 'src/datasources/mongo.prisma'));
         fs.rmSync(path.join(projectDir, 'src/functions/com/biz/ds/cross_db_join.yaml'));
-        fs.rmSync(path.join(projectDir, 'src/events/cross_db_join.yaml'));  
+        fs.rmSync(path.join(projectDir, 'src/events/cross_db_join.yaml'));
       } catch(ex) {
-  
+
       }
     }
 
@@ -169,7 +289,7 @@ async function GSCreate(projectName: string, options: any) {
     const mongodbRsInitPath = path.join(devcontainerDir, '/scripts/mongodb_rs_init.sh.ejs');
     const mongodbRsInitPathTemplate = ejs.compile(fs.readFileSync(mongodbRsInitPath, 'utf-8'));
     fs.writeFileSync(mongodbRsInitPath.replace('.ejs', ''), mongodbRsInitPathTemplate({ projectName, mongoDbName }),'utf-8');
-    
+
     await replaceInFile(
       {
         files: devcontainerDir + '/scripts/*',
@@ -198,11 +318,8 @@ async function GSCreate(projectName: string, options: any) {
     );
 
     fs.writeFileSync(`${projectName}/.godspeed`, JSON.stringify({
-      projectName,
-      mongodb,
-      postgresql,
-      kafka,
-      elasticsearch
+      projectName, mongodb, mongoDbName,
+      postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort
     }))
 
     console.log('\n', `godspeed create ${projectName} is done.`);
@@ -221,6 +338,7 @@ async function changeVersion(version: string) {
     console.error('Run version command from Project Root',ex);
     process.exit(1);
   }
+
   replaceInFile(
     {
       files: '.devcontainer/Dockerfile',
@@ -257,10 +375,11 @@ async function main() {
 
   program.command('create <projectName>').option('-n, --noexamples', 'create blank project without examples').option('-d, --directory <projectTemplateDir>', 'local project template dir').action((projectName, options) => { GSCreate(projectName, options); });
 
+  program.command('update').action(() => { GSUpdate(); });
+
   program
     .command('prisma')
     .allowUnknownOption()
-
 
   program.command('versions')
     .description('List all the available versions of gs_service')
@@ -285,11 +404,6 @@ async function main() {
   });
 
   program.command('version <version>').action((version) => { changeVersion(version) });
-
-  program
-    .command('prisma')
-    .allowUnknownOption()
-
 
   try {
     const scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
