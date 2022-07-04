@@ -1,7 +1,7 @@
 ## Table of Contents
 1. [Godspeed](#godspeed-cli)
 2. [Version History](#version-history)
-3. 
+
 # Godspeed CLI
 CLI to create any microservice using Godspeed framework. It creates the project structure for the microservice. Follwing section describes the commands and options available in CLI.
 
