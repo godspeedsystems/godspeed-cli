@@ -105,10 +105,13 @@ async function GSCreate(projectName: string, options: any) {
 
   try {
     const mongodb = ask('Do you need mongodb? [y/n] ');
-    let mongoDbName;
+    let mongoDbName, mongoDb1Port!: Number, mongoDb2Port!: Number, mongoDb3Port!: Number;
 
     if (mongodb) {
       mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
+      mongoDb1Port = Number(prompt('Please enter host port for mongodb1 [default: 27017] ') || 27017);
+      mongoDb2Port = Number(prompt('Please enter host port for mongodb2 [default: 27018] ') || 27018);
+      mongoDb3Port = Number(prompt('Please enter host port for mongodb3 [default: 27019] ') || 27019);
     } else {
       try {
         fs.rmSync(path.join(projectDir, 'src/datasources/mongo.prisma'));
@@ -120,16 +123,31 @@ async function GSCreate(projectName: string, options: any) {
     }
 
     const postgresql = ask('Do you need postgresdb? [y/n] ');
-    let postgresDbName;
+    let postgresDbName, postgresDbPort!: Number;
     if (postgresql) {
       postgresDbName = prompt('Please enter name of the postgres database [default: test] ') || 'test';
+      postgresDbPort = Number(prompt('Please enter host port for postgres [default: 5432] ') || 5432);
     } else {
       fs.rmSync(path.join(projectName, 'src/datasources/postgres.prisma'));
     }
 
     const kafka = ask('Do you need kafka? [y/n] ');
+    let kafkaPort!: Number, zookeeperPort!: Number;
+    if (kafka) {
+      kafkaPort = Number(prompt('Please enter host port for kafka [default: 9092] ') || 9092);
+      zookeeperPort = Number(prompt('Please enter host port for zookeeper [default: 2181] ') || 2181);
+    }
+
     const elasticsearch = ask('Do you need elastisearch? [y/n] ');
+    let elasticsearchPort!: Number;
+    if (elasticsearch) {
+      elasticsearchPort = Number(prompt('Please enter host port for elasticsearch [default: 9200] ') || 9200);
+    }
     const redis = false; //ask('Do you need redis? [y/n] ');
+    let redisPort!: Number;
+    if (redis) {
+      redisPort = Number(prompt('Please enter host port for redis [default: 6379] ') || 6379);
+    }
     const svcPort: Number = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || 3000);
 
     // Ask user about release version information of gs_service and change version in Dockerfile
@@ -157,7 +175,9 @@ async function GSCreate(projectName: string, options: any) {
 
     fs.writeFileSync(dockerComposePath.replace('.ejs', ''), dockerComposeTemplate({
       projectName, mongodb, mongoDbName,
-      postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort
+      postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort,
+      elasticsearchPort, postgresDbPort, zookeeperPort, kafkaPort, redisPort,
+      mongoDb1Port, mongoDb2Port, mongoDb3Port
     }));
 
     const mongodbRsInitPath = path.join(devcontainerDir, '/scripts/mongodb_rs_init.sh.ejs');
