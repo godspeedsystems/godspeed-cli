@@ -236,7 +236,8 @@ async function GSCreate(projectName: string, options: any) {
   }
 
   if (options.noexamples) {
-    glob.sync(path.join(projectDir, 'src/{datasources,functions,events}/*')).map((f: string) => fs.unlinkSync(f));
+    glob.sync(path.join(projectDir, 'src/{datasources,functions,events,mappings}/*')).map((f: string) => fs.rmSync(f,{recursive: true,force: true}));
+    // glob.sync(path.join(projectDir, 'src/{datasources,functions,events}/*')).map((f: string) => fs.unlinkSync(f));
   }
 
   try {
