@@ -237,7 +237,6 @@ async function GSCreate(projectName: string, options: any) {
 
   if (options.noexamples) {
     glob.sync(path.join(projectDir, 'src/{datasources,functions,events,mappings}/*')).map((f: string) => {
-      console.log("Removing", f); 
       fs.rmSync(f,{recursive: true,force: true});
     });
     // glob.sync(path.join(projectDir, 'src/{datasources,functions,events}/*')).map((f: string) => fs.unlinkSync(f));
