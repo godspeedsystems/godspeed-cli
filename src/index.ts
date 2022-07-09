@@ -236,7 +236,10 @@ async function GSCreate(projectName: string, options: any) {
   }
 
   if (options.noexamples) {
-    glob.sync(path.join(projectDir, 'src/{datasources,functions,events,mappings}/*')).map((f: string) => fs.rmSync(f,{recursive: true,force: true}));
+    glob.sync(path.join(projectDir, 'src/{datasources,functions,events,mappings}/*')).map((f: string) => {
+      console.log("Removing", f); 
+      fs.rmSync(f,{recursive: true,force: true});
+    });
     // glob.sync(path.join(projectDir, 'src/{datasources,functions,events}/*')).map((f: string) => fs.unlinkSync(f));
   }
 
@@ -265,7 +268,11 @@ async function GSCreate(projectName: string, options: any) {
       postgresDbName = prompt('Please enter name of the postgres database [default: test] ') || 'test';
       postgresDbPort = Number(prompt('Please enter host port for postgres [default: 5432] ') || 5432);
     } else {
+      try {      
       fs.rmSync(path.join(projectName, 'src/datasources/postgres.prisma'));
+    } catch(ex) {
+
+    }
     }
 
     const kafka = ask('Do you need kafka? [y/n] ');
