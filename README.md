@@ -23,3 +23,7 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ##### 0.0.32
  ###### Bug Fix
 - `godspeed create -n` is updated to create a new project with no examples.
+
+##### 0.0.33
+ ###### Bug Fix
+- `godspeed create -n` is updated when a new project is created with no db.
