@@ -60,6 +60,13 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
       );
   }
 
+  // docker-compose -p <projectname_devcontainer> stop
+  await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
+  .then(
+    () => { console.log('"docker-compose stop" done') },
+    err => { console.log('Error in "docker-compose stop":', err.message) }
+  );
+
 }
 
 /*
@@ -173,13 +180,6 @@ async function GSUpdate() {
 
       await prepareContainers(projectName, projectName, devcontainerDir, mongodb, postgresql);
 
-      // docker-compose -p <projectname_devcontainer> stop
-      await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
-      .then(
-        () => { console.log('"docker-compose stop" done') },
-        err => { console.log('Error in "docker-compose stop":', err.message) }
-      );
-
       fs.writeFileSync(`.godspeed`, JSON.stringify({
         projectName, mongodb, mongoDbName,
         postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort,
@@ -268,10 +268,10 @@ async function GSCreate(projectName: string, options: any) {
       postgresDbPort = Number(prompt('Please enter host port for postgres [default: 5432] ') || 5432);
     } else {
       try {      
-      fs.rmSync(path.join(projectName, 'src/datasources/postgres.prisma'));
-    } catch(ex) {
+        fs.rmSync(path.join(projectName, 'src/datasources/postgres.prisma'));
+      } catch(ex) {
 
-    }
+      }
     }
 
     const kafka = ask('Do you need kafka? [y/n] ');
@@ -279,6 +279,14 @@ async function GSCreate(projectName: string, options: any) {
     if (kafka) {
       kafkaPort = Number(prompt('Please enter host port for kafka [default: 9092] ') || 9092);
       zookeeperPort = Number(prompt('Please enter host port for zookeeper [default: 2181] ') || 2181);
+    } else {
+        try {      
+        fs.rmSync(path.join(projectName, 'src/datasources/kafka1.kafka'));
+        fs.rmSync(path.join(projectName, 'src/events/publish_kafka.yaml'));
+        fs.rmSync(path.join(projectName, 'src/functions/com/jfs/publish_kafka.yaml'));
+        } catch(ex) {
+
+        }
     }
 
     const elasticsearch = ask('Do you need elastisearch? [y/n] ');
@@ -346,13 +354,6 @@ async function GSCreate(projectName: string, options: any) {
     // await spawnSync('docker kill `docker ps -q`')
 
     await prepareContainers(projectName, projectName, devcontainerDir, mongodb, postgresql);
-
-    // docker-compose -p <projectname_devcontainer> stop
-    await dockerCompose.stop({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`] })
-    .then(
-      () => { console.log('"docker-compose stop" done') },
-      err => { console.log('Error in "docker-compose stop":', err.message) }
-    );
 
     fs.writeFileSync(`${projectName}/.godspeed`, JSON.stringify({
       projectName, mongodb, mongoDbName,
