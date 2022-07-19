@@ -169,7 +169,7 @@ async function GSUpdate() {
       )
 
       // docker-compose -p <projectname_devcontainer> down -v --remove-orphans
-      await dockerCompose.down({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions:['--remove-orphans', '-v']})
+      await dockerCompose.down({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions:['--remove-orphans']})
       .then(
         () => { console.log('"docker-compose down" done') },
         err => { console.log('Error in "docker-compose down":', err.message) }
