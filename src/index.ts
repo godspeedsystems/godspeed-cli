@@ -49,6 +49,12 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
         err => { console.log('Error in building container:', err.message) }
       );
     }
+  }else{
+    await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]},)
+    .then(
+      () => { },
+      err => { console.log('Error in building container:', err.message) }
+    );
   }
 
   if (mongodb || postgresql) {
@@ -86,16 +92,16 @@ async function GSUpdate() {
       mongoDb1Port, mongoDb2Port, mongoDb3Port} = gs;
 
     try {
-      if (!gs.mongodb) {
+        if (!gs.mongodb) {
         mongodb = ask('Do you need mongodb? [y/n] ');
-        if (mongodb) {
-          mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
-          mongoDb1Port = Number(prompt('Please enter host port for mongodb1 [default: 27017] ') || 27017);
-          mongoDb2Port = Number(prompt('Please enter host port for mongodb2 [default: 27018] ') || 27018);
-          mongoDb3Port = Number(prompt('Please enter host port for mongodb3 [default: 27019] ') || 27019);
-        }
-      }
-
+          if (mongodb) {
+            mongoDbName = prompt('Please enter name of the mongo database [default: test] ') || 'test';
+            mongoDb1Port = Number(prompt('Please enter host port for mongodb1 [default: 27017] ') || 27017);
+            mongoDb2Port = Number(prompt('Please enter host port for mongodb2 [default: 27018] ') || 27018);
+            mongoDb3Port = Number(prompt('Please enter host port for mongodb3 [default: 27019] ') || 27019);
+          }
+        }  
+        
       if (!gs.postgresql) {
         postgresql = ask('Do you need postgresdb? [y/n] ');
         if (postgresql) {
