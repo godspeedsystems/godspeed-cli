@@ -174,7 +174,7 @@ async function GSUpdate() {
         }
       )
 
-      // docker-compose -p <projectname_devcontainer> down -v --remove-orphans
+      // docker-compose -p <projectname_devcontainer> down --remove-orphans
       await dockerCompose.down({ cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions:['--remove-orphans']})
       .then(
         () => { console.log('"docker-compose down" done') },
@@ -437,17 +437,6 @@ async function main() {
       .catch(error => {
         console.error(error)
       })
-    });
-
-    program.command('prepare')
-    .description('prepare the containers, before launch or after cleaning the containers')
-    .action(async () => {
-      try {
-      const gs = JSON.parse(fs.readFileSync(path.join(process.cwd(),'.godspeed'),'utf-8'));
-      await prepareContainers(gs.projectName, '.', '.devcontainer', gs.mongodb, gs.postgresql);
-    } catch(ex) {
-      console.log('Run prepare command from Project Root');
-    }
   });
 
   program.command('version <version>').action((version) => { changeVersion(version) });

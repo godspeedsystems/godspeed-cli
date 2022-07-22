@@ -32,3 +32,8 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
  ###### Bug Fix
 - Stop all the containers after `godspeed prepare` command.
 - Templates added for message bus.
+
+##### 0.0.35
+ ###### Bug Fix
+- Removed `godspeed prepare` command. Use `godspeed update` instead. Check [online documentation](https://docs.mindgrep.com/docs/microservices/introduction-cli) for more information on `godspeed update` command.
+- Fixed volume recreation issue in `godspeed update`. 
