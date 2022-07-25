@@ -37,3 +37,7 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
  ###### Bug Fix
 - Removed `godspeed prepare` command. Use `godspeed update` instead. Check [online documentation](https://docs.mindgrep.com/docs/microservices/introduction-cli) for more information on `godspeed update` command.
 - Fixed volume recreation issue in `godspeed update`. 
+
+##### 0.0.36
+ ###### Bug Fix
+- Updated kafka templates in the template project.
