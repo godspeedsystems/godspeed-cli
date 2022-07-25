@@ -287,7 +287,7 @@ async function GSCreate(projectName: string, options: any) {
       zookeeperPort = Number(prompt('Please enter host port for zookeeper [default: 2181] ') || 2181);
     } else {
         try {      
-        fs.rmSync(path.join(projectName, 'src/datasources/kafka1.kafka'));
+        fs.rmSync(path.join(projectName, 'src/datasources/kafka1.yaml'));
         fs.rmSync(path.join(projectName, 'src/events/publish_kafka.yaml'));
         fs.rmSync(path.join(projectName, 'src/functions/com/jfs/publish_kafka.yaml'));
         } catch(ex) {
