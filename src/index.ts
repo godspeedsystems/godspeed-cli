@@ -35,13 +35,13 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
 
   }
 
-  let commandOptions: string[] = ['--pull'];
+  let commandOptions: string[] = ['--pull', '--no-cache'];
   if (process.platform == 'linux') {
     const cmd = spawnSync( 'id', [ '-u' ] );
     const uid = cmd.stdout?.toString().trim()
 
     if (uid) {
-      commandOptions = commandOptions.concat(['--build-arg', `USER_UID=${uid}`], ['--no-cache']);
+      commandOptions = commandOptions.concat(['--build-arg', `USER_UID=${uid}`]);
       console.log('Setting uid/gid', uid);
       await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
       .then(
@@ -50,7 +50,6 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
       );
     }
   }else{
-    commandOptions = commandOptions.concat(['--no-cache']);
     await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
     .then(
       () => { },
