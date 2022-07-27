@@ -41,7 +41,7 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
     const uid = cmd.stdout?.toString().trim()
 
     if (uid) {
-      commandOptions = commandOptions.concat(['--build-arg', `USER_UID=${uid}`]);
+      commandOptions = commandOptions.concat(['--build-arg', `USER_UID=${uid}`], ['--no-cache']);
       console.log('Setting uid/gid', uid);
       await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
       .then(
@@ -50,7 +50,8 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
       );
     }
   }else{
-    await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]},)
+    commandOptions = commandOptions.concat(['--no-cache']);
+    await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
     .then(
       () => { },
       err => { console.log('Error in building container:', err.message) }
