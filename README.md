@@ -41,3 +41,7 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ##### 0.0.36
  ###### Bug Fix
 - Updated kafka templates in the template project.
+
+##### 0.0.37
+ ###### Bug Fix
+- Added --no-cache flag for docker build.
