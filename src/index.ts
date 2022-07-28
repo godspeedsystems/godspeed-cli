@@ -35,7 +35,7 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
 
   }
 
-  let commandOptions: string[] = ['--pull'];
+  let commandOptions: string[] = ['--pull', '--no-cache'];
   if (process.platform == 'linux') {
     const cmd = spawnSync( 'id', [ '-u' ] );
     const uid = cmd.stdout?.toString().trim()
@@ -50,7 +50,7 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
       );
     }
   }else{
-    await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`]},)
+    await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
     .then(
       () => { },
       err => { console.log('Error in building container:', err.message) }
