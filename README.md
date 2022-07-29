@@ -44,7 +44,7 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 
 ##### 0.0.37
  ###### Bug Fix
-- Removed cache build's during godspeed create and update. 
+- Removed cache builds during godspeed create and update. 
 
 ##### 0.0.38
  ###### Bug Fix
