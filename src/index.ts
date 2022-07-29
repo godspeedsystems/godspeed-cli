@@ -6,7 +6,7 @@ import path from 'path';
 import simpleGit from 'simple-git';
 import { spawn, spawnSync } from 'child_process';
 import dockerCompose from 'docker-compose';
-import { ask, prompt } from './utils';
+import { ask, prompt, userID } from './utils';
 import axios from 'axios';
 import {replaceInFile} from 'replace-in-file';
 import ejs from 'ejs';
@@ -36,26 +36,12 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
   }
 
   let commandOptions: string[] = ['--pull', '--no-cache'];
-  if (process.platform == 'linux') {
-    const cmd = spawnSync( 'id', [ '-u' ] );
-    const uid = cmd.stdout?.toString().trim()
+  await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
+  .then(
+  () => { },
+  err => { console.log('Error in building container:', err.message) }
+  );
 
-    if (uid) {
-      commandOptions = commandOptions.concat(['--build-arg', `USER_UID=${uid}`]);
-      console.log('Setting uid/gid', uid);
-      await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
-      .then(
-        () => { },
-        err => { console.log('Error in building container:', err.message) }
-      );
-    }
-  }else{
-    await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
-    .then(
-      () => { },
-      err => { console.log('Error in building container:', err.message) }
-    );
-  }
 
   if (mongodb || postgresql) {
     console.log('Generating prisma modules');
@@ -87,7 +73,7 @@ async function GSUpdate() {
     const devcontainerDir = path.resolve(projectDir, '.devcontainer');
 
     let {projectName, mongodb, mongoDbName,
-      postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort,
+      postgresql, postgresDbName, kafka, elasticsearch, redis, userUID, svcPort,
       elasticsearchPort, postgresDbPort, zookeeperPort, kafkaPort, redisPort,
       mongoDb1Port, mongoDb2Port, mongoDb3Port} = gs;
 
@@ -130,7 +116,7 @@ async function GSUpdate() {
         redisPort = Number(prompt('Please enter host port for redis [default: 6379] ') || 6379);
       }  
 
-      svcPort = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || gs.svcPort);
+      svcPort = Number(prompt(`Please enter host port on which you want to run your service [current: ${gs.svcPort}] `) || gs.svcPort);
 
       // Ask user about release version information of gs_service and change version in Dockerfile
       console.log('Fetching release version information...');
@@ -147,6 +133,10 @@ async function GSUpdate() {
         }
       )
 
+      // Fetching UID information
+      userUID = userID();
+      console.log("User ID is",userUID);
+
       // Create devcontainer.json file
       const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json.ejs');
       const devcontainerTemplate = ejs.compile(fs.readFileSync(devcontainerPath, 'utf-8'));
@@ -157,7 +147,7 @@ async function GSUpdate() {
 
       fs.writeFileSync(dockerComposePath.replace('.ejs', ''), dockerComposeTemplate({
         projectName, mongodb, mongoDbName,
-        postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort,
+        postgresql, postgresDbName, kafka, elasticsearch, redis, userUID, svcPort,
         elasticsearchPort, postgresDbPort, zookeeperPort, kafkaPort, redisPort,
         mongoDb1Port, mongoDb2Port, mongoDb3Port
       }));
@@ -307,6 +297,11 @@ async function GSCreate(projectName: string, options: any) {
     }
     const svcPort: Number = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || 3000);
 
+    // Fetching UID information
+
+    let userUID = userID();
+    console.log("User ID is",userUID);
+
     // Ask user about release version information of gs_service and change version in Dockerfile
     console.log('Fetching release version information...');
     const versions = await axios.get('https://registry.hub.docker.com/v1/repositories/adminmindgrep/gs_service/tags')
@@ -332,7 +327,7 @@ async function GSCreate(projectName: string, options: any) {
 
     fs.writeFileSync(dockerComposePath.replace('.ejs', ''), dockerComposeTemplate({
       projectName, mongodb, mongoDbName,
-      postgresql, postgresDbName, kafka, elasticsearch, redis, svcPort,
+      postgresql, postgresDbName, kafka, elasticsearch, redis, userUID, svcPort,
       elasticsearchPort, postgresDbPort, zookeeperPort, kafkaPort, redisPort,
       mongoDb1Port, mongoDb2Port, mongoDb3Port
     }));

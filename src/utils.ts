@@ -1,4 +1,5 @@
 import promptSync from 'prompt-sync';
+import { spawn, spawnSync } from 'child_process';
 
 export const prompt = promptSync();
 
@@ -12,4 +13,14 @@ export function ask(ques: string): boolean {
     } else {
         return false;
     }
+}
+
+export function userID(): string {
+          if (process.platform == 'linux') {
+            const cmd = spawnSync( 'id', [ '-u' ] );
+            const uid = cmd.stdout?.toString().trim()
+            return uid;
+          }else{
+              return "1000";
+          }
 }
