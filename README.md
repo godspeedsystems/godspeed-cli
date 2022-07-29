@@ -45,3 +45,8 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ##### 0.0.37
  ###### Bug Fix
 - Added --no-cache flag for the cli build.
+
+##### 0.0.38
+ ###### Bug Fix
+- Fixed the application service port.
+- Fixed the linux UID issue

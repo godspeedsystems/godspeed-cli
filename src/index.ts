@@ -137,7 +137,7 @@ async function GSUpdate() {
         redisPort = Number(prompt('Please enter host port for redis [default: 6379] ') || 6379);
       }  
 
-      svcPort = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || gs.svcPort);
+      svcPort = Number(prompt(`Please enter host port on which you want to run your service [current: ${gs.svcPort}] `) || gs.svcPort);
 
       // Ask user about release version information of gs_service and change version in Dockerfile
       console.log('Fetching release version information...');
