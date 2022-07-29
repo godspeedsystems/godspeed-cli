@@ -41,27 +41,6 @@ async function  prepareContainers(projectName: string, projectDir: string, devco
   () => { },
   err => { console.log('Error in building container:', err.message) }
   );
-  // if (process.platform == 'linux') {
-  //   const cmd = spawnSync( 'id', [ '-u' ] );
-  //   const uid = cmd.stdout?.toString().trim()
-
-  //   if (uid) {
-  //     commandOptions = commandOptions.concat(['--build-arg', `USER_UID=${uid}`]);
-  //     console.log('Setting uid/gid', uid);
-  //     await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
-  //     .then(
-  //       () => { },
-  //       err => { console.log('Error in building container:', err.message) }
-  //     );
-  //   }
-  // }else{
-  //   await dockerCompose.buildOne('node', { cwd: devcontainerDir, log: true, composeOptions: ["-p", `${projectName}_devcontainer`], commandOptions },)
-  //   .then(
-  //     () => { },
-  //     err => { console.log('Error in building container:', err.message) }
-  //   );
-  // }
-
 
 
   if (mongodb || postgresql) {
@@ -155,19 +134,9 @@ async function GSUpdate() {
       )
 
       // Fetching UID information
-      // if (process.platform == 'linux') {
-      //   const cmd = spawnSync( 'id', [ '-u' ] );
-      //   const uid = cmd.stdout?.toString().trim()
-
-      //   if (uid) {
-      //     console.log('Setting uid/gid', uid);
-      //     userID = uid;
-      //   }
-      // }else{
-      //     userID = 1000;
-      // }      
       userUID = userID();
       console.log("User ID is",userUID);
+
       // Create devcontainer.json file
       const devcontainerPath = path.resolve(devcontainerDir, 'devcontainer.json.ejs');
       const devcontainerTemplate = ejs.compile(fs.readFileSync(devcontainerPath, 'utf-8'));
@@ -327,6 +296,8 @@ async function GSCreate(projectName: string, options: any) {
       redisPort = Number(prompt('Please enter host port for redis [default: 6379] ') || 6379);
     }
     const svcPort: Number = Number(prompt('Please enter host port on which you want to run your service [default: 3000] ') || 3000);
+
+    // Fetching UID information
 
     let userUID = userID();
     console.log("User ID is",userUID);
