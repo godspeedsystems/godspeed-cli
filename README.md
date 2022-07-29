@@ -48,5 +48,5 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 
 ##### 0.0.38
  ###### Bug Fix
-- Fixed the application service port update issue faced during godspeed update . 
-- Fixed the user id issue for linux enviroment's. 
+- Fixed the application service port update issue faced during godspeed update. 
+- Fixed the user id issue for Linux environment. 
