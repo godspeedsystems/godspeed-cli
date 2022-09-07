@@ -51,6 +51,6 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 - Fixed the application service port update issue faced during godspeed update. 
 - Fixed the user id issue for Linux environment. 
 
-##### 0.0.39
+##### 0.0.40
  ###### Bug Fix
 - Fixed deprecated dockerhub v1 api and used v2 api URL.
