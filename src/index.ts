@@ -120,8 +120,8 @@ async function GSUpdate() {
 
       // Ask user about release version information of gs_service and change version in Dockerfile
       console.log('Fetching release version information...');
-      const versions = await axios.get('https://registry.hub.docker.com/v1/repositories/adminmindgrep/gs_service/tags')
-      const availableVersions = versions.data.map((s:any) => s.name).join('\n');
+      const versions = await axios.get('https://registry.hub.docker.com/v2/namespaces/adminmindgrep/repositories/gs_service/tags?page_size=1024')
+      const availableVersions = versions.data.results.map((s:any) => s.name).join('\n');
       console.log(`Please select release version of gs_service from the available list:\n${availableVersions}`);
       const gsServiceVersion = prompt('Enter your version [default: latest] ') || 'latest';
       console.log(`Selected version ${gsServiceVersion}`);
@@ -304,8 +304,8 @@ async function GSCreate(projectName: string, options: any) {
 
     // Ask user about release version information of gs_service and change version in Dockerfile
     console.log('Fetching release version information...');
-    const versions = await axios.get('https://registry.hub.docker.com/v1/repositories/adminmindgrep/gs_service/tags')
-    const availableVersions = versions.data.map((s:any) => s.name).join('\n');
+    const versions = await axios.get('https://registry.hub.docker.com/v2/namespaces/adminmindgrep/repositories/gs_service/tags?page_size=1024')
+    const availableVersions = versions.data.results.map((s:any) => s.name).join('\n');
     console.log(`Please select release version of gs_service from the available list:\n${availableVersions}`);
     const gsServiceVersion = prompt('Enter your version [default: latest] ') || 'latest';
     console.log(`Selected version ${gsServiceVersion}`);
