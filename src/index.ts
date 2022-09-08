@@ -213,7 +213,7 @@ async function GSUpdate() {
         }
       }
 
-      redis = true; //ask('Do you need redis? [y/n] ');
+      redis = ask("Do you need redis? [y/n] ");
       if (redis) {
         redisPort = Number(
           prompt("Please enter host port for redis [default: 6379] ") || 6379
@@ -511,13 +511,15 @@ async function GSCreate(projectName: string, options: any) {
           9200
       );
     }
-    const redis = true; //ask('Do you need redis? [y/n] ');
+
+    const redis = ask("Do you need redis? [y/n] ");
     let redisPort!: Number;
     if (redis) {
       redisPort = Number(
         prompt("Please enter host port for redis [default: 6379] ") || 6379
       );
     }
+
     const svcPort: Number = Number(
       prompt(
         "Please enter host port on which you want to run your service [default: 3000] "
