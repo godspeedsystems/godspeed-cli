@@ -90,3 +90,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Remove elasticgraph templates if elasticsearch is not selected during `godspeed create`.
+
+##### 0.0.43
+
+###### Bug Fix
+
+- Fixed permissions issue for mongodb init scripts during `godspeed update`.

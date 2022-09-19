@@ -4,7 +4,7 @@ import figlet from "figlet";
 import program from "commander";
 import path from "path";
 import simpleGit from "simple-git";
-import { spawn, spawnSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import dockerCompose from "docker-compose";
 import { ask, prompt, userID } from "./utils";
 import axios from "axios";
@@ -313,6 +313,8 @@ async function GSUpdate() {
         from: /\r\n/g,
         to: "\n",
       });
+
+      const res = execSync(`chmod 755 ${devcontainerDir}/scripts/mongodb_init.sh ${devcontainerDir}/scripts/mongodb_rs_init.sh`);
 
       // docker-compose -p <projectname_devcontainer> down --remove-orphans
       await dockerCompose
