@@ -462,9 +462,7 @@ async function GSCreate(projectName: string, options: any) {
     } else {
       try {
         fs.rmSync(path.join(projectDir, "src/datasources/mongo.prisma"));
-        fs.rmSync(
-          path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml")
-        );
+        fs.rmSync(path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml"));
         fs.rmSync(path.join(projectDir, "src/events/cross_db_join.yaml"));
       } catch (ex) {}
     }
@@ -481,6 +479,8 @@ async function GSCreate(projectName: string, options: any) {
     } else {
       try {
         fs.rmSync(path.join(projectName, "src/datasources/postgres.prisma"));
+        fs.rmSync(path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml"));
+        fs.rmSync(path.join(projectDir, "src/events/cross_db_join.yaml"));
       } catch (ex) {}
     }
 
@@ -510,6 +510,14 @@ async function GSCreate(projectName: string, options: any) {
         prompt("Please enter host port for elasticsearch [default: 9200] ") ||
           9200
       );
+    } else {
+      try {
+        fs.rmSync(path.join(projectName, "src/datasources/elasticgraph.yaml"));
+        fs.rmSync(path.join(projectDir, "src/functions/com/eg/eg_create.yaml"));
+        fs.rmSync(path.join(projectDir, "src/functions/com/eg/eg_search.yaml"));
+        fs.rmSync(path.join(projectDir, "src/events/eg_create.yaml"));
+        fs.rmSync(path.join(projectDir, "src/events/eg_search.yaml"));
+      } catch (ex) {}
     }
 
     const redis = ask("Do you need redis? [y/n] ");

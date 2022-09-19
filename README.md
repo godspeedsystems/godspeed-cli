@@ -84,3 +84,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Feature
 
 - Enabled option to select redis
+
+##### 0.0.42
+
+###### Bug Fix
+
+- Remove elasticgraph templates if elasticsearch is not selected during `godspeed create`.
