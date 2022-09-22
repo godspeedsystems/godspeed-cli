@@ -314,7 +314,9 @@ async function GSUpdate() {
         to: "\n",
       });
 
-      const res = execSync(`chmod 755 ${devcontainerDir}/scripts/mongodb_init.sh ${devcontainerDir}/scripts/mongodb_rs_init.sh`);
+      if (process.platform != 'win32') {
+        const res = execSync(`chmod 755 ${devcontainerDir}/scripts/mongodb_init.sh ${devcontainerDir}/scripts/mongodb_rs_init.sh`);
+      }
 
       // docker-compose -p <projectname_devcontainer> down --remove-orphans
       await dockerCompose

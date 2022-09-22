@@ -96,3 +96,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Fixed permissions issue for mongodb init scripts during `godspeed update`.
+
+##### 0.0.44
+
+###### Bug Fix
+
+- Added operating system specific check to fix permission of mongodb init scripts.
