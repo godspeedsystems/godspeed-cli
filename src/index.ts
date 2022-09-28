@@ -17,7 +17,7 @@ const git = simpleGit();
 
 async function prepareContainers(
   projectName: string,
-  projectDir: string,
+  gsServiceVersion: string,
   devcontainerDir: string,
   mongodb: boolean,
   postgresql: boolean
@@ -61,6 +61,8 @@ async function prepareContainers(
         }
       );
   }
+
+  const res = execSync(`docker pull adminmindgrep/gs_service:${gsServiceVersion}`);
 
   let commandOptions: string[] = ["--pull", "--no-cache"];
   await dockerCompose
@@ -346,7 +348,7 @@ async function GSUpdate() {
 
       await prepareContainers(
         projectName,
-        projectName,
+        gsServiceVersion,
         devcontainerDir,
         mongodb,
         postgresql
@@ -656,7 +658,7 @@ async function GSCreate(projectName: string, options: any) {
 
     await prepareContainers(
       projectName,
-      projectName,
+      gsServiceVersion,
       devcontainerDir,
       mongodb,
       postgresql
@@ -719,7 +721,7 @@ async function changeVersion(version: string) {
         try {
           await prepareContainers(
             gs.projectName,
-            ".",
+            version,
             ".devcontainer",
             gs.mongodb,
             gs.postgresql

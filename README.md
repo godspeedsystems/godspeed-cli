@@ -108,3 +108,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Replaced `docker-compose`(deprecated) with `docker compose`.
+
+##### 0.0.46
+
+###### Bug Fix
+
+- Added `docker pull` in `godspeed update`.
