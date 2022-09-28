@@ -27,9 +27,10 @@ async function prepareContainers(
     // Start .devcontainer
     await dockerCompose
       .upMany([`mongodb1`, `mongodb2`, `mongodb3`], {
+        executablePath: 'docker',
         cwd: devcontainerDir,
         log: true,
-        composeOptions: ["-p", `${projectName}_devcontainer`],
+        composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
       })
       .then(
         () => {
@@ -43,9 +44,10 @@ async function prepareContainers(
     console.log("Creating replica set for mongodb");
     await dockerCompose
       .exec(`mongodb1`, "bash /scripts/mongodb_rs_init.sh", {
+        executablePath: 'docker',
         cwd: devcontainerDir,
         log: true,
-        composeOptions: ["-p", `${projectName}_devcontainer`],
+        composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
       })
       .then(
         () => {
@@ -63,9 +65,10 @@ async function prepareContainers(
   let commandOptions: string[] = ["--pull", "--no-cache"];
   await dockerCompose
     .buildOne("node", {
+      executablePath: 'docker',
       cwd: devcontainerDir,
       log: true,
-      composeOptions: ["-p", `${projectName}_devcontainer`],
+      composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
       commandOptions,
     })
     .then(
@@ -86,9 +89,10 @@ async function prepareContainers(
           "for i in src/datasources/*.prisma; do npx --yes prisma generate --schema $i && npx --yes prisma db push --schema $i; done",
         ],
         {
+          executablePath: 'docker',
           cwd: devcontainerDir,
           log: true,
-          composeOptions: ["-p", `${projectName}_devcontainer`],
+          composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
         }
       )
       .then(
@@ -104,9 +108,10 @@ async function prepareContainers(
   // docker-compose -p <projectname_devcontainer> stop
   await dockerCompose
     .stop({
+      executablePath: 'docker',
       cwd: devcontainerDir,
       log: true,
-      composeOptions: ["-p", `${projectName}_devcontainer`],
+      composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
     })
     .then(
       () => {
@@ -321,9 +326,10 @@ async function GSUpdate() {
       // docker-compose -p <projectname_devcontainer> down --remove-orphans
       await dockerCompose
         .down({
+          executablePath: 'docker',
           cwd: devcontainerDir,
           log: true,
-          composeOptions: ["-p", `${projectName}_devcontainer`],
+          composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
           commandOptions: ["--remove-orphans"],
         })
         .then(
@@ -630,9 +636,10 @@ async function GSCreate(projectName: string, options: any) {
     // docker-compose -p <projectname_devcontainer> down -v --remove-orphans
     await dockerCompose
       .down({
+        executablePath: 'docker compose',
         cwd: devcontainerDir,
         log: true,
-        composeOptions: ["-p", `${projectName}_devcontainer`],
+        composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
         commandOptions: ["--remove-orphans", "-v"],
       })
       .then(

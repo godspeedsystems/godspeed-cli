@@ -102,3 +102,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Added operating system specific check to fix permission of mongodb init scripts.
+
+##### 0.0.45
+
+###### Bug Fix
+
+- Replaced `docker-compose`(deprecated) with `docker compose`.
