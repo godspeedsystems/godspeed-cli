@@ -114,3 +114,4 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Added `docker pull` in `godspeed update`.
+- Added elasticgraph sample config.

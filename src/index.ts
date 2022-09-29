@@ -490,7 +490,7 @@ async function GSCreate(projectName: string, options: any) {
       );
     } else {
       try {
-        fs.rmSync(path.join(projectName, "src/datasources/postgres.prisma"));
+        fs.rmSync(path.join(projectDir, "src/datasources/postgres.prisma"));
         fs.rmSync(path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml"));
         fs.rmSync(path.join(projectDir, "src/events/cross_db_join.yaml"));
       } catch (ex) {}
@@ -524,7 +524,8 @@ async function GSCreate(projectName: string, options: any) {
       );
     } else {
       try {
-        fs.rmSync(path.join(projectName, "src/datasources/elasticgraph.yaml"));
+        fs.rmSync(path.join(projectDir, "src/datasources/eg_config/"), { recursive: true });
+        fs.rmSync(path.join(projectDir, "src/datasources/elasticgraph.yaml"));
         fs.rmSync(path.join(projectDir, "src/functions/com/eg/eg_create.yaml"));
         fs.rmSync(path.join(projectDir, "src/functions/com/eg/eg_search.yaml"));
         fs.rmSync(path.join(projectDir, "src/events/eg_create.yaml"));
