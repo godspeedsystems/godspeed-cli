@@ -107,7 +107,7 @@ async function prepareContainers(
       );
   }
 
-  // docker-compose -p <projectname_devcontainer> stop
+  // docker compose -p <projectname_devcontainer> stop
   await dockerCompose
     .stop({
       executablePath: 'docker',
@@ -117,10 +117,10 @@ async function prepareContainers(
     })
     .then(
       () => {
-        console.log('"docker-compose stop" done');
+        console.log('"docker compose stop" done');
       },
       (err) => {
-        console.log('Error in "docker-compose stop":', err.message);
+        console.log('Error in "docker compose stop":', err.message);
       }
     );
 }
@@ -272,7 +272,7 @@ async function GSUpdate() {
 
       const dockerComposePath = path.resolve(
         devcontainerDir,
-        "docker-compose.yml.ejs"
+        "docker compose.yml.ejs"
       );
       const dockerComposeTemplate = ejs.compile(
         fs.readFileSync(dockerComposePath, "utf-8")
@@ -325,7 +325,7 @@ async function GSUpdate() {
         const res = execSync(`chmod 755 ${devcontainerDir}/scripts/mongodb_init.sh ${devcontainerDir}/scripts/mongodb_rs_init.sh`);
       }
 
-      // docker-compose -p <projectname_devcontainer> down --remove-orphans
+      // docker compose -p <projectname_devcontainer> down --remove-orphans
       await dockerCompose
         .down({
           executablePath: 'docker',
@@ -336,10 +336,10 @@ async function GSUpdate() {
         })
         .then(
           () => {
-            console.log('"docker-compose down" done');
+            console.log('"docker compose down" done');
           },
           (err) => {
-            console.log('Error in "docker-compose down":', err.message);
+            console.log('Error in "docker compose down":', err.message);
           }
         );
 
@@ -636,7 +636,7 @@ async function GSCreate(projectName: string, options: any) {
       to: "\n",
     });
 
-    // docker-compose -p <projectname_devcontainer> down -v --remove-orphans
+    // docker compose -p <projectname_devcontainer> down -v --remove-orphans
     await dockerCompose
       .down({
         executablePath: 'docker compose',
@@ -647,10 +647,10 @@ async function GSCreate(projectName: string, options: any) {
       })
       .then(
         () => {
-          console.log('"docker-compose down" done');
+          console.log('"docker compose down" done');
         },
         (err) => {
-          console.log('Error in "docker-compose down":', err.message);
+          console.log('Error in "docker compose down":', err.message);
         }
       );
 
@@ -772,10 +772,10 @@ async function main() {
     .action(() => {
       axios
         .get(
-          "https://registry.hub.docker.com/v1/repositories/adminmindgrep/gs_service/tags"
+          "https://registry.hub.docker.com/v2/namespaces/adminmindgrep/repositories/gs_service/tags?page_size=1024"
         )
         .then((res) => {
-          console.log(res.data.map((s: any) => s.name).join("\n"));
+          console.log(res.data.results.map((s: any) => s.name).join("\n"));
         })
         .catch((error) => {
           console.error(error);

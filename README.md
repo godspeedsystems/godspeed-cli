@@ -115,3 +115,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 
 - Added `docker pull` in `godspeed update`.
 - Added elasticgraph sample config.
+
+##### 0.0.47
+
+###### Bug Fix
+
+- Fixed deprecated dockerhub v1 api and used v2 api URL in `godspeed versions`.
