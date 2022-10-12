@@ -272,7 +272,7 @@ async function GSUpdate() {
 
       const dockerComposePath = path.resolve(
         devcontainerDir,
-        "docker compose.yml.ejs"
+        "docker-compose.yml.ejs"
       );
       const dockerComposeTemplate = ejs.compile(
         fs.readFileSync(dockerComposePath, "utf-8")

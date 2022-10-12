@@ -121,3 +121,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Fixed deprecated dockerhub v1 api and used v2 api URL in `godspeed versions`.
+
+##### 0.0.48
+
+###### Bug Fix
+
+- Updated the docker-compose template name.
