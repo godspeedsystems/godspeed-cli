@@ -12,6 +12,8 @@ import { replaceInFile } from "replace-in-file";
 import ejs from "ejs";
 import glob from "glob";
 import fs from "fs";
+import { PlainObject } from "./common";
+import { exit } from "process";
 
 const git = simpleGit();
 
@@ -19,6 +21,7 @@ async function prepareContainers(
   projectName: string,
   gsServiceVersion: string,
   devcontainerDir: string,
+  composeOptions: PlainObject,
   mongodb: boolean,
   postgresql: boolean
 ) {
@@ -26,12 +29,7 @@ async function prepareContainers(
   if (mongodb) {
     // Start .devcontainer
     await dockerCompose
-      .upMany([`mongodb1`, `mongodb2`, `mongodb3`], {
-        executablePath: 'docker',
-        cwd: devcontainerDir,
-        log: true,
-        composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-      })
+      .upMany([`mongodb1`, `mongodb2`, `mongodb3`], composeOptions)
       .then(
         () => {
           console.log("mongodb containers started");
@@ -43,12 +41,7 @@ async function prepareContainers(
 
     console.log("Creating replica set for mongodb");
     await dockerCompose
-      .exec(`mongodb1`, "bash /scripts/mongodb_rs_init.sh", {
-        executablePath: 'docker',
-        cwd: devcontainerDir,
-        log: true,
-        composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-      })
+      .exec(`mongodb1`, "bash /scripts/mongodb_rs_init.sh", composeOptions)
       .then(
         () => {
           console.log("Creating replica set is done for mongodb");
@@ -65,13 +58,11 @@ async function prepareContainers(
   const res = execSync(`docker pull adminmindgrep/gs_service:${gsServiceVersion}`);
 
   let commandOptions: string[] = ["--pull", "--no-cache"];
+
   await dockerCompose
     .buildOne("node", {
-      executablePath: 'docker',
-      cwd: devcontainerDir,
-      log: true,
-      composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-      commandOptions,
+      ...composeOptions,
+      commandOptions
     })
     .then(
       () => {},
@@ -90,12 +81,7 @@ async function prepareContainers(
           "-c",
           "for i in src/datasources/*.prisma; do npx --yes prisma generate --schema $i && npx --yes prisma db push --schema $i; done",
         ],
-        {
-          executablePath: 'docker',
-          cwd: devcontainerDir,
-          log: true,
-          composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-        }
+        composeOptions
       )
       .then(
         () => {
@@ -109,12 +95,7 @@ async function prepareContainers(
 
   // docker compose -p <projectname_devcontainer> stop
   await dockerCompose
-    .stop({
-      executablePath: 'docker',
-      cwd: devcontainerDir,
-      log: true,
-      composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-    })
+    .stop(composeOptions)
     .then(
       () => {
         console.log('"docker compose stop" done');
@@ -128,7 +109,7 @@ async function prepareContainers(
 /*
  * function to update GS Project
  */
-async function GSUpdate() {
+async function GSUpdate(composeOptions: PlainObject) {
   let gs: any;
   try {
     gs = JSON.parse(
@@ -158,6 +139,9 @@ async function GSUpdate() {
       mongoDb2Port,
       mongoDb3Port,
     } = gs;
+
+    composeOptions.cwd = devcontainerDir;
+    composeOptions.composeOptions.push(`${projectName}_devcontainer`);
 
     try {
       if (!gs.mongodb) {
@@ -328,11 +312,8 @@ async function GSUpdate() {
       // docker compose -p <projectname_devcontainer> down --remove-orphans
       await dockerCompose
         .down({
-          executablePath: 'docker',
-          cwd: devcontainerDir,
-          log: true,
-          composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-          commandOptions: ["--remove-orphans"],
+          ...composeOptions,
+          commandOptions: ["--remove-orphans"]
         })
         .then(
           () => {
@@ -350,6 +331,7 @@ async function GSUpdate() {
         projectName,
         gsServiceVersion,
         devcontainerDir,
+        composeOptions,
         mongodb,
         postgresql
       );
@@ -397,9 +379,11 @@ async function GSUpdate() {
  *   - Clone gs_project_template GIT repo into projectName
  *   - Create docker-compose.yml file after getting information from user by prompt (mongodb, postgresdb, elasticsearch, kafka, redis)
  */
-async function GSCreate(projectName: string, options: any) {
+async function GSCreate(projectName: string, options: any, composeOptions: PlainObject) {
   const projectDir = path.resolve(process.cwd(), projectName);
   const devcontainerDir = path.resolve(projectDir, ".devcontainer");
+  composeOptions.cwd = devcontainerDir;
+
   console.log(
     "projectDir: ",
     projectDir,
@@ -638,19 +622,13 @@ async function GSCreate(projectName: string, options: any) {
 
     // docker compose -p <projectname_devcontainer> down -v --remove-orphans
     await dockerCompose
-      .down({
-        executablePath: 'docker compose',
-        cwd: devcontainerDir,
-        log: true,
-        composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-        commandOptions: ["--remove-orphans", "-v"],
-      })
+      .down(composeOptions)
       .then(
         () => {
           console.log('"docker compose down" done');
         },
         (err) => {
-          console.log('Error in "docker compose down":', err.message);
+          //console.log('Error in "docker compose down":', err.message);
         }
       );
 
@@ -661,6 +639,7 @@ async function GSCreate(projectName: string, options: any) {
       projectName,
       gsServiceVersion,
       devcontainerDir,
+      composeOptions,
       mongodb,
       postgresql
     );
@@ -699,7 +678,7 @@ async function GSCreate(projectName: string, options: any) {
   }
 }
 
-async function changeVersion(version: string) {
+async function changeVersion(version: string, composeOptions: PlainObject) {
   let gs: any;
   try {
     gs = JSON.parse(
@@ -709,6 +688,9 @@ async function changeVersion(version: string) {
     console.error("Run version command from Project Root", ex);
     process.exit(1);
   }
+
+  composeOptions.cwd = ".devcontainer";
+  composeOptions.composeOptions.push(`${gs.projectName}_devcontainer`);
 
   replaceInFile({
     files: ".devcontainer/Dockerfile",
@@ -724,6 +706,7 @@ async function changeVersion(version: string) {
             gs.projectName,
             version,
             ".devcontainer",
+            composeOptions,
             gs.mongodb,
             gs.postgresql
           );
@@ -749,6 +732,8 @@ async function main() {
     });
   }
 
+  let composeOptions: PlainObject;
+
   program
     .command("create <projectName>")
     .option("-n, --noexamples", "create blank project without examples")
@@ -757,11 +742,61 @@ async function main() {
       "local project template dir"
     )
     .action((projectName, options) => {
-      GSCreate(projectName, options);
+
+      if (process.platform != 'win32') {
+        let res;
+        try {
+          res = execSync(`docker-compose -v`,{
+            stdio: ['pipe', 'pipe', 'ignore']
+          });
+        } catch (err) {
+        }
+
+        if (!res) {
+          composeOptions = {
+            executablePath: 'docker',
+            log: true,
+            composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
+          };
+        } else {
+          composeOptions = {
+            log: true,
+            composeOptions: ["-p", `${projectName}_devcontainer`],
+          };
+        }
+
+      }
+
+      GSCreate(projectName, options, composeOptions);
     });
 
   program.command("update").action(() => {
-    GSUpdate();
+
+    if (process.platform != 'win32') {
+      let res;
+      try {
+        res = execSync(`docker-compose -v`,{
+          stdio: ['pipe', 'pipe', 'ignore']
+        });
+      } catch (err) {
+      }
+
+      if (!res) {
+        composeOptions = {
+          executablePath: 'docker',
+          log: true,
+          composeOptions: ["compose", "-p"],
+        };
+      } else {
+        composeOptions = {
+          log: true,
+          composeOptions: ["-p"],
+        };
+      }
+
+    }
+
+    GSUpdate(composeOptions);
   });
 
   program.command("prisma").allowUnknownOption();
@@ -783,7 +818,32 @@ async function main() {
     });
 
   program.command("version <version>").action((version) => {
-    changeVersion(version);
+
+    if (process.platform != 'win32') {
+      let res;
+      try {
+        res = execSync(`docker-compose -v`,{
+          stdio: ['pipe', 'pipe', 'ignore']
+        });
+      } catch (err) {
+      }
+
+      if (!res) {
+        composeOptions = {
+          executablePath: 'docker',
+          log: true,
+          composeOptions: ["compose", "-p"],
+        };
+      } else {
+        composeOptions = {
+          log: true,
+          composeOptions: ["-p"],
+        };
+      }
+
+    }
+    
+    changeVersion(version, composeOptions);
   });
 
   try {

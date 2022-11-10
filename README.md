@@ -127,3 +127,10 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Updated the docker-compose template name.
+
+##### 0.0.49
+
+###### Bug Fix
+
+- Removed extra log of `Error in "docker compose down": spawn docker compose ENOENT` error.
+- Updated CLI for docker compose. Check if docker-compose is available then use this CLI else use docker compose (latest) CLI.
