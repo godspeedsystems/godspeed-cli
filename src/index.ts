@@ -383,6 +383,7 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
   const projectDir = path.resolve(process.cwd(), projectName);
   const devcontainerDir = path.resolve(projectDir, ".devcontainer");
   composeOptions.cwd = devcontainerDir;
+  composeOptions.composeOptions.push(`${projectName}_devcontainer`);
 
   console.log(
     "projectDir: ",
@@ -622,7 +623,10 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
 
     // docker compose -p <projectname_devcontainer> down -v --remove-orphans
     await dockerCompose
-      .down(composeOptions)
+      .down({
+        ...composeOptions,
+        commandOptions: ["--remove-orphans", "-v"]
+      })
       .then(
         () => {
           console.log('"docker compose down" done');
@@ -733,6 +737,29 @@ async function main() {
   }
 
   let composeOptions: PlainObject;
+  if (process.platform != 'win32') {
+    let res;
+    try {
+      res = execSync(`docker-compose -v`,{
+        stdio: ['pipe', 'pipe', 'ignore']
+      });
+    } catch (err) {
+    }
+
+    if (!res) {
+      composeOptions = {
+        executablePath: 'docker',
+        log: true,
+        composeOptions: ["compose", "-p"],
+      };
+    } else {
+      composeOptions = {
+        log: true,
+        composeOptions: ["-p"],
+      };
+    }
+
+  }
 
   program
     .command("create <projectName>")
@@ -742,60 +769,10 @@ async function main() {
       "local project template dir"
     )
     .action((projectName, options) => {
-
-      if (process.platform != 'win32') {
-        let res;
-        try {
-          res = execSync(`docker-compose -v`,{
-            stdio: ['pipe', 'pipe', 'ignore']
-          });
-        } catch (err) {
-        }
-
-        if (!res) {
-          composeOptions = {
-            executablePath: 'docker',
-            log: true,
-            composeOptions: ["compose", "-p", `${projectName}_devcontainer`],
-          };
-        } else {
-          composeOptions = {
-            log: true,
-            composeOptions: ["-p", `${projectName}_devcontainer`],
-          };
-        }
-
-      }
-
       GSCreate(projectName, options, composeOptions);
     });
 
   program.command("update").action(() => {
-
-    if (process.platform != 'win32') {
-      let res;
-      try {
-        res = execSync(`docker-compose -v`,{
-          stdio: ['pipe', 'pipe', 'ignore']
-        });
-      } catch (err) {
-      }
-
-      if (!res) {
-        composeOptions = {
-          executablePath: 'docker',
-          log: true,
-          composeOptions: ["compose", "-p"],
-        };
-      } else {
-        composeOptions = {
-          log: true,
-          composeOptions: ["-p"],
-        };
-      }
-
-    }
-
     GSUpdate(composeOptions);
   });
 
@@ -818,31 +795,6 @@ async function main() {
     });
 
   program.command("version <version>").action((version) => {
-
-    if (process.platform != 'win32') {
-      let res;
-      try {
-        res = execSync(`docker-compose -v`,{
-          stdio: ['pipe', 'pipe', 'ignore']
-        });
-      } catch (err) {
-      }
-
-      if (!res) {
-        composeOptions = {
-          executablePath: 'docker',
-          log: true,
-          composeOptions: ["compose", "-p"],
-        };
-      } else {
-        composeOptions = {
-          log: true,
-          composeOptions: ["-p"],
-        };
-      }
-
-    }
-    
     changeVersion(version, composeOptions);
   });
 
