@@ -736,7 +736,7 @@ async function main() {
     });
   }
 
-  let composeOptions: PlainObject;
+  let composeOptions: PlainObject = {};
   if (process.platform != 'win32') {
     let res;
     try {
