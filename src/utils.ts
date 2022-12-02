@@ -17,6 +17,7 @@ export function ask(ques: string): boolean {
 
 export function userID(): string {
           if (process.platform == 'linux') {
+            console.log('platform linux');
             const cmd = spawnSync( 'id', [ '-u' ] );
             const uid = cmd.stdout?.toString().trim()
             return uid;
