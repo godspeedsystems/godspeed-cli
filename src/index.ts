@@ -27,6 +27,8 @@ async function prepareContainers(
 ) {
   // If mongoDb is selected then start mongoDb containers and set mongo cluster.
   if (mongodb) {
+    console.log("Pulling mongodb...");
+
     // Start .devcontainer
     await dockerCompose
       .upMany([`mongodb1`, `mongodb2`, `mongodb3`], composeOptions)
@@ -55,9 +57,13 @@ async function prepareContainers(
       );
   }
 
+  console.log("Pulling framework Image...");
+
   const res = execSync(`docker pull adminmindgrep/gs_service:${gsServiceVersion}`);
 
   let commandOptions: string[] = ["--pull", "--no-cache"];
+
+  console.log("Building framework Image...");
 
   await dockerCompose
     .buildOne("node", {
@@ -645,6 +651,8 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
 
     // // docker kill `docker ps -q`
     // await spawnSync('docker kill `docker ps -q`')
+
+    console.log('Preparing Containers...');
 
     await prepareContainers(
       projectName,
