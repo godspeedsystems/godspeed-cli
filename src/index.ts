@@ -481,6 +481,13 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
       } catch (ex) {}
     }
 
+    if (!mongodb && !postgresql) {
+      try {
+        fs.rmSync(path.join(projectDir, "src/functions/com/biz/ds/create_user_then_show_all.yaml"));
+        fs.rmSync(path.join(projectDir, "src/events/create_user_then_show_all.yaml"));
+      } catch (ex) {}
+    }
+
     const kafka = ask("Do you need kafka? [y/n] ");
     let kafkaPort!: Number, zookeeperPort!: Number;
     if (kafka) {

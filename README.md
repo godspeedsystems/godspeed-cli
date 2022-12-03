@@ -60,3 +60,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Compose options set for windows.
+
+##### 1.0.4
+
+###### Bug Fix
+
+- Remove mongo/postgres events if these options are not selected.
