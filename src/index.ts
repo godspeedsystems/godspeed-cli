@@ -13,7 +13,19 @@ import ejs from "ejs";
 import glob from "glob";
 import fs from "fs";
 import { PlainObject } from "./common";
-import { exit } from "process";
+
+import terminalColors from './terminal_colors';
+
+let log = console.log.bind(console);
+
+console.log = (...args) => {
+  log(terminalColors.FgYellow + args[0] + terminalColors.Reset, args.length > 1 ? args.slice(1) : '');
+}
+
+console.error = (...args) => {
+  log(terminalColors.FgRed + args[0] + terminalColors.Reset, args.length > 1 ? args.slice(1) : '');
+}
+
 
 const git = simpleGit();
 
@@ -37,7 +49,7 @@ async function prepareContainers(
           console.log("mongodb containers started");
         },
         (err) => {
-          console.log("Error in starting mongodb containers:", err.message);
+          console.error("Error in starting mongodb containers:", err.message);
         }
       );
 
@@ -49,7 +61,7 @@ async function prepareContainers(
           console.log("Creating replica set is done for mongodb");
         },
         (err) => {
-          console.log(
+          console.error(
             "Error in creating replica set for mongodb:",
             err.message
           );
@@ -61,7 +73,7 @@ async function prepareContainers(
 
   const res = execSync(`docker pull adminmindgrep/gs_service:${gsServiceVersion}`);
 
-  let commandOptions: string[] = ["--pull", "--no-cache"];
+  let commandOptions: string[] = [];
 
   console.log("Building framework Image...");
 
@@ -73,7 +85,7 @@ async function prepareContainers(
     .then(
       () => {},
       (err) => {
-        console.log("Error in building container:", err.message);
+        console.error("Error in building container:", err.message);
       }
     );
 
@@ -94,7 +106,7 @@ async function prepareContainers(
           console.log("prisma modules generated");
         },
         (err) => {
-          console.log("Error in generating prisma clients:", err.message);
+          console.error("Error in generating prisma clients:", err.message);
         }
       );
   }
@@ -107,7 +119,7 @@ async function prepareContainers(
         console.log('"docker compose stop" done');
       },
       (err) => {
-        console.log('Error in "docker compose stop":', err.message);
+        console.error('Error in "docker compose stop":', err.message);
       }
     );
 }
@@ -326,7 +338,7 @@ async function GSUpdate(composeOptions: PlainObject) {
             console.log('"docker compose down" done');
           },
           (err) => {
-            console.log('Error in "docker compose down":', err.message);
+            console.error('Error in "docker compose down":', err.message);
           }
         );
 
@@ -368,7 +380,7 @@ async function GSUpdate(composeOptions: PlainObject) {
       console.log("\n", `godspeed update ${projectName} is done.`);
     } catch (ex) {
       console.error((ex as Error).message);
-      console.log(
+      console.error(
         "\n",
         `godspeed update ${projectName} is failed cleaning up...`
       );
@@ -393,14 +405,13 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
 
   console.log(
     "projectDir: ",
-    projectDir,
-    "projectTemplateDir",
-    options.directory
+    projectDir
   );
 
   if (fs.existsSync(projectName)) {
     let overwrite = ask(`${projectName} exists do you want overwrite? [y/n] `);
     if (!overwrite) {
+      console.error('Exiting without creating the project')
       process.exit(0);
     }
     fs.rmSync(projectName, { recursive: true, force: true });
@@ -555,15 +566,21 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
     const versions = await axios.get(
       "https://registry.hub.docker.com/v2/namespaces/adminmindgrep/repositories/gs_service/tags?page_size=1024"
     );
+
+
+
     const availableVersions = versions.data.results
       .map((s: any) => s.name)
       .join("\n");
+
     console.log(
       `Please select release version of gs_service from the available list:\n${availableVersions}`
     );
     const gsServiceVersion =
       prompt("Enter your version [default: latest] ") || "latest";
+
     console.log(`Selected version ${gsServiceVersion}`);
+
     await replaceInFile({
       files: devcontainerDir + "/Dockerfile",
       from: /adminmindgrep\/gs_service:.*/,
