@@ -49,3 +49,14 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 
 - Improved logging messages.
 
+##### 1.0.2
+
+###### Bug Fix
+
+- Compose options initialized for windows.
+
+##### 1.0.3
+
+###### Bug Fix
+
+- Compose options set for windows.

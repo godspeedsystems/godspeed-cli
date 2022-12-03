@@ -759,6 +759,12 @@ async function main() {
       };
     }
 
+  } else {
+    composeOptions = {
+      executablePath: 'docker',
+      log: true,
+      composeOptions: ["compose", "-p"],
+    };
   }
 
   program
