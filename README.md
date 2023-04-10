@@ -66,3 +66,9 @@ Refer to our [online documentation](https://docs.mindgrep.com/docs/microservices
 ###### Bug Fix
 
 - Remove mongo/postgres events if these options are not selected.
+
+##### 1.0.7
+
+###### Bug Fix
+
+- Check if redis is already enabled then do not prompt to add redis.
