@@ -222,11 +222,13 @@ async function GSUpdate(composeOptions: PlainObject) {
         }
       }
 
-      redis = ask("Do you need redis? [y/n] ");
-      if (redis) {
-        redisPort = Number(
-          prompt("Please enter host port for redis [default: 6379] ") || 6379
-        );
+      if (!gs.redis) {
+        redis = ask("Do you need redis? [y/n] ");
+        if (redis) {
+          redisPort = Number(
+            prompt("Please enter host port for redis [default: 6379] ") || 6379
+          );
+        }
       }
 
       svcPort = Number(
