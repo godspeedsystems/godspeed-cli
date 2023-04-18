@@ -1,1 +1,4 @@
-export default function createDevContainerJson(projectName: string, devcontainerDir: string): void;
+export default function createDevContainerJson(
+  projectName: string,
+  devcontainerDir: string
+): void;

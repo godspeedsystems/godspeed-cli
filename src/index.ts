@@ -14,18 +14,23 @@ import glob from "glob";
 import fs from "fs";
 import { PlainObject } from "./common";
 
-import terminalColors from './terminal_colors';
+import terminalColors from "./terminal_colors";
 
 let log = console.log.bind(console);
 
 console.log = (...args) => {
-  log(terminalColors.FgYellow + args[0] + terminalColors.Reset, args.length > 1 ? args.slice(1) : '');
-}
+  log(
+    terminalColors.FgYellow + args[0] + terminalColors.Reset,
+    args.length > 1 ? args.slice(1) : ""
+  );
+};
 
 console.error = (...args) => {
-  log(terminalColors.FgRed + args[0] + terminalColors.Reset, args.length > 1 ? args.slice(1) : '');
-}
-
+  log(
+    terminalColors.FgRed + args[0] + terminalColors.Reset,
+    args.length > 1 ? args.slice(1) : ""
+  );
+};
 
 const git = simpleGit();
 
@@ -71,7 +76,9 @@ async function prepareContainers(
 
   console.log("Pulling framework Image...");
 
-  const res = execSync(`docker pull adminmindgrep/gs_service:${gsServiceVersion}`);
+  const res = execSync(
+    `docker pull adminmindgrep/gs_service:${gsServiceVersion}`
+  );
 
   let commandOptions: string[] = [];
 
@@ -80,7 +87,7 @@ async function prepareContainers(
   await dockerCompose
     .buildOne("node", {
       ...composeOptions,
-      commandOptions
+      commandOptions,
     })
     .then(
       () => {},
@@ -112,16 +119,14 @@ async function prepareContainers(
   }
 
   // docker compose -p <projectname_devcontainer> stop
-  await dockerCompose
-    .stop(composeOptions)
-    .then(
-      () => {
-        console.log('"docker compose stop" done');
-      },
-      (err) => {
-        console.error('Error in "docker compose stop":', err.message);
-      }
-    );
+  await dockerCompose.stop(composeOptions).then(
+    () => {
+      console.log('"docker compose stop" done');
+    },
+    (err) => {
+      console.error('Error in "docker compose stop":', err.message);
+    }
+  );
 }
 
 /*
@@ -325,15 +330,17 @@ async function GSUpdate(composeOptions: PlainObject) {
         to: "\n",
       });
 
-      if (process.platform != 'win32') {
-        const res = execSync(`chmod 755 ${devcontainerDir}/scripts/mongodb_init.sh ${devcontainerDir}/scripts/mongodb_rs_init.sh`);
+      if (process.platform != "win32") {
+        const res = execSync(
+          `chmod 755 ${devcontainerDir}/scripts/mongodb_init.sh ${devcontainerDir}/scripts/mongodb_rs_init.sh`
+        );
       }
 
       // docker compose -p <projectname_devcontainer> down --remove-orphans
       await dockerCompose
         .down({
           ...composeOptions,
-          commandOptions: ["--remove-orphans"]
+          commandOptions: ["--remove-orphans"],
         })
         .then(
           () => {
@@ -399,21 +406,22 @@ async function GSUpdate(composeOptions: PlainObject) {
  *   - Clone gs_project_template GIT repo into projectName
  *   - Create docker-compose.yml file after getting information from user by prompt (mongodb, postgresdb, elasticsearch, kafka, redis)
  */
-async function GSCreate(projectName: string, options: any, composeOptions: PlainObject) {
+async function GSCreate(
+  projectName: string,
+  options: any,
+  composeOptions: PlainObject
+) {
   const projectDir = path.resolve(process.cwd(), projectName);
   const devcontainerDir = path.resolve(projectDir, ".devcontainer");
   composeOptions.cwd = devcontainerDir;
   composeOptions.composeOptions.push(`${projectName}_devcontainer`);
 
-  console.log(
-    "projectDir: ",
-    projectDir
-  );
+  console.log("projectDir: ", projectDir);
 
   if (fs.existsSync(projectName)) {
     let overwrite = ask(`${projectName} exists do you want overwrite? [y/n] `);
     if (!overwrite) {
-      console.error('Exiting without creating the project')
+      console.error("Exiting without creating the project");
       process.exit(0);
     }
     fs.rmSync(projectName, { recursive: true, force: true });
@@ -478,7 +486,9 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
     } else {
       try {
         fs.rmSync(path.join(projectDir, "src/datasources/mongo.prisma"));
-        fs.rmSync(path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml"));
+        fs.rmSync(
+          path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml")
+        );
         fs.rmSync(path.join(projectDir, "src/events/cross_db_join.yaml"));
       } catch (ex) {}
     }
@@ -495,15 +505,24 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
     } else {
       try {
         fs.rmSync(path.join(projectDir, "src/datasources/postgres.prisma"));
-        fs.rmSync(path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml"));
+        fs.rmSync(
+          path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml")
+        );
         fs.rmSync(path.join(projectDir, "src/events/cross_db_join.yaml"));
       } catch (ex) {}
     }
 
     if (!mongodb && !postgresql) {
       try {
-        fs.rmSync(path.join(projectDir, "src/functions/com/biz/ds/create_user_then_show_all.yaml"));
-        fs.rmSync(path.join(projectDir, "src/events/create_user_then_show_all.yaml"));
+        fs.rmSync(
+          path.join(
+            projectDir,
+            "src/functions/com/biz/ds/create_user_then_show_all.yaml"
+          )
+        );
+        fs.rmSync(
+          path.join(projectDir, "src/events/create_user_then_show_all.yaml")
+        );
       } catch (ex) {}
     }
 
@@ -535,7 +554,9 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
       );
     } else {
       try {
-        fs.rmSync(path.join(projectDir, "src/datasources/eg_config/"), { recursive: true });
+        fs.rmSync(path.join(projectDir, "src/datasources/eg_config/"), {
+          recursive: true,
+        });
         fs.rmSync(path.join(projectDir, "src/datasources/elasticgraph.yaml"));
         fs.rmSync(path.join(projectDir, "src/functions/com/eg/eg_create.yaml"));
         fs.rmSync(path.join(projectDir, "src/functions/com/eg/eg_search.yaml"));
@@ -568,8 +589,6 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
     const versions = await axios.get(
       "https://registry.hub.docker.com/v2/namespaces/adminmindgrep/repositories/gs_service/tags?page_size=1024"
     );
-
-
 
     const availableVersions = versions.data.results
       .map((s: any) => s.name)
@@ -657,7 +676,7 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
     await dockerCompose
       .down({
         ...composeOptions,
-        commandOptions: ["--remove-orphans", "-v"]
+        commandOptions: ["--remove-orphans", "-v"],
       })
       .then(
         () => {
@@ -671,7 +690,7 @@ async function GSCreate(projectName: string, options: any, composeOptions: Plain
     // // docker kill `docker ps -q`
     // await spawnSync('docker kill `docker ps -q`')
 
-    console.log('Preparing Containers...');
+    console.log("Preparing Containers...");
 
     await prepareContainers(
       projectName,
@@ -771,18 +790,17 @@ async function main() {
   }
 
   let composeOptions: PlainObject = {};
-  if (process.platform != 'win32') {
+  if (process.platform != "win32") {
     let res;
     try {
-      res = execSync(`docker-compose -v`,{
-        stdio: ['pipe', 'pipe', 'ignore']
+      res = execSync(`docker-compose -v`, {
+        stdio: ["pipe", "pipe", "ignore"],
       });
-    } catch (err) {
-    }
+    } catch (err) {}
 
     if (!res) {
       composeOptions = {
-        executablePath: 'docker',
+        executablePath: "docker",
         log: true,
         composeOptions: ["compose", "-p"],
       };
@@ -792,10 +810,9 @@ async function main() {
         composeOptions: ["-p"],
       };
     }
-
   } else {
     composeOptions = {
-      executablePath: 'docker',
+      executablePath: "docker",
       log: true,
       composeOptions: ["compose", "-p"],
     };
