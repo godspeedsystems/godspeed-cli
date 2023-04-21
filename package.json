@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "local": "sudo npm uninstall -g && sudo npm install -g && godspeed",
+    "local": "tsc -p . && sudo npm uninstall -g && sudo npm install -g && godspeed",
     "test": "sudo npm i -g && godspeed"
   },
   "dependencies": {
