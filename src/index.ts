@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import * as dotenv from "dotenv";
 import chalk from "chalk";
 import figlet from "figlet";
 import program from "commander";
@@ -10,6 +11,9 @@ import create from "./commands/create";
 import update from "./commands/update";
 import version from "./commands/version";
 import terminalColors from "./terminal_colors";
+
+// load .env
+dotenv.config();
 
 let log = console.log.bind(console);
 
