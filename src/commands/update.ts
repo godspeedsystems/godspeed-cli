@@ -1,7 +1,7 @@
 import path from "path";
 import { execSync } from "child_process";
 import dockerCompose from "docker-compose";
-import { ask, prompt, userID } from "../utils";
+import { ask, generateFileFromTemplate, prompt, userID } from "../utils";
 import axios from "axios";
 import { replaceInFile } from "replace-in-file";
 import ejs from "ejs";
@@ -136,11 +136,17 @@ export default async function (composeOptions: PlainObject) {
       const gsServiceVersion =
         prompt("Enter your version [default: latest] ") || "latest";
       console.log(`Selected version ${gsServiceVersion}`);
-      await replaceInFile({
-        files: devcontainerDir + "/Dockerfile",
-        from: /adminmindgrep\/gs_service:.*/,
-        to: `adminmindgrep/gs_service:${gsServiceVersion}`,
-      });
+
+      // update mechanism for root level DOckerfile
+      generateFileFromTemplate(
+        path.resolve(devcontainerDir, "Dockerfile.ejs"),
+        path.resolve(devcontainerDir, "Dockerfile"),
+        {
+          dockerRegistry: process.env.DOCKER_REGISTRY,
+          dockerPackageName: process.env.DOCKER_PACKAGE_NAME,
+          tag: gsServiceVersion,
+        }
+      );
 
       // Fetching UID information
       userUID = userID();

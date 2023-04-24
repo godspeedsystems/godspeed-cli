@@ -7,7 +7,7 @@ import dockerCompose from "docker-compose";
 import { replaceInFile } from "replace-in-file";
 import ejs from "ejs";
 
-import { ask, prompt, userID } from "../utils";
+import { ask, generateFileFromTemplate, prompt, userID } from "../utils";
 import { PlainObject } from "../common";
 import prepareContainers from "../utils/prepareContainers";
 
@@ -17,6 +17,7 @@ import prepareContainers from "../utils/prepareContainers";
  *   - Clone gs_project_template GIT repo into projectName
  *   - Create docker-compose.yml file after getting information from user by prompt (mongodb, postgresdb, elasticsearch, kafka, redis)
  */
+
 export default async function (
   projectName: string,
   options: any,
@@ -40,8 +41,8 @@ export default async function (
 
   if (!options.directory) {
     const git = simpleGit();
-    // Clone gs_project_template GIT repo
     const REPO = `${process.env.GITHUB_REPO_URL}`;
+    // clone godspeedsystems/godspeed-scaffolding repo
     await git
       .clone(REPO, projectName)
       .then(() => {
@@ -207,43 +208,49 @@ export default async function (
       .join("\n");
 
     console.log(
-      `Please select release version of gs_service from the available list:\n${availableVersions}`
+      `Please select release version of gs-node-service(Godspeed Framework) from the available list:\n${availableVersions}`
     );
+
     const gsServiceVersion =
       prompt("Enter your version [default: latest] ") || "latest";
 
     console.log(`Selected version ${gsServiceVersion}`);
 
-    await replaceInFile({
-      files: devcontainerDir + "/Dockerfile",
-      from: /adminmindgrep\/gs_service:.*/,
-      to: `adminmindgrep/gs_service:${gsServiceVersion}`,
-    });
-
-    // Create devcontainer.json file
-    const devcontainerPath = path.resolve(
-      devcontainerDir,
-      "devcontainer.json.ejs"
-    );
-    const devcontainerTemplate = ejs.compile(
-      fs.readFileSync(devcontainerPath, "utf-8")
-    );
-    fs.writeFileSync(
-      devcontainerPath.replace(".ejs", ""),
-      devcontainerTemplate({ projectName, svcPort })
+    // generate porject level Dockerfile from template available at `${projectDir}/Dockerfile.ejs`
+    generateFileFromTemplate(
+      path.resolve(projectDir, "Dockerfile.ejs"),
+      path.resolve(projectDir, "Dockerfile"),
+      {
+        dockerRegistry: process.env.DOCKER_REGISTRY,
+        dockerPackageName: process.env.DOCKER_PACKAGE_NAME,
+        tag: gsServiceVersion,
+      }
     );
 
-    const dockerComposePath = path.resolve(
-      devcontainerDir,
-      "docker-compose.yml.ejs"
-    );
-    const dockerComposeTemplate = ejs.compile(
-      fs.readFileSync(dockerComposePath, "utf-8")
+    // generate .devcontainer level Dockerfile from template available at `${projectDir}/.devcontainer/Dockerfile.ejs`
+    generateFileFromTemplate(
+      path.resolve(projectDir, ".devcontainer", "Dockerfile.ejs"),
+      path.resolve(projectDir, ".devcontainer", "Dockerfile"),
+      {
+        dockerRegistry: process.env.DOCKER_REGISTRY,
+        dockerPackageName: process.env.DOCKER_PACKAGE_NAME,
+        tag: gsServiceVersion,
+      }
     );
 
-    fs.writeFileSync(
-      dockerComposePath.replace(".ejs", ""),
-      dockerComposeTemplate({
+    // generate .devcontainer config from template
+    generateFileFromTemplate(
+      path.resolve(devcontainerDir, "devcontainer.json.ejs"),
+      path.resolve(devcontainerDir, "devcontainer.json"),
+      { projectName, svcPort }
+    );
+
+    // generate docker-compose.yml from template
+
+    generateFileFromTemplate(
+      path.resolve(devcontainerDir, "docker-compose.yml.ejs"),
+      path.resolve(devcontainerDir, "docker-compose.yml"),
+      {
         projectName,
         mongodb,
         mongoDbName,
@@ -262,20 +269,14 @@ export default async function (
         mongoDb1Port,
         mongoDb2Port,
         mongoDb3Port,
-      })
+      }
     );
 
-    const mongodbRsInitPath = path.join(
-      devcontainerDir,
-      "/scripts/mongodb_rs_init.sh.ejs"
-    );
-    const mongodbRsInitPathTemplate = ejs.compile(
-      fs.readFileSync(mongodbRsInitPath, "utf-8")
-    );
-    fs.writeFileSync(
-      mongodbRsInitPath.replace(".ejs", ""),
-      mongodbRsInitPathTemplate({ projectName, mongoDbName }),
-      "utf-8"
+    // generate mogodb init script
+    generateFileFromTemplate(
+      path.resolve(devcontainerDir, "/scripts/mongodb_rs_init.sh.ejs"),
+      path.resolve(devcontainerDir, "/scripts/mongodb_rs_init.sh"),
+      { projectName, mongoDbName }
     );
 
     await replaceInFile({

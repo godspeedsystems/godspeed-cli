@@ -1,5 +1,9 @@
 import promptSync from "prompt-sync";
 import { spawn, spawnSync } from "child_process";
+import { PlainObject } from "./common";
+import path from "path";
+import fs from "fs";
+import ejs from "ejs";
 
 export const prompt = promptSync();
 
@@ -25,3 +29,13 @@ export function userID(): string {
     return "1000";
   }
 }
+
+export const generateFileFromTemplate = (
+  templateFilePath: string,
+  pathToSaveFileWithFileName: string,
+  templateData: PlainObject
+) => {
+  const template = ejs.compile(fs.readFileSync(templateFilePath, "utf-8"));
+
+  fs.writeFileSync(pathToSaveFileWithFileName, template(templateData));
+};
