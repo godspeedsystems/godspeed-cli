@@ -246,7 +246,6 @@ export default async function (
     );
 
     // generate docker-compose.yml from template
-
     generateFileFromTemplate(
       path.resolve(devcontainerDir, "docker-compose.yml.ejs"),
       path.resolve(devcontainerDir, "docker-compose.yml"),
@@ -274,8 +273,8 @@ export default async function (
 
     // generate mogodb init script
     generateFileFromTemplate(
-      path.resolve(devcontainerDir, "/scripts/mongodb_rs_init.sh.ejs"),
-      path.resolve(devcontainerDir, "/scripts/mongodb_rs_init.sh"),
+      path.resolve(devcontainerDir, "scripts/mongodb_rs_init.sh.ejs"),
+      path.resolve(devcontainerDir, "scripts/mongodb_rs_init.sh"),
       { projectName, mongoDbName }
     );
 

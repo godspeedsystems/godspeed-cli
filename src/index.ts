@@ -5,12 +5,12 @@ import figlet from "figlet";
 import program from "commander";
 import path from "path";
 import { execSync, spawn } from "child_process";
-import axios from "axios";
 import { PlainObject } from "./common";
 import create from "./commands/create";
 import update from "./commands/update";
 import version from "./commands/version";
 import terminalColors from "./terminal_colors";
+import versions from "./commands/versions";
 
 // load .env
 dotenv.config();
@@ -97,14 +97,7 @@ async function main() {
       "list all the available versions of gs-node-service (Godspeed Framework) "
     )
     .action(() => {
-      axios
-        .get(`${process.env.DOCKER_REGISTRY_TAGS_VERSION_URL}`)
-        .then((res) => {
-          console.log(res.data.results.map((s: any) => s.name).join("\n"));
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+      versions();
     });
 
   // version

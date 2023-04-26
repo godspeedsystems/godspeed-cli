@@ -1,5 +1,5 @@
 {
-  "name": "@mindgrep/godspeed",
+  "name": "@godspeedsystems/godspeed",
   "description": "Godspeed CLI",
   "version": "1.0.7",
   "main": "./lib/index.js",

@@ -4,7 +4,6 @@ import dockerCompose from "docker-compose";
 import { ask, generateFileFromTemplate, prompt, userID } from "../utils";
 import axios from "axios";
 import { replaceInFile } from "replace-in-file";
-import ejs from "ejs";
 import fs from "fs";
 import { PlainObject } from "../common";
 import prepareContainers from "../utils/prepareContainers";
@@ -124,9 +123,7 @@ export default async function (composeOptions: PlainObject) {
 
       // Ask user about release version information of gs_service and change version in Dockerfile
       console.log("Fetching release version information...");
-      const versions = await axios.get(
-        `${process.env.DOCKER_REGISTRY_URL}/tags?page_size=1024`
-      );
+      const versions = await axios.get(`${process.env.DOCKER_REGISTRY_URL}`);
       const availableVersions = versions.data.results
         .map((s: any) => s.name)
         .join("\n");
@@ -137,7 +134,7 @@ export default async function (composeOptions: PlainObject) {
         prompt("Enter your version [default: latest] ") || "latest";
       console.log(`Selected version ${gsServiceVersion}`);
 
-      // update mechanism for root level DOckerfile
+      // update mechanism for root level Dockerfile
       generateFileFromTemplate(
         path.resolve(devcontainerDir, "Dockerfile.ejs"),
         path.resolve(devcontainerDir, "Dockerfile"),
@@ -152,30 +149,18 @@ export default async function (composeOptions: PlainObject) {
       userUID = userID();
       console.log("User ID is", userUID);
 
-      // Create devcontainer.json file
-      const devcontainerPath = path.resolve(
-        devcontainerDir,
-        "devcontainer.json.ejs"
-      );
-      const devcontainerTemplate = ejs.compile(
-        fs.readFileSync(devcontainerPath, "utf-8")
-      );
-      fs.writeFileSync(
-        devcontainerPath.replace(".ejs", ""),
-        devcontainerTemplate({ projectName, svcPort })
+      // generate devcinteiner.json from template
+      generateFileFromTemplate(
+        path.resolve(devcontainerDir, "devcontainer.json.ejs"),
+        path.resolve(devcontainerDir, "devcontainer.json"),
+        { projectName, svcPort }
       );
 
-      const dockerComposePath = path.resolve(
-        devcontainerDir,
-        "docker-compose.yml.ejs"
-      );
-      const dockerComposeTemplate = ejs.compile(
-        fs.readFileSync(dockerComposePath, "utf-8")
-      );
-
-      fs.writeFileSync(
-        dockerComposePath.replace(".ejs", ""),
-        dockerComposeTemplate({
+      // generate docker-compose.yml from template
+      generateFileFromTemplate(
+        path.resolve(devcontainerDir, "docker-compose.yml.ejs"),
+        path.resolve(devcontainerDir, "docker-compose.yml"),
+        {
           projectName,
           mongodb,
           mongoDbName,
@@ -194,20 +179,14 @@ export default async function (composeOptions: PlainObject) {
           mongoDb1Port,
           mongoDb2Port,
           mongoDb3Port,
-        })
+        }
       );
 
-      const mongodbRsInitPath = path.join(
-        devcontainerDir,
-        "/scripts/mongodb_rs_init.sh.ejs"
-      );
-      const mongodbRsInitPathTemplate = ejs.compile(
-        fs.readFileSync(mongodbRsInitPath, "utf-8")
-      );
-      fs.writeFileSync(
-        mongodbRsInitPath.replace(".ejs", ""),
-        mongodbRsInitPathTemplate({ projectName, mongoDbName }),
-        "utf-8"
+      // generate mongodb_rs_init.sh from template available at `${projectDir}/.devcontainer/scripts/mongodb_rs_init.sh.ejs`
+      generateFileFromTemplate(
+        path.resolve(devcontainerDir, "scripts/mongodb_rs_init.sh.ejs"),
+        path.resolve(devcontainerDir, "scripts/mongodb_rs_init.sh"),
+        { projectName, mongoDbName }
       );
 
       await replaceInFile({
