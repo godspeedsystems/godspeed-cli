@@ -1,1 +1,7 @@
 node_modules/
+src/
+.env
+.gitignore
+CHANGELOG.md
+tsconfig.json
+tsconfig.prod.json

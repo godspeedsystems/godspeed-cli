@@ -8,7 +8,6 @@ import { execSync, spawn } from "child_process";
 import { PlainObject } from "./common";
 import create from "./commands/create";
 import update from "./commands/update";
-import version from "./commands/version";
 import terminalColors from "./terminal_colors";
 import versions from "./commands/versions";
 
@@ -99,12 +98,6 @@ async function main() {
     .action(() => {
       versions();
     });
-
-  // version
-  program.command(" <version>").action((_v) => {
-    // _v, renamed it because of collision with the function name
-    version(_v, composeOptions);
-  });
 
   // commands defined in scaffolding package.json
   try {
