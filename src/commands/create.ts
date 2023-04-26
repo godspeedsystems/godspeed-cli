@@ -44,7 +44,9 @@ export default async function (
     const REPO = `${process.env.GITHUB_REPO_URL}`;
     // clone godspeedsystems/godspeed-scaffolding repo
     await git
-      .clone(REPO, projectName)
+      .clone(REPO, projectName, {
+        "--branch": `${process.env.GITHUB_REPO_BRANCH}`,
+      })
       .then(() => {
         const p = require(path.resolve(
           process.cwd(),
