@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.8
+##### Bug Fix
+  - Initilize a fresh git repository on created project
+
 ## 1.0.7
 ##### Bug Fix
   - Check if redis is already enabled then do not prompt to add redis.

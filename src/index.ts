@@ -444,6 +444,10 @@ async function GSCreate(
         );
       })
       .then(() => console.log("project created"))
+      .then(async () => {
+        fs.rmSync(path.resolve(projectDir, ".git"), { recursive: true });
+        await simpleGit(projectDir).init();
+      })
       .catch((err) => {
         console.error(err.message);
         process.exit(1);
