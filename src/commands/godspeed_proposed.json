@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "createTimestamp": "",
+    "lastUpdateTimestamp": "",
+    "cliVersionWhileCreation": "",
+    "cliVersionWhileLastUpdate": ""
+  },
+  "projectName": "",
+  "frameworkVersion": "",
+  "mongodb": {
+    "name": "",
+    "clusterMode": true,
+    "nodes": [
+      {
+        "port": 1
+      },
+      {
+        "port": 2
+      }
+    ]
+  },
+  "postgresql": {
+    "databaseName": "",
+    "databasePort": ""
+  },
+  "kafka": {},
+  "elasticgraph": {},
+  "redis": {},
+  "servicePort": ""
+}

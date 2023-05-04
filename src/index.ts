@@ -6,7 +6,7 @@ import program from "commander";
 import path from "path";
 import { execSync, spawn } from "child_process";
 import { PlainObject } from "./common";
-import create from "./commands/create";
+import create from "./commands/create/index";
 import update from "./commands/update";
 import terminalColors from "./terminal_colors";
 import versions from "./commands/versions";
@@ -64,17 +64,29 @@ async function main() {
     };
   }
 
-  // create
+  // create <NEW>
   program
     .command("create <projectName>")
-    .option("-n, --noexamples", "create blank project without examples")
     .option(
-      "-d, --directory <projectTemplateDir>",
-      "local project template dir"
+      "--from-template <projectTemplate>",
+      "create a new godspeed project from godspeed template"
     )
+    .option("--dry-run", "dry run the create process.")
     .action((projectName, options) => {
-      create(projectName, options, composeOptions);
+      create(projectName, options);
     });
+
+  // create
+  // program
+  //   .command("create <projectName>")
+  //   .option("-n, --noexamples", "create blank project without examples")
+  //   .option(
+  //     "-d, --directory <projectTemplateDir>",
+  //     "local project template dir"
+  //   )
+  //   .action((projectName, options) => {
+  //     create(projectName, options, composeOptions);
+  //   });
 
   // update
   program.command("update").action(() => {

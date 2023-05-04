@@ -1,7 +1,6 @@
 import promptSync from "prompt-sync";
-import { spawn, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import { PlainObject } from "./common";
-import path from "path";
 import fs from "fs";
 import ejs from "ejs";
 
@@ -17,6 +16,10 @@ export function ask(ques: string): boolean {
   } else {
     return false;
   }
+}
+
+export function askNew(question: string, defaultValue: string) {
+  const answer = prompt(`${question} `);
 }
 
 export function userID(): string {
