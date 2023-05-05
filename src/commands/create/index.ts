@@ -1,8 +1,8 @@
 import path from "path";
 import fs from "fs";
-const inquirer = require("inquirer");
 
 import { PlainObject } from "../../common";
+import interactiveMode from "../../utils/interactiveMode";
 
 /**
  * options = {
@@ -34,27 +34,6 @@ const validateAndCreateProjectDirectory = async (projectDirPath: string) => {
 
     // create project directory
   } catch (error) {}
-};
-
-const interactiveMode = async () => {
-  const answers = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "mongodb",
-      message: "Do you want MongoDB?",
-      default: false,
-    },
-    {
-      type: "input",
-      name: "mode",
-      message: "MongoDB Name?",
-      default: "test",
-    },
-    {
-      type: "input",
-      name: "",
-    },
-  ]);
 };
 
 const cloneAndProcess = async (): Promise<PlainObject> => {
