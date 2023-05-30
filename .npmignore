@@ -1,6 +1,5 @@
 node_modules/
 src/
-.env
 .gitignore
 CHANGELOG.md
 tsconfig.json
