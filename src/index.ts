@@ -1,149 +1,115 @@
 #!/usr/bin/env node
+
 import * as dotenv from "dotenv";
 import chalk from "chalk";
-import figlet from "figlet";
-import program from "commander";
-import path from "path";
-import { execSync, spawn } from "child_process";
-import { PlainObject } from "./common";
+import { Command } from "commander";
 import create from "./commands/create/index";
-import update from "./commands/update";
-import terminalColors from "./terminal_colors";
-import versions from "./commands/versions";
+import update from "./commands/update/index";
+import path from "path";
+import { spawn } from "child_process";
+const fsExtras = require("fs-extra");
 
 // load .env
-dotenv.config();
 
-let log = console.log.bind(console);
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
-console.log = (...args) => {
-  log(
-    terminalColors.FgYellow + args[0] + terminalColors.Reset,
-    args.length > 1 ? args.slice(1) : ""
-  );
-};
-
-console.error = (...args) => {
-  log(
-    terminalColors.FgRed + args[0] + terminalColors.Reset,
-    args.length > 1 ? args.slice(1) : ""
-  );
+// added a new ENV variable in docker-compose.yml
+const isInsideDevContainer = (): boolean => {
+  return !!process.env.INSIDE_CONTAINER;
 };
 
 async function main() {
-  console.log(
-    chalk.green(figlet.textSync("godspeed", { horizontalLayout: "full" }))
-  );
+  console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
 
-  let composeOptions: PlainObject = {};
-  if (process.platform != "win32") {
-    let res;
-    try {
-      res = execSync(`docker-compose -v`, {
-        stdio: ["pipe", "pipe", "ignore"],
-      });
-    } catch (err) {}
+  const program = new Command();
+  const { name, description, version } = require("../package.json");
 
-    if (!res) {
-      composeOptions = {
-        executablePath: "docker",
-        log: true,
-        composeOptions: ["compose", "-p"],
-      };
-    } else {
-      composeOptions = {
-        log: true,
-        composeOptions: ["-p"],
-      };
-    }
-  } else {
-    composeOptions = {
-      executablePath: "docker",
-      log: true,
-      composeOptions: ["compose", "-p"],
-    };
-  }
-
-  // create <NEW>
-  program
-    .command("create <projectName>")
-    .option(
-      "--from-template <projectTemplate>",
-      "create a new godspeed project from godspeed template"
-    )
-    .option("--dry-run", "dry run the create process.")
-    .action((projectName, options) => {
-      create(projectName, options);
-    });
-
-  // create
-  // program
-  //   .command("create <projectName>")
-  //   .option("-n, --noexamples", "create blank project without examples")
-  //   .option(
-  //     "-d, --directory <projectTemplateDir>",
-  //     "local project template dir"
-  //   )
-  //   .action((projectName, options) => {
-  //     create(projectName, options, composeOptions);
-  //   });
-
-  // update
-  program.command("update").action(() => {
-    update(composeOptions);
+  // remove @godspeedsystems from the name
+  program.name(name.split("/")[1]).description(description).version(version);
+  program.showHelpAfterError();
+  program.showSuggestionAfterError(true);
+  program.configureOutput({
+    outputError: (str, write) => {
+      write(chalk.red(str));
+    },
   });
 
-  // prisma
-  program.command("prisma").allowUnknownOption();
-  if (process.argv[2] == "prisma") {
-    return spawn("npx", ["prisma"].concat(process.argv.slice(3)), {
-      stdio: "inherit",
-    });
-  }
-
-  // versions
   program
-    .command("versions")
-    .description(
-      "list all the available versions of gs-node-service (Godspeed Framework) "
+    .command("create")
+    .description("Create a new Godspeed project.")
+    .argument("<projectName>", "name of the project.")
+    .option(
+      "--from-template <projectTemplateName>",
+      "create a project from a template."
     )
-    .action(() => {
-      versions();
+    .option("--from-example <exampleName>", "create a project from examples.")
+    .action((projectName, options) => {
+      create(projectName, options, version);
+    });
+
+  program
+    .command("update")
+    .description(
+      "Update existing godspeed project. (execute from project root folder)"
+    )
+    .action((options) => {
+      update(options, version);
     });
 
   // commands defined in scaffolding package.json
+  // TODO: We should add known commands to the program itself
+
+  let scripts: PlainObject;
   try {
-    const scripts = require(path.resolve(
-      process.cwd(),
-      `package.json`
-    )).scripts;
+    scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
+  } catch (error) {}
 
-    for (let script in scripts) {
-      program
-        .command(script)
-        .allowUnknownOption()
-        .addHelpText(
-          "after",
-          `
-  Will run:
-    $ ${scripts[script]}`
-        )
-        .action(() => {
-          spawn("npm", ["run"].concat(process.argv.slice(2)), {
-            stdio: "inherit",
-          });
+  program
+    .command("dev")
+    .description("Run the godspeeds development server. [devcontainer only]")
+    .action(() => {
+      if (isInsideDevContainer()) {
+        spawn(`npm run dev`, {
+          stdio: "inherit",
         });
-    }
-  } catch (ex) {}
+      } else {
+        console.log(
+          chalk.red("This command is supposed to run inside dev container.")
+        );
+      }
+    });
 
-  // version
-  const _version = require("../package.json").version;
-  program.version(_version, "-v, --version").parse(process.argv);
+  program
+    .command("clean")
+    .description("Clean the build directory. [devcontainer only]")
+    .action((options) => {
+      if (isInsideDevContainer()) {
+        spawn(`npm run clean`, {
+          stdio: "inherit",
+        });
+      } else {
+        console.log(
+          chalk.red("This command is supposed to run inside dev container.")
+        );
+      }
+    });
 
-  // help
-  if (process.argv.length < 3) {
-    program.help();
-  }
+  program
+    .command("build")
+    .description("Build the godspeed project. [devocintainer only]")
+    .action((options) => {
+      if (isInsideDevContainer()) {
+        spawn(`npm run build`, {
+          stdio: "inherit",
+        });
+      } else {
+        console.log(
+          chalk.red("This command is supposed to run inside dev container.")
+        );
+      }
+    });
+
+  program.parse();
 }
 
 main();

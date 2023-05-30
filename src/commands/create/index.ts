@@ -1,84 +1,107 @@
+const fsExtras = require("fs-extra");
 import path from "path";
-import fs from "fs";
-
-import { PlainObject } from "../../common";
 import interactiveMode from "../../utils/interactiveMode";
+import {
+  buildContainers,
+  getComposeOptions,
+  prepareToStartContainers,
+} from "../../utils/dockerUtility";
+import checkPrerequisite from "../../utils/checkPrerequisite";
+import { validateAndCreateProjectDirectory } from "../../utils/index";
+import { copyingLocalTemplate } from "../../utils";
+import { cloneProjectTemplate } from "../../utils";
+import { generateFromExamples } from "../../utils";
+import { generateProjectFromDotGodspeed } from "../../utils";
+import { log } from "../../utils/signale";
+import chalk from "chalk";
 
 /**
  * options = {
  *  --from-template: "path or git repo of template",
  *  --with-example: "wether to copy examples or not",
- *  --dry-run: "should dry run the process"
  * }
  * */
 
-const validateAndCreateProjectDirectory = async (projectDirPath: string) => {
-  try {
-    if (fs.existsSync(projectDirPath)) {
-      if (fs.existsSync(path.resolve(projectDirPath, ".godspeed"))) {
-        console.log(
-          `${projectDirPath} is already a godspeed project, Do you want to update?`
-        );
-      } else {
-        console.log(
-          `${projectDirPath} already exists. Do you want to overwite?`
-        );
-        // ask user
-        if ("yes") {
-          console.log(`Creating godspeed project at ${projectDirPath}`);
-        } else {
-          console.log("Existing the project creatin process.");
-        }
-      }
-    }
-
-    // create project directory
-  } catch (error) {}
-};
-
-const cloneAndProcess = async (): Promise<PlainObject> => {
-  return {};
-};
-
-const fetchTemplate = async (
-  projectTemplate: string = "default"
-): Promise<Boolean> => {
-  return true;
-};
-
 export default async function create(
   projectName: string,
-  options: PlainObject
+  options: PlainObject,
+  cliVersion: string
 ) {
+  await checkPrerequisite();
+
   const projectDirPath = path.resolve(process.cwd(), projectName);
 
   await validateAndCreateProjectDirectory(projectDirPath);
+  // directory is created
+  let godspeedOptions: GodspeedOptions | null;
 
-  let godspeedOptions: PlainObject;
-
-  if (options.projectTemplate) {
-    godspeedOptions = await cloneAndProcess();
+  if (options.fromTemplate) {
+    await copyingLocalTemplate(projectDirPath, options.fromTemplate);
   } else {
-    // if there is no --from-template=<projectTemplate>, that's the interactive mode
-    await interactiveMode();
+    await cloneProjectTemplate(projectDirPath);
   }
 
-  // clone the default template, If no template is selected.
-  await fetchTemplate(options.projectTemplate);
+  godspeedOptions = await generateFromExamples(
+    projectDirPath,
+    options.fromExample
+  );
+
+  if (godspeedOptions) {
+    godspeedOptions = await interactiveMode({}, false);
+  }
+
+  godspeedOptions = <GodspeedOptions>godspeedOptions;
+
+  let timestamp = new Date().toISOString();
+  godspeedOptions.projectName = projectName;
+  godspeedOptions.meta = {
+    createTimestamp: timestamp,
+    lastUpdateTimestamp: timestamp,
+    cliVersionWhileCreation: cliVersion,
+    cliVersionWhileLastUpdate: cliVersion,
+  };
 
   // by this time we have all things required to spin up the service and create project
   // let's start the generation process
+  await generateProjectFromDotGodspeed(
+    projectName,
+    projectDirPath,
+    godspeedOptions
+  );
 
-  if (options.dryRun) {
-    // show all the steps
-  } else {
-    // steps to create the project
-    // clone the default OR provided template directory
-    // STEP1: generate .devcontainer
-    // STEP2: generate Docker file
-    // STEP3: generate docker-compose.yml
-    // STEP4: generate scripts
-    // STEP5: copy examples
-    // STEP6: docker compose down and prepare containers
+  try {
+    const composeOptions = await getComposeOptions();
+
+    if (composeOptions.composeOptions) {
+      composeOptions.composeOptions.push(`${projectName}_devcontainer`);
+    }
+
+    composeOptions.cwd = path.resolve(projectDirPath, ".devcontainer");
+    composeOptions.log = process.env.DEBUG ? Boolean(process.env.DEBUG) : false;
+
+    // check if there are already running resources
+    await prepareToStartContainers(projectName, composeOptions);
+
+    await buildContainers(
+      projectName,
+      godspeedOptions,
+      composeOptions,
+      projectDirPath
+    );
+
+    log.success(
+      `\n\n${chalk.green("Successfully created the project")} ${chalk.yellow(
+        projectName
+      )}.`
+    );
+    console.log(
+      `${chalk.green("Open the project in Visual Studio Code,")} ${chalk.yellow(
+        "Happy building microservices with Godspeed!"
+      )}.`
+    );
+  } catch (error) {
+    log.error(error);
+    fsExtras.rmSync(projectDirPath, { recursive: true });
+    process.exit(1);
   }
 }
