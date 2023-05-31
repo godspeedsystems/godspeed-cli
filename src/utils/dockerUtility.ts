@@ -164,7 +164,6 @@ export const buildContainers = async (
 ) => {
   try {
     log.wait(`Building containers for project ${projectName}`);
-    console.log(JSON.stringify(composeOptions));
     await dockerCompose.buildAll(composeOptions);
     log.success(
       `Successfully build all containers for project ${chalk.yellow(

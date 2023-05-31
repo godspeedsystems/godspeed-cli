@@ -19,7 +19,6 @@ const fetchFrameworkVersionTags = async (): Promise<
   } catch (err) {
     const error = err as Error | AxiosError;
     if (axios.isAxiosError(error)) {
-      console.log(error);
       log.fatal(
         chalk.red(
           `Not able to connect docker registry. Please check your internet connection.`
