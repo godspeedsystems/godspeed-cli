@@ -12,6 +12,10 @@ type PostgresDB = {
   port: number;
 };
 
+type MysqlDB = {
+  dbName: string;
+  port: number;
+};
 type Kafka = {
   kafkaPort: number;
   zookeeperPort: number;
@@ -31,6 +35,7 @@ interface GodspeedOptions {
   servicePort: number;
   mongodb: false | MongoDB;
   postgresql: false | PostgresDB;
+  mysql: false | MysqlDB;
   kafka: false | Kafka;
   elasticsearch: false | ElasticSearch;
   redis: false | Redis;

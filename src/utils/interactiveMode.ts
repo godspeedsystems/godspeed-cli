@@ -107,6 +107,33 @@ export default async (
         askAnswered: askAnswered,
         validate: isAPort,
       },
+
+      {
+        type: "confirm",
+        name: "mysql",
+        message: "Do you want to use Mysql as database?",
+        default: false,
+        askAnswered: askAnswered,
+      },
+      {
+        type: "input",
+        name: "mysql.dbName",
+        message: "What will be the name of Mysql database?",
+        default: "godspeed",
+        when: (answers) => !!answers.mysql,
+        askAnswered: askAnswered,
+        validate: isAWord,
+      },
+      {
+        type: "input",
+        name: "mysql.port",
+        message: "What will be the port of Mysql database?",
+        default: 3306,
+        when: (answers) => !!answers.mysql,
+        askAnswered: askAnswered,
+        validate: isAPort,
+      },
+
       {
         type: "confirm",
         name: "postgresql",
