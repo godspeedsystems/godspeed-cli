@@ -48,7 +48,9 @@ export const validateAndCreateProjectDirectory = async (
 
     fsExtras.mkdirSync(projectDirPath);
   } catch (error) {
-    console.log(chalk.red("Error while validateAndCreateProjectDirectory"));
+    console.log(
+      chalk.red("Error while validateAndCreateProjectDirectory.", error)
+    );
   }
 };
 
@@ -68,7 +70,7 @@ export const copyingLocalTemplate = async (
 ): Promise<void> => {
   if (!fsExtras.lstatSync(templateDir)) {
     log.fatal(`${chalk.red(templateDir)} does not exist or path is incorrect.`);
-    process.exit(0);
+    process.exit(1);
   }
 
   log.wait(`Copying template from ${chalk.yellow(templateDir)}`);
@@ -86,7 +88,10 @@ export const cloneProjectTemplate = async (
     // clone godspeedsystems/godspeed-scaffolding repo
     await git.clone(REPO, projectDirPath, {
       "--branch": `${process.env.GITHUB_REPO_BRANCH}`,
+      "--depth": "1",
     });
+
+    // TODO: remove git remote
     log.success("Cloning template successful.");
   } catch (error) {
     log.fatal(`Not able to reach template repository.`);

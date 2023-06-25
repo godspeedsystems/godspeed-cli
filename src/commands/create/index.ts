@@ -99,6 +99,8 @@ export default async function create(
         "Happy building microservices with Godspeed!"
       )}.`
     );
+
+    fsExtras.rmSync(path.resolve(projectDirPath, ".git"), { recursive: true });
   } catch (error) {
     log.error(error);
     fsExtras.rmSync(projectDirPath, { recursive: true });

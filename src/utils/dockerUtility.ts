@@ -122,7 +122,6 @@ const generatePrismaClients = async (
       path.resolve(projectDirPath, "src/datasources/*.prisma"),
       async (err, matches) => {
         if (err) {
-          console.log(err);
           reject(err);
         } else {
           if (matches.length) {
@@ -142,9 +141,7 @@ const generatePrismaClients = async (
                   ],
                   composeOptions
                 );
-            } catch (error) {
-              console.log(error);
-            }
+            } catch (error) {}
             log.success(
               "Successfully generated client for prisma datasources."
             );

@@ -18,7 +18,7 @@ const isInsideDevContainer = (): boolean => {
   return !!process.env.INSIDE_CONTAINER;
 };
 
-async function main() {
+(async function main() {
   console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
 
   const program = new Command();
@@ -110,6 +110,4 @@ async function main() {
     });
 
   program.parse();
-}
-
-main();
+})();
