@@ -69,7 +69,7 @@ const isInsideDevContainer = (): boolean => {
     .description("Run the godspeeds development server. [devcontainer only]")
     .action(() => {
       if (isInsideDevContainer()) {
-        spawn(`npm run dev`, {
+        spawn("npm", ["run", "dev"], {
           stdio: "inherit",
         });
       } else {
@@ -81,10 +81,12 @@ const isInsideDevContainer = (): boolean => {
 
   program
     .command("clean")
-    .description("Clean the build directory. [devcontainer only]")
+    .description(
+      `Clean the build directory. ${chalk.yellow("[devcontainer only]")}`
+    )
     .action((options) => {
       if (isInsideDevContainer()) {
-        spawn(`npm run clean`, {
+        spawn("npm", ["run", "clean"], {
           stdio: "inherit",
         });
       } else {
@@ -99,7 +101,7 @@ const isInsideDevContainer = (): boolean => {
     .description("Build the godspeed project. [devocintainer only]")
     .action((options) => {
       if (isInsideDevContainer()) {
-        spawn(`npm run build`, {
+        spawn("npm", ["run", "build"], {
           stdio: "inherit",
         });
       } else {
