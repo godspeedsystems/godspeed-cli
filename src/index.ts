@@ -40,7 +40,8 @@ async function prepareContainers(
   devcontainerDir: string,
   composeOptions: PlainObject,
   mongodb: boolean,
-  postgresql: boolean
+  postgresql: boolean,
+  mysql: boolean
 ) {
   // If mongoDb is selected then start mongoDb containers and set mongo cluster.
   if (mongodb) {
@@ -96,7 +97,7 @@ async function prepareContainers(
       }
     );
 
-  if (mongodb || postgresql) {
+  if (mongodb || postgresql || mysql) {
     console.log("Generating prisma modules");
     await dockerCompose
       .run(
@@ -161,6 +162,9 @@ async function GSUpdate(composeOptions: PlainObject) {
       mongoDb1Port,
       mongoDb2Port,
       mongoDb3Port,
+      mysql,
+      mysqlDbName,
+      mysqlDbPort
     } = gs;
 
     composeOptions.cwd = devcontainerDir;
@@ -199,6 +203,20 @@ async function GSUpdate(composeOptions: PlainObject) {
           postgresDbPort = Number(
             prompt("Please enter host port for postgres [default: 5432] ") ||
               5432
+          );
+        }
+      }
+
+      if (!gs.mysql) {
+        mysql = ask("Do you need mysql? [y/n] ");
+        if (mysql) {
+          mysqlDbName =
+            prompt(
+              "Please enter name of the mysql database [default: test] "
+            ) || "test";
+          mysqlDbPort = Number(
+            prompt("Please enter host port for mysql [default: 3306] ") ||
+              3306
           );
         }
       }
@@ -308,6 +326,9 @@ async function GSUpdate(composeOptions: PlainObject) {
           mongoDb1Port,
           mongoDb2Port,
           mongoDb3Port,
+          mysql,
+          mysqlDbName,
+          mysqlDbPort          
         })
       );
 
@@ -360,7 +381,8 @@ async function GSUpdate(composeOptions: PlainObject) {
         devcontainerDir,
         composeOptions,
         mongodb,
-        postgresql
+        postgresql,
+        mysql
       );
 
       fs.writeFileSync(
@@ -383,6 +405,9 @@ async function GSUpdate(composeOptions: PlainObject) {
           mongoDb1Port,
           mongoDb2Port,
           mongoDb3Port,
+          mysql,
+          mysqlDbName,
+          mysqlDbPort
         })
       );
 
@@ -512,7 +537,26 @@ async function GSCreate(
       } catch (ex) {}
     }
 
-    if (!mongodb && !postgresql) {
+    const mysql = ask("Do you need mysql? [y/n] ");
+    let mysqlDbName, mysqlDbPort!: Number;
+    if (mysql) {
+      mysqlDbName =
+        prompt("Please enter name of the mysql database [default: test] ") ||
+        "test";
+      mysqlDbPort = Number(
+        prompt("Please enter host port for mysql [default: 3306] ") || 3306
+      );
+    } else {
+      try {
+        fs.rmSync(path.join(projectDir, "src/datasources/mysql.prisma"));
+        fs.rmSync(
+          path.join(projectDir, "src/functions/com/biz/ds/cross_db_join.yaml")
+        );
+        fs.rmSync(path.join(projectDir, "src/events/cross_db_join.yaml"));
+      } catch (ex) {}
+    }
+
+    if (!mongodb && !postgresql && !mysql ) {
       try {
         fs.rmSync(
           path.join(
@@ -650,6 +694,9 @@ async function GSCreate(
         mongoDb1Port,
         mongoDb2Port,
         mongoDb3Port,
+        mysql,
+        mysqlDbName,
+        mysqlDbPort        
       })
     );
 
@@ -698,7 +745,8 @@ async function GSCreate(
       devcontainerDir,
       composeOptions,
       mongodb,
-      postgresql
+      postgresql,
+      mysql
     );
 
     fs.writeFileSync(
@@ -721,6 +769,9 @@ async function GSCreate(
         mongoDb1Port,
         mongoDb2Port,
         mongoDb3Port,
+        mysql,
+        mysqlDbName,
+        mysqlDbPort
       })
     );
 
@@ -765,7 +816,8 @@ async function changeVersion(version: string, composeOptions: PlainObject) {
             ".devcontainer",
             composeOptions,
             gs.mongodb,
-            gs.postgresql
+            gs.postgresql,
+            gs.mysql
           );
         } catch (ex) {
           console.error("Run prepare command from Project Root", ex);
