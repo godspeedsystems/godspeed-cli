@@ -97,20 +97,22 @@ const prepareMongoDb = async (
   composeOptions: IDockerComposeOptions
 ) => {
   const { mongodb } = godspeedOptions;
-  if (mongodb) {
-    log.wait(`Setting up MongoDB replica cluster.`);
-    const responseUpMany: IDockerComposeResult = await dockerCompose.upMany(
-      [`mongodb1`, `mongodb2`, `mongodb3`],
-      composeOptions
-    );
-
-    const responseExec: IDockerComposeResult = await dockerCompose.exec(
-      `mongodb1`,
-      "bash /scripts/mongodb_rs_init.sh",
-      composeOptions
-    );
-    log.success(`Successfully setup MongoDB replica cluster.`);
+  if (!mongodb) {
+    return;
   }
+
+  log.wait(`Setting up MongoDB replica cluster.`);
+  const responseUpMany: IDockerComposeResult = await dockerCompose.upMany(
+    [`mongodb1`, `mongodb2`, `mongodb3`],
+    composeOptions
+  );
+
+  const responseExec: IDockerComposeResult = await dockerCompose.exec(
+    `mongodb1`,
+    "bash /scripts/mongodb_rs_init.sh",
+    composeOptions
+  );
+  log.success(`Successfully setup MongoDB replica cluster.`);
 };
 
 const generatePrismaClients = async (
@@ -128,7 +130,7 @@ const generatePrismaClients = async (
             log.wait("Generating client for prisma datasources.");
 
             try {
-              const responseUpOne: IDockerComposeResult =
+              const responseUpAll: IDockerComposeResult =
                 await dockerCompose.upAll(composeOptions);
 
               const responseExec: IDockerComposeResult =
@@ -141,7 +143,9 @@ const generatePrismaClients = async (
                   ],
                   composeOptions
                 );
-            } catch (error) {}
+            } catch (error) {
+              console.log(error);
+            }
             log.success(
               "Successfully generated client for prisma datasources."
             );
@@ -160,8 +164,9 @@ export const buildContainers = async (
   projectDirPath: string
 ) => {
   try {
-    log.wait(`Building containers for project ${projectName}`);
-    await dockerCompose.buildAll(composeOptions);
+    log.wait(`Building containers for project ${chalk.yellow(projectName)}`);
+    const response = await dockerCompose.buildAll(composeOptions);
+
     log.success(
       `Successfully build all containers for project ${chalk.yellow(
         projectName

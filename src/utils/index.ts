@@ -119,7 +119,9 @@ export const generateFromExamples = async (
   fsExtras.cpSync(
     path.resolve(projectDirPath, `.template/examples/${exampleName}`),
     path.resolve(projectDirPath),
-    { recursive: true }
+    {
+      recursive: true,
+    }
   );
 
   // read if there is an .godspeed file
@@ -252,7 +254,7 @@ export const generateProjectFromDotGodspeed = async (
       servicePort,
       mongodb,
       postgresql,
-      mysql, 
+      mysql,
       kafka,
       redis,
       elasticsearch,
@@ -291,20 +293,40 @@ export const generateProjectFromDotGodspeed = async (
         }
       );
 
-      // create project folder structure
-      const projectStructure = [
-        "config",
-        "src/events",
-        "src/functions",
-        "src/datasources",
-        "src/mappings",
-      ];
-
-      projectStructure.map(async (folderName) => {
-        await fsExtras.mkdirSync(path.resolve(projectDirPath, folderName), {
+      // create folder structure
+      fsExtras.cpSync(
+        path.resolve(projectDirPath, ".template/defaults"),
+        path.resolve(projectDirPath),
+        {
           recursive: true,
-        });
-      });
+          filter: (source: string, destination: string) => {
+            if (source.includes("mongo.prisma")) {
+              return mongodb ? true : false;
+            } else if (source.includes("postgres.prisma")) {
+              return postgresql ? true : false;
+            } else if (source.includes("mysql.prisma")) {
+              return mysql ? true : false;
+            } else {
+              return true;
+            }
+          },
+        }
+      );
+
+      // create project folder structure
+      // const projectStructure = [
+      //   "config",
+      //   "src/events",
+      //   "src/functions",
+      //   "src/datasources",
+      //   "src/mappings",
+      // ];
+
+      // projectStructure.map(async (folderName) => {
+      //   await fsExtras.mkdirSync(path.resolve(projectDirPath, folderName), {
+      //     recursive: true,
+      //   });
+      // });
     }
 
     // TODO: generate helm-chats

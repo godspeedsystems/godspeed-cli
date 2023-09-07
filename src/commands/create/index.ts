@@ -46,7 +46,7 @@ export default async function create(
     options.fromExample
   );
 
-  if (godspeedOptions) {
+  if (!godspeedOptions) {
     godspeedOptions = await interactiveMode({}, false);
   }
 

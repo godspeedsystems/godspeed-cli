@@ -6,7 +6,7 @@ import chalk from "chalk";
 const fetchFrameworkVersionTags = async (): Promise<
   { name: string; value: string }[]
 > => {
-  let versions = [{ name: "latest", value: "latest" }];
+  let versions = [];
 
   try {
     let response = await axios.get(
