@@ -161,7 +161,7 @@ export const compileAndCopyOrJustCopy = async (
           isUpdateCall = fsExtras
             .lstatSync(path.resolve(process.cwd(), ".godspeed"))
             .isFile();
-        } catch (error) {}
+        } catch (error) { }
 
         fileList.map(async (sourceFilePath) => {
           if (fsExtras.lstatSync(sourceFilePath).isFile()) {
@@ -171,17 +171,17 @@ export const compileAndCopyOrJustCopy = async (
 
             relativeDestinationPath = !isUpdateCall
               ? path.relative(
+                path.resolve(projectDirPath, sourceFolder),
+                sourceFilePath
+              )
+              : path.resolve(
+                projectDirPath,
+                destinationFolder,
+                path.relative(
                   path.resolve(projectDirPath, sourceFolder),
                   sourceFilePath
                 )
-              : path.resolve(
-                  projectDirPath,
-                  destinationFolder,
-                  path.relative(
-                    path.resolve(projectDirPath, sourceFolder),
-                    sourceFilePath
-                  )
-                );
+              );
 
             let finalDestinationWithFileName = path.resolve(
               projectDirPath,
