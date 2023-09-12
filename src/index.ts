@@ -7,10 +7,11 @@ import create from "./commands/create/index";
 import update from "./commands/update/index";
 import path from "path";
 import { spawn } from "child_process";
+import devOpsPluginsCommands from "./commands/devops-plugin";
 const fsExtras = require("fs-extra");
 
-// load .env
 
+// load .env
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // added a new ENV variable in docker-compose.yml
@@ -62,7 +63,9 @@ const isInsideDevContainer = (): boolean => {
   let scripts: PlainObject;
   try {
     scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
-  } catch (error) {}
+  } catch (error) {
+    console.log('Error accessing process', error)
+  }
 
   program
     .command("dev")
@@ -110,6 +113,17 @@ const isInsideDevContainer = (): boolean => {
         );
       }
     });
+
+
+  program
+    .command('devops-plugin')
+    .addCommand(devOpsPluginsCommands.list)
+    .addCommand(devOpsPluginsCommands.add)
+    .addCommand(devOpsPluginsCommands.remove)
+    .addCommand(devOpsPluginsCommands.update)
+    .description(
+      `Godspeed plugins for devops`
+    );
 
   program.parse();
 })();
