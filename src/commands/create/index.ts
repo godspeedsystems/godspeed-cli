@@ -1,12 +1,12 @@
 const fsExtras = require("fs-extra");
 import path from "path";
-import interactiveMode from "../../utils/interactiveMode";
-import {
-  buildContainers,
-  getComposeOptions,
-  prepareToStartContainers,
-} from "../../utils/dockerUtility";
-import checkPrerequisite from "../../utils/checkPrerequisite";
+// import interactiveMode from "../../utils/interactiveMode";
+// import {
+//   buildContainers,
+//   getComposeOptions,
+//   prepareToStartContainers,
+// } from "../../utils/dockerUtility";
+// import checkPrerequisite from "../../utils/checkPrerequisite";
 import { validateAndCreateProjectDirectory } from "../../utils/index";
 import { copyingLocalTemplate } from "../../utils";
 import { cloneProjectTemplate } from "../../utils";
@@ -27,7 +27,7 @@ export default async function create(
   options: PlainObject,
   cliVersion: string
 ) {
-  await checkPrerequisite();
+  // await checkPrerequisite();
 
   const projectDirPath = path.resolve(process.cwd(), projectName);
 
@@ -46,9 +46,9 @@ export default async function create(
     options.fromExample
   );
 
-  if (!godspeedOptions) {
-    godspeedOptions = await interactiveMode({}, false);
-  }
+  // if (!godspeedOptions) {
+  //   godspeedOptions = await interactiveMode({}, false);
+  // }
 
   godspeedOptions = <GodspeedOptions>godspeedOptions;
 
@@ -70,24 +70,24 @@ export default async function create(
   );
 
   try {
-    const composeOptions = await getComposeOptions();
+    // const composeOptions = await getComposeOptions();
 
-    if (composeOptions.composeOptions) {
-      composeOptions.composeOptions.push(`${projectName}_devcontainer`);
-    }
+    // if (composeOptions.composeOptions) {
+    //   composeOptions.composeOptions.push(`${projectName}_devcontainer`);
+    // }
 
-    composeOptions.cwd = path.resolve(projectDirPath, ".devcontainer");
-    composeOptions.log = process.env.DEBUG ? Boolean(process.env.DEBUG) : false;
+    // composeOptions.cwd = path.resolve(projectDirPath, ".devcontainer");
+    // composeOptions.log = process.env.DEBUG ? Boolean(process.env.DEBUG) : false;
 
-    // check if there are already running resources
-    await prepareToStartContainers(projectName, composeOptions);
+    // // check if there are already running resources
+    // await prepareToStartContainers(projectName, composeOptions);
 
-    await buildContainers(
-      projectName,
-      godspeedOptions,
-      composeOptions,
-      projectDirPath
-    );
+    // await buildContainers(
+    //   projectName,
+    //   godspeedOptions,
+    //   composeOptions,
+    //   projectDirPath
+    // );
 
     log.success(
       `\n\n${chalk.green("Successfully created the project")} ${chalk.yellow(
