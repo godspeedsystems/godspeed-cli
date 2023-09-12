@@ -12,7 +12,6 @@ const fsExtras = require("fs-extra");
 
 
 // load .env
-
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // added a new ENV variable in docker-compose.yml
@@ -64,7 +63,9 @@ const isInsideDevContainer = (): boolean => {
   let scripts: PlainObject;
   try {
     scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
-  } catch (error) { }
+  } catch (error) {
+    console.log('Error accessing process', error)
+  }
 
   program
     .command("dev")
