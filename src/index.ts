@@ -7,8 +7,11 @@ import create from "./commands/create/index";
 import update from "./commands/update/index";
 import path from "path";
 import { spawn } from "child_process";
-import devOpsPluginsCommands from "./commands/devops-plugin";
+
+import devOpsPluginCommands from "./commands/devops-plugin";
+import pluginCommands from "./commands/plugin";
 const fsExtras = require("fs-extra");
+import demo from './utils/demo';
 
 
 // load .env
@@ -117,13 +120,30 @@ const isInsideDevContainer = (): boolean => {
 
   program
     .command('devops-plugin')
-    .addCommand(devOpsPluginsCommands.list)
-    .addCommand(devOpsPluginsCommands.add)
-    .addCommand(devOpsPluginsCommands.remove)
-    .addCommand(devOpsPluginsCommands.update)
+    .addCommand(devOpsPluginCommands.list)
+    .addCommand(devOpsPluginCommands.add)
+    .addCommand(devOpsPluginCommands.remove)
+    .addCommand(devOpsPluginCommands.update)
     .description(
       `Godspeed plugins for devops`
     );
+
+
+  program
+    .command('plugin')
+    .addCommand(pluginCommands.list)
+    .addCommand(pluginCommands.add)
+    .addCommand(pluginCommands.remove)
+    .addCommand(pluginCommands.update)
+    .description(
+      `Godspeed plugins for devops`
+    );
+
+  program.command('demo')
+    .action(async () => {
+      console.log('demo');
+      await demo();
+    });
 
   program.parse();
 })();

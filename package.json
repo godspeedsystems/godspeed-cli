@@ -14,6 +14,7 @@
     "local": "sudo npm uninstall -g && sudo npm install -g && godspeed"
   },
   "dependencies": {
+    "@godspeedsystems/core": "^2.0.0-beta.3",
     "axios": "^0.27.2",
     "chalk": "^4.1.0",
     "clear": "^0.1.0",
@@ -28,6 +29,7 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "path": "^0.12.7",
+    "pino-pretty": "^10.2.0",
     "replace-in-file": "^6.3.5",
     "signale": "^1.4.0",
     "simple-git": "^3.7.1"
