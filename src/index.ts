@@ -120,7 +120,6 @@ const isInsideDevContainer = (): boolean => {
 
   program
     .command('devops-plugin')
-    .addCommand(devOpsPluginCommands.list)
     .addCommand(devOpsPluginCommands.add)
     .addCommand(devOpsPluginCommands.remove)
     .addCommand(devOpsPluginCommands.update)
