@@ -4,32 +4,58 @@ import * as dotenv from "dotenv";
 import chalk from "chalk";
 import { Command } from "commander";
 import create from "./commands/create/index";
-import update from "./commands/update/index";
+// import update from "./commands/update/index";
 import path from "path";
 import { spawn } from "child_process";
 
 import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 const fsExtras = require("fs-extra");
-import demo from './utils/demo';
+import { cwd } from "process";
+import { readFileSync } from "fs";
 
 
 // load .env
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // added a new ENV variable in docker-compose.yml
-const isInsideDevContainer = (): boolean => {
-  return !!process.env.INSIDE_CONTAINER;
-};
+// const isInsideDevContainer = (): boolean => {
+//   return !!process.env.INSIDE_CONTAINER;
+// };
+
+async function isAGodspeedProject() {
+  // verify .godspeed file, only then, it is a godspeed project
+  try {
+    readFileSync(path.join(cwd(), ".godspeed"))
+  } catch (error) {
+    console.log(`${chalk.yellow(cwd())} ${chalk.red('is not a Godspeed Framework project.')}`);
+    console.log('\n', chalk.yellow('godspeed'), chalk.yellow('commands works inside godspeed project directory.'));
+    return false;
+  }
+
+  let packageJSON;
+  try {
+    // @ts-ignore
+    packageJSON = JSON.parse(readFileSync(path.join(cwd(), "package.json"), { encoding: 'utf-8' }));
+  } catch (error) {
+    console.log(`This (${chalk.yellow(cwd())})`, 'is not a Godspeed project.');
+    console.log('\n', chalk.yellow('godspeed'), chalk.yellow('commands only work inside godspeed project directory.'));
+    return false;
+  }
+
+  return true;
+}
 
 (async function main() {
   console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
 
   const program = new Command();
-  const { name, description, version } = require("../package.json");
+
+  // @ts-ignore
+  let { version } = require(path.join(__dirname, '../package.json'));
 
   // remove @godspeedsystems from the name
-  program.name(name.split("/")[1]).description(description).version(version);
+  program.name('Godspeed CLI').description('CLI tool for godspeed framework.').version(version);
   program.showHelpAfterError();
   program.showSuggestionAfterError(true);
   program.configureOutput({
@@ -51,69 +77,49 @@ const isInsideDevContainer = (): boolean => {
       create(projectName, options, version);
     });
 
-  program
-    .command("update")
-    .description(
-      "Update existing godspeed project. (execute from project root folder)"
-    )
-    .action((options) => {
-      update(options, version);
-    });
-
-  // commands defined in scaffolding package.json
-  // TODO: We should add known commands to the program itself
-
-  let scripts: PlainObject;
-  try {
-    scripts = require(path.resolve(process.cwd(), `package.json`)).scripts;
-  } catch (error) {
-    console.log('Error accessing process', error)
-  }
+  // program
+  //   .command("update")
+  //   .description(
+  //     "Update existing godspeed project. (execute from project root folder)"
+  //   )
+  //   .action(async (options) => {
+  //     if (await isAGodspeedProject()) {
+  //       update(options, version);
+  //     }
+  //   });
 
   program
     .command("dev")
-    .description("Run the godspeeds development server. [devcontainer only]")
-    .action(() => {
-      if (isInsideDevContainer()) {
+    .description("Run the godspeeds development server.")
+    .action(async () => {
+      if (await isAGodspeedProject()) {
         spawn("npm", ["run", "dev"], {
           stdio: "inherit",
         });
-      } else {
-        console.log(
-          chalk.red("This command is supposed to run inside dev container.")
-        );
       }
     });
 
   program
     .command("clean")
     .description(
-      `Clean the build directory. ${chalk.yellow("[devcontainer only]")}`
+      `Clean the build directory.`
     )
-    .action((options) => {
-      if (isInsideDevContainer()) {
+    .action(async (options) => {
+      if (await isAGodspeedProject()) {
         spawn("npm", ["run", "clean"], {
           stdio: "inherit",
         });
-      } else {
-        console.log(
-          chalk.red("This command is supposed to run inside dev container.")
-        );
       }
     });
 
   program
     .command("build")
-    .description("Build the godspeed project. [devocintainer only]")
-    .action((options) => {
-      if (isInsideDevContainer()) {
+    .description("Build the godspeed project.")
+    .action(async (options) => {
+      if (await isAGodspeedProject()) {
         spawn("npm", ["run", "build"], {
           stdio: "inherit",
         });
-      } else {
-        console.log(
-          chalk.red("This command is supposed to run inside dev container.")
-        );
       }
     });
 
@@ -135,14 +141,8 @@ const isInsideDevContainer = (): boolean => {
     .addCommand(pluginCommands.remove)
     .addCommand(pluginCommands.update)
     .description(
-      `Godspeed plugins for devops`
+      `Event Source and Data Source plugins for godspeed.`
     );
-
-  program.command('demo')
-    .action(async () => {
-      console.log('demo');
-      await demo();
-    });
 
   program.parse();
 })();

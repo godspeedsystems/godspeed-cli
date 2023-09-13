@@ -19,7 +19,7 @@ const addAction = async (gsDevOpsPlugin: string) => {
     }
 
     if (!existsSync(path.join(gsDevopsPluginsDir, 'package.json'))) {
-      spawnSync('npm', ['init', '--yes'], { stdio: 'inherit', cwd: gsDevopsPluginsDir })
+      spawnSync('npm', ['init', '--yes'], { cwd: gsDevopsPluginsDir })
     }
 
     // npm install <gsDevOpsPlugin> in the <gsDevopsPluginsDir> directory

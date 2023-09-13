@@ -14,6 +14,7 @@ import { generateFromExamples } from "../../utils";
 import { generateProjectFromDotGodspeed } from "../../utils";
 import { log } from "../../utils/signale";
 import chalk from "chalk";
+import { spawnSync } from "child_process";
 
 /**
  * options = {
@@ -70,6 +71,23 @@ export default async function create(
   );
 
   try {
+    // the NEW flow [without containers]
+    log.success(
+      `\n\n${chalk.green("Successfully created the project")} ${chalk.yellow(
+        projectName
+      )}.`
+    );
+
+    console.log(
+      `${chalk.green("Open the project in Visual Studio Code,")} ${chalk.yellow(
+        "Happy building microservices with Godspeed!"
+      )}.`
+    );
+
+    spawnSync('npm', ['install'], { cwd: projectDirPath });
+
+    fsExtras.rmSync(path.resolve(projectDirPath, ".git"), { recursive: true });
+
     // const composeOptions = await getComposeOptions();
 
     // if (composeOptions.composeOptions) {
@@ -88,19 +106,6 @@ export default async function create(
     //   composeOptions,
     //   projectDirPath
     // );
-
-    log.success(
-      `\n\n${chalk.green("Successfully created the project")} ${chalk.yellow(
-        projectName
-      )}.`
-    );
-    console.log(
-      `${chalk.green("Open the project in Visual Studio Code,")} ${chalk.yellow(
-        "Happy building microservices with Godspeed!"
-      )}.`
-    );
-
-    fsExtras.rmSync(path.resolve(projectDirPath, ".git"), { recursive: true });
   } catch (error) {
     log.error(error);
     fsExtras.rmSync(projectDirPath, { recursive: true });
