@@ -1,23 +1,31 @@
 import { Command } from "commander";
 import path from "path";
-import { homedir } from 'node:os';
+import { homedir } from "node:os";
 import fs, { mkdirSync, writeFileSync } from "fs";
 import { spawnSync } from "child_process";
 import inquirer from "inquirer";
-import * as yaml from 'js-yaml';
+import * as yaml from "js-yaml";
 const program = new Command();
 
 const list = program
   .command("list")
-  .description(
-    `List all available godspeed plugins.`
-  )
+  .description(`List all available godspeed plugins.`)
   .action(async () => {
     // fetch the list of packages, maybe from the plugins repository
-    let npmSearch = spawnSync("npm", ["search", `@godspeedsystems/plugins`, '--json'], { encoding: 'utf-8' });
-    let availablePlugins: [{ name: string, description: string, version: string }] | [] = JSON.parse(npmSearch.stdout) || [];
+    let npmSearch = spawnSync(
+      "npm",
+      ["search", `@godspeedsystems/plugins`, "--json"],
+      { encoding: "utf-8" }
+    );
+    let availablePlugins:
+      | [{ name: string; description: string; version: string }]
+      | [] = JSON.parse(npmSearch.stdout) || [];
 
-    let result = availablePlugins.map(({ name, description, version }) => ({ name, description, version }));
+    let result = availablePlugins.map(({ name, description, version }) => ({
+      name,
+      description,
+      version,
+    }));
 
     // list all the packages starting with plugins
     const answer = await inquirer.prompt([
@@ -28,79 +36,241 @@ const list = program
         default: "latest",
         choices: result,
         loop: false,
-      }
+      },
     ]);
 
     // install that package
-    spawnSync('npm', ['install', `${answer.gsPlugin}`], { stdio: "inherit" })
+    spawnSync("npm", ["install", `${answer.gsPlugin}`], { stdio: "inherit" });
 
     // call the add action with pluginName
     await addAction(answer.gsPlugin);
   });
 // instance check
 
-type ModuleType = 'DS' | 'ES' | 'BOTH';
+type ModuleType = "DS" | "ES" | "BOTH";
 
 const addAction = async (pluginName: string) => {
   // create folder for eventsource or datasource respective file
   try {
-    const Module = await import(path.join(process.cwd(), 'node_modules', pluginName));
+    const Module = await import(
+      path.join(process.cwd(), "node_modules", pluginName)
+    );
 
     let moduleType = Module.SourceType as ModuleType;
     let loaderFileName = Module.Type as string;
     let yamlFileName = Module.CONFIG_FILE_NAME as string;
-    let defaultConfig = Module.DEFAULT_CONFIG || {} as PlainObject;
+    let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
 
     switch (moduleType) {
-      case 'BOTH': {
-        mkdirSync(path.join(process.cwd(), 'src', 'eventsources', 'types'), { recursive: true });
-        mkdirSync(path.join(process.cwd(), 'src', 'datasources', 'types'), { recursive: true });
+      case "BOTH":
+        {
+          mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
+            recursive: true,
+          });
+          mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+            recursive: true,
+          });
 
-        writeFileSync(path.join(process.cwd(), 'src', 'eventsources', 'types', `${loaderFileName}.ts`), `
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              "types",
+              `${loaderFileName}.ts`
+            ),
+            `
       import { EventSource } from '${pluginName}';
       export default EventSource;
-          `);
-        writeFileSync(path.join(process.cwd(), 'src', 'eventsources', `${yamlFileName}.yaml`), yaml.dump({ type: loaderFileName, ...defaultConfig }));
+          `
+          );
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              `${yamlFileName}.yaml`
+            ),
+            yaml.dump({ type: loaderFileName, ...defaultConfig })
+          );
 
-        writeFileSync(path.join(process.cwd(), 'src', 'datasources', 'types', `${loaderFileName}.ts`), `
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "datasources",
+              "types",
+              `${loaderFileName}.ts`
+            ),
+            `
       import { DataSource } from '${pluginName}';
       export default DataSource;
-          `);
-        writeFileSync(path.join(process.cwd(), 'src', 'datasources', `${yamlFileName}.yaml`), yaml.dump({ type: loaderFileName, ...defaultConfig }));
-      }
+          `
+          );
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "datasources",
+              `${yamlFileName}.yaml`
+            ),
+            yaml.dump({ type: loaderFileName, ...defaultConfig })
+          );
+        }
         break;
-      case 'DS': {
-        mkdirSync(path.join(process.cwd(), 'src', 'datasources', 'types'), { recursive: true });
-        writeFileSync(path.join(process.cwd(), 'src', 'datasources', 'types', `${loaderFileName}.ts`), `
+      case "DS":
+        {
+          mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+            recursive: true,
+          });
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "datasources",
+              "types",
+              `${loaderFileName}.ts`
+            ),
+            `
         import { DataSource } from '${pluginName}';
         export default DataSource;
-            `);
-        // special case for prisma for now
-        // @ts-ignore
-        if (Module.Type !== 'prisma') {
-          writeFileSync(path.join(process.cwd(), 'src', 'datasources', `${yamlFileName}.yaml`), yaml.dump({ type: loaderFileName, ...defaultConfig }));
+            `
+          );
+          // special case for prisma for now
+          // @ts-ignore
+          if (Module.Type !== "prisma") {
+            writeFileSync(
+              path.join(
+                process.cwd(),
+                "src",
+                "datasources",
+                `${yamlFileName}.yaml`
+              ),
+              yaml.dump({ type: loaderFileName, ...defaultConfig })
+            );
+          }
         }
-      }
         break;
-      case 'ES': {
-        mkdirSync(path.join(process.cwd(), 'src', 'eventsources', 'types'), { recursive: true });
-        writeFileSync(path.join(process.cwd(), 'src', 'eventsources', 'types', `${loaderFileName}.ts`), `
+      case "ES": {
+        mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
+          recursive: true,
+        });
+        writeFileSync(
+          path.join(
+            process.cwd(),
+            "src",
+            "eventsources",
+            "types",
+            `${loaderFileName}.ts`
+          ),
+          `
         import { EventSource } from '${pluginName}';
         export default EventSource;
-            `);
-        writeFileSync(path.join(process.cwd(), 'src', 'eventsources', `${yamlFileName}.yaml`), yaml.dump({ type: loaderFileName, ...defaultConfig }));
+            `
+        );
+        writeFileSync(
+          path.join(
+            process.cwd(),
+            "src",
+            "eventsources",
+            `${yamlFileName}.yaml`
+          ),
+          yaml.dump({ type: loaderFileName, ...defaultConfig })
+        );
       }
     }
   } catch (error) {
-    console.error('unable to import the module.', error);
+    console.error("unable to import the module.", error);
   }
-}
+};
+
+const removeAction = async (pluginName: string) => {
+  try {
+    // Import the module dynamically
+    const Module = await import(
+      path.join(process.cwd(), "node_modules", pluginName)
+    );
+
+    // Define module-specific variables
+    let moduleType = Module.SourceType as ModuleType;
+    let loaderFileName = Module.Type as string;
+    let yamlFileName = Module.CONFIG_FILE_NAME as string;
+    let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
+
+    switch (moduleType) {
+      case "BOTH":
+        // Remove both EventSource and DataSource files
+        await removeModule("ES", pluginName, loaderFileName, yamlFileName);
+        await removeModule("DS", pluginName, loaderFileName, yamlFileName);
+        break;
+
+      // Remove either EventSource or DataSource files
+
+      case "ES":
+        await removeModule(
+          moduleType,
+          pluginName,
+          loaderFileName,
+          yamlFileName
+        );
+        break;
+
+      case "DS":
+        await removeModule(
+          moduleType,
+          pluginName,
+          loaderFileName,
+          yamlFileName
+        );
+        break;
+
+      default:
+        console.error("Invalid moduleType:", moduleType);
+        break;
+    }
+
+    console.log(`Plugin '${pluginName}' removed successfully.`);
+  } catch (error) {
+    console.error("Unable to remove the plugin.", error);
+  }
+};
+
+// Define a function to remove EventSource or DataSource files
+const removeModule = async (
+  moduleType: ModuleType,
+  pluginName: string,
+  loaderFileName: string,
+  yamlFileName: string
+) => {
+  try {
+    // Determine the paths to the TypeScript and YAML files
+    const tsFilePath = path.join(
+      process.cwd(),
+      moduleType === "ES" ? "src/eventsources/types" : "src/datasources/types",
+      `${loaderFileName}.ts`
+    );
+    const yamlFilePath = path.join(
+      process.cwd(),
+      moduleType === "ES" ? "src/eventsources" : "src/datasources",
+      `${yamlFileName}.yaml`
+    );
+
+    // Check if the TypeScript and YAML files exist and remove them
+    await Promise.all([
+      fs.unlink(tsFilePath, (err) => {}),
+      fs.unlink(yamlFilePath, (err) => {}),
+    ]);
+  } catch (error) {
+    console.error(
+      `Unable to remove ${moduleType} module for '${pluginName}'.`,
+      error
+    );
+  }
+};
 
 const add = program
   .command("add")
-  .description(
-    `Add a godspeed plugin.`
-  )
+  .description(`Add a godspeed plugin.`)
   .argument("<pluginName>", "name of the plugin.")
   .action(async (pluginName) => {
     await addAction(pluginName);
@@ -109,27 +279,20 @@ const add = program
 const remove = program
   .command("remove")
   .argument("<pluginName>", "name of the plugin.")
-  .description(
-    `Remove a godspeed plugin.`
-  )
+  .description(`Remove a godspeed plugin.`)
   .action(async (pluginName) => {
     try {
-
-    } catch (error) {
-    }
+      await removeAction(pluginName);
+    } catch (error) {}
   });
 
 const update = program
   .command("update")
   .argument("<pluginName>", "name of the plugin.")
-  .description(
-    `Update a godspeed devops plugin.`
-  )
+  .description(`Update a godspeed devops plugin.`)
   .action(async (pluginName) => {
     try {
-    } catch (error) {
-    }
+    } catch (error) {}
   });
-
 
 export default { list, add, remove, update };
