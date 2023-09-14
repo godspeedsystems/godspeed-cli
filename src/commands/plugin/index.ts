@@ -1,55 +1,18 @@
 import { Command } from "commander";
 import path from "path";
-import { homedir } from "node:os";
-import fs, { mkdirSync, writeFileSync } from "fs";
+import fs, { existsSync, mkdirSync, readFileSync, readSync, writeFileSync } from "fs";
 import { spawnSync } from "child_process";
 import inquirer from "inquirer";
 import * as yaml from "js-yaml";
+import { cwd } from "process";
 const program = new Command();
-
-const list = program
-  .command("list")
-  .description(`List all available godspeed plugins.`)
-  .action(async () => {
-    // fetch the list of packages, maybe from the plugins repository
-    let npmSearch = spawnSync(
-      "npm",
-      ["search", `@godspeedsystems/plugins`, "--json"],
-      { encoding: "utf-8" }
-    );
-    let availablePlugins:
-      | [{ name: string; description: string; version: string }]
-      | [] = JSON.parse(npmSearch.stdout) || [];
-
-    let result = availablePlugins.map(({ name, description, version }) => ({
-      name,
-      description,
-      version,
-    }));
-
-    // list all the packages starting with plugins
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
-        name: "gsPlugin",
-        message: "Please select godspeed plugin to install.",
-        default: "latest",
-        choices: result,
-        loop: false,
-      },
-    ]);
-
-    // install that package
-    spawnSync("npm", ["install", `${answer.gsPlugin}`], { stdio: "inherit" });
-
-    // call the add action with pluginName
-    await addAction(answer.gsPlugin);
-  });
-// instance check
 
 type ModuleType = "DS" | "ES" | "BOTH";
 
 const addAction = async (pluginName: string) => {
+  // install that package
+  spawnSync("npm", ["install", `${pluginName}`], { stdio: "inherit" });
+
   // create folder for eventsource or datasource respective file
   try {
     const Module = await import(
@@ -80,8 +43,8 @@ const addAction = async (pluginName: string) => {
               `${loaderFileName}.ts`
             ),
             `
-      import { EventSource } from '${pluginName}';
-      export default EventSource;
+import { EventSource } from '${pluginName}';
+export default EventSource;
           `
           );
           writeFileSync(
@@ -103,8 +66,8 @@ const addAction = async (pluginName: string) => {
               `${loaderFileName}.ts`
             ),
             `
-      import { DataSource } from '${pluginName}';
-      export default DataSource;
+import { DataSource } from '${pluginName}';
+export default DataSource;
           `
           );
           writeFileSync(
@@ -132,8 +95,8 @@ const addAction = async (pluginName: string) => {
               `${loaderFileName}.ts`
             ),
             `
-        import { DataSource } from '${pluginName}';
-        export default DataSource;
+import { DataSource } from '${pluginName}';
+export default DataSource;
             `
           );
           // special case for prisma for now
@@ -164,8 +127,8 @@ const addAction = async (pluginName: string) => {
             `${loaderFileName}.ts`
           ),
           `
-        import { EventSource } from '${pluginName}';
-        export default EventSource;
+import { EventSource } from '${pluginName}';
+export default EventSource;
             `
         );
         writeFileSync(
@@ -183,6 +146,42 @@ const addAction = async (pluginName: string) => {
     console.error("unable to import the module.", error);
   }
 };
+
+const add = program
+  .command("add")
+  .description(`Add an eventsource/datasource plugin.`)
+  .action(async () => {
+    // fetch the list of packages, maybe from the plugins repository
+    let npmSearch = spawnSync(
+      "npm",
+      ["search", `@godspeedsystems/plugins`, "--json"],
+      { encoding: "utf-8" }
+    );
+    let availablePlugins:
+      | [{ name: string; description: string; version: string }]
+      | [] = JSON.parse(npmSearch.stdout) || [];
+
+    let result = availablePlugins.map(({ name, description, version }) => ({
+      name,
+      description,
+      version,
+    }));
+
+    // list all the packages starting with plugins
+    const answer = await inquirer.prompt([
+      {
+        type: "list",
+        name: "gsPlugin",
+        message: "Please select godspeed plugin to install.",
+        default: "latest",
+        choices: result,
+        loop: false,
+      },
+    ]);
+
+    // call the add action with pluginName
+    await addAction(answer.gsPlugin);
+  });
 
 const removeAction = async (pluginName: string) => {
   try {
@@ -229,7 +228,7 @@ const removeAction = async (pluginName: string) => {
         break;
     }
 
-    console.log(`Plugin '${pluginName}' removed successfully.`);
+    spawnSync('npm', ['uninstall', pluginName], { stdio: 'inherit' });
   } catch (error) {
     console.error("Unable to remove the plugin.", error);
   }
@@ -257,8 +256,8 @@ const removeModule = async (
 
     // Check if the TypeScript and YAML files exist and remove them
     await Promise.all([
-      fs.unlink(tsFilePath, (err) => {}),
-      fs.unlink(yamlFilePath, (err) => {}),
+      fs.unlink(tsFilePath, (err) => { }),
+      fs.unlink(yamlFilePath, (err) => { }),
     ]);
   } catch (error) {
     console.error(
@@ -268,31 +267,79 @@ const removeModule = async (
   }
 };
 
-const add = program
-  .command("add")
-  .description(`Add a godspeed plugin.`)
-  .argument("<pluginName>", "name of the plugin.")
-  .action(async (pluginName) => {
-    await addAction(pluginName);
-  });
-
 const remove = program
   .command("remove")
-  .argument("<pluginName>", "name of the plugin.")
-  .description(`Remove a godspeed plugin.`)
-  .action(async (pluginName) => {
+  .description(`Remove an eventsource/datasource plugin.`)
+  .action(async () => {
+    let pluginsList;
     try {
-      await removeAction(pluginName);
-    } catch (error) {}
+      // list all the installed plugins
+      let pkgPath = path.join(cwd(), 'package.json');
+      pluginsList = existsSync(pkgPath) ? JSON.parse(readFileSync(pkgPath, { encoding: 'utf-8' })).dependencies : [];
+
+      for (const pluginName in pluginsList) {
+        // if the dependency name does not start with @godspeedsystems/plugin-, then it's not a godspeed plugin
+        const isGSPlugin = pluginName.includes('@godspeedsystems/plugins');
+        !isGSPlugin && delete pluginsList[pluginName];
+      }
+
+      // id package.json dont have "dependencies" key
+      if (!pluginsList || pluginsList.length) throw new Error();
+    } catch (error) {
+      console.error('There are no eventsource/datasource plugins installed.');
+      return;
+    }
+
+    // ask user to select the plugin to remove
+    const answer = await inquirer.prompt([
+      {
+        type: "list",
+        name: "gsPlugin",
+        message: "Please select a eventsource/datasource plugin to remove.",
+        default: "",
+        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
+        loop: false,
+      },
+    ]);
+    await removeAction(answer.gsPlugin);
   });
 
 const update = program
   .command("update")
-  .argument("<pluginName>", "name of the plugin.")
-  .description(`Update a godspeed devops plugin.`)
+  .description(`Update an eventsource/datasource plugin.`)
   .action(async (pluginName) => {
+    let pluginsList;
     try {
-    } catch (error) {}
+      // list all the installed plugins
+      let pkgPath = path.join(cwd(), 'package.json');
+      pluginsList = existsSync(pkgPath) ? JSON.parse(readFileSync(pkgPath, { encoding: 'utf-8' })).dependencies : [];
+
+      for (const pluginName in pluginsList) {
+        // if the dependency name does not start with @godspeedsystems/plugin-, then it's not a godspeed plugin
+        const isGSPlugin = pluginName.includes('@godspeedsystems/plugins');
+        !isGSPlugin && delete pluginsList[pluginName];
+      }
+
+      // id package.json dont have "dependencies" key
+      if (!pluginsList || pluginsList.length) throw new Error();
+    } catch (error) {
+      console.error('There are no eventsource/datasource plugins installed.');
+      return;
+    }
+
+    // ask user to select the plugin to remove
+    const answer = await inquirer.prompt([
+      {
+        type: "list",
+        name: "gsPlugin",
+        message: "Please select a eventsource/datasource plugin to remove.",
+        default: "",
+        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
+        loop: false,
+      },
+    ]);
+
+    spawnSync('npm', ['update', answer.gsPlugin], { stdio: "inherit" });
   });
 
-export default { list, add, remove, update };
+export default { add, remove, update };

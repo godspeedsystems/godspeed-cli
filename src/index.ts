@@ -136,7 +136,6 @@ async function isAGodspeedProject() {
 
   program
     .command('plugin')
-    .addCommand(pluginCommands.list)
     .addCommand(pluginCommands.add)
     .addCommand(pluginCommands.remove)
     .addCommand(pluginCommands.update)
