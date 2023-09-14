@@ -241,6 +241,15 @@ export const compileAndCopyOrJustCopy = async (
   });
 };
 
+export const installDependencies = async (projectDirPath: string) => {
+  log.wait('Installing project dependencies.');
+  try {
+    spawnSync('npm', ['install'], { cwd: projectDirPath });
+  } catch (error) {
+  }
+  log.success("Successfully installed project dependencies.");
+};
+
 export const generateProjectFromDotGodspeed = async (
   projectName: string,
   projectDirPath: string,

@@ -7,7 +7,7 @@ import path from "path";
 //   prepareToStartContainers,
 // } from "../../utils/dockerUtility";
 // import checkPrerequisite from "../../utils/checkPrerequisite";
-import { validateAndCreateProjectDirectory } from "../../utils/index";
+import { installDependencies, validateAndCreateProjectDirectory } from "../../utils/index";
 import { copyingLocalTemplate } from "../../utils";
 import { cloneProjectTemplate } from "../../utils";
 import { generateFromExamples } from "../../utils";
@@ -69,7 +69,7 @@ export default async function create(
     projectDirPath,
     godspeedOptions
   );
-
+  await installDependencies(projectDirPath);
   try {
     // the NEW flow [without containers]
     log.success(
@@ -79,14 +79,10 @@ export default async function create(
     );
 
     console.log(
-      `${chalk.green("Open the project in Visual Studio Code,")} ${chalk.yellow(
+      `${chalk.green("Use `godspeed help` command for available commands.")} ${chalk.yellow(
         "Happy building microservices with Godspeed!"
       )}.`
     );
-
-    spawnSync('npm', ['install'], { cwd: projectDirPath });
-
-    fsExtras.rmSync(path.resolve(projectDirPath, ".git"), { recursive: true });
 
     // const composeOptions = await getComposeOptions();
 

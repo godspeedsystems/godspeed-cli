@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import * as dotenv from "dotenv";
 import chalk from "chalk";
 import { Command } from "commander";
@@ -52,27 +51,33 @@ async function isAGodspeedProject() {
   const program = new Command();
 
   // @ts-ignore
-  let { version } = require(path.join(__dirname, '../package.json'));
+  let { version, homepage } = require(path.join(__dirname, '../package.json'));
 
   // remove @godspeedsystems from the name
   program.name('Godspeed CLI').description('CLI tool for godspeed framework.').version(version);
   program.showHelpAfterError();
   program.showSuggestionAfterError(true);
   program.configureOutput({
+    writeOut: (str) => {
+      console.log(`${str}\n`);
+      console.log(`For detailed documentation visit ${homepage}`);
+      console.log(`\n`);
+    },
     outputError: (str, write) => {
       write(chalk.red(str));
     },
   });
 
+
   program
     .command("create")
     .description("Create a new Godspeed project.")
     .argument("<projectName>", "name of the project.")
-    .option(
-      "--from-template <projectTemplateName>",
-      "create a project from a template."
-    )
-    .option("--from-example <exampleName>", "create a project from examples.")
+    // .option(
+    //   "--from-template <projectTemplateName>",
+    //   "create a project from a template."
+    // )
+    // .option("--from-example <exampleName>", "create a project from examples.")
     .action((projectName, options) => {
       create(projectName, options, version);
     });
@@ -90,7 +95,7 @@ async function isAGodspeedProject() {
 
   program
     .command("dev")
-    .description("Run the godspeeds development server.")
+    .description("run godspeed development server.")
     .action(async () => {
       if (await isAGodspeedProject()) {
         spawn("npm", ["run", "dev"], {
@@ -102,7 +107,7 @@ async function isAGodspeedProject() {
   program
     .command("clean")
     .description(
-      `Clean the build directory.`
+      `clean the previous build.`
     )
     .action(async (options) => {
       if (await isAGodspeedProject()) {
@@ -114,7 +119,7 @@ async function isAGodspeedProject() {
 
   program
     .command("build")
-    .description("Build the godspeed project.")
+    .description("build the godspeed project.")
     .action(async (options) => {
       if (await isAGodspeedProject()) {
         spawn("npm", ["run", "build"], {
@@ -130,7 +135,7 @@ async function isAGodspeedProject() {
     .addCommand(devOpsPluginCommands.remove)
     .addCommand(devOpsPluginCommands.update)
     .description(
-      `Godspeed plugins for devops`
+      `godspeed plugins for devops.`
     );
 
 
@@ -140,7 +145,7 @@ async function isAGodspeedProject() {
     .addCommand(pluginCommands.remove)
     .addCommand(pluginCommands.update)
     .description(
-      `Event Source and Data Source plugins for godspeed.`
+      `Event Source and Data Source plugins for Godspeed.`
     );
 
   program.parse();
