@@ -1,6 +1,6 @@
 const fsExtras = require("fs-extra");
 import path from "path";
-// import interactiveMode from "../../utils/interactiveMode";
+import interactiveMode from "../../utils/interactiveMode";
 // import {
 //   buildContainers,
 //   getComposeOptions,
@@ -46,9 +46,9 @@ export default async function create(
     options.fromExample
   );
 
-  // if (!godspeedOptions) {
-  //   godspeedOptions = await interactiveMode({}, false);
-  // }
+  if (!godspeedOptions) {
+    godspeedOptions = await interactiveMode({}, false);
+  }
 
   godspeedOptions = <GodspeedOptions>godspeedOptions;
 
