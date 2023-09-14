@@ -71,7 +71,7 @@ async function isAGodspeedProject() {
 
   program
     .command("create")
-    .description("Create a new Godspeed project.")
+    .description("create a new godspeed project.")
     .argument("<projectName>", "name of the project.")
     // .option(
     //   "--from-template <projectTemplateName>",
@@ -135,7 +135,7 @@ async function isAGodspeedProject() {
     .addCommand(devOpsPluginCommands.remove)
     .addCommand(devOpsPluginCommands.update)
     .description(
-      `godspeed plugins for devops.`
+      `manage(add, remove, update) godspeed plugins for devops.`
     );
 
 
@@ -145,7 +145,7 @@ async function isAGodspeedProject() {
     .addCommand(pluginCommands.remove)
     .addCommand(pluginCommands.update)
     .description(
-      `Event Source and Data Source plugins for Godspeed.`
+      `manage(add, remove, update) eventsource and datasource plugins for godspeed.`
     );
 
   program.parse();
