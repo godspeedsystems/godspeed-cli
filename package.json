@@ -2,7 +2,7 @@
   "name": "@godspeedsystems/godspeed",
   "description": "Godspeed CLI",
   "homepage": "https://godspeed.systems",
-  "version": "2.7.4",
+  "version": "2.7.5-prerelease",
   "main": "./lib/index.js",
   "bin": {
     "godspeed": "./lib/index.js"
