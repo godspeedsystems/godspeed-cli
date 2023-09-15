@@ -22,6 +22,14 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 //   return !!process.env.INSIDE_CONTAINER;
 // };
 
+const detectOSType = () => {
+  switch (process.platform) {
+    case 'win32': return 'Windows';
+    case 'linux': return 'Linux';
+    case 'darwin': return 'Mac';
+    default: return 'UNKNOWN';
+  }
+};
 async function isAGodspeedProject() {
   // verify .godspeed file, only then, it is a godspeed project
   try {
@@ -47,6 +55,12 @@ async function isAGodspeedProject() {
 
 (async function main() {
   console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
+  if (detectOSType() === 'Windows') {
+    console.log(chalk.yellow('Coming Soon! Support for Windows OS.'));
+    console.log('If you would love to give it a try to our Alpha realease of Godspeed Framework. You can use these online cloud-development platform.');
+    console.log(`1. CodeSandbox `);
+    console.log(`2. Github Codespaces `)
+  }
 
   const program = new Command();
 
