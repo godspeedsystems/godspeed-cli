@@ -87,11 +87,11 @@ async function isAGodspeedProject() {
     .command("create")
     .description("create a new godspeed project.")
     .argument("<projectName>", "name of the project.")
-    // .option(
-    //   "--from-template <projectTemplateName>",
-    //   "create a project from a template."
-    // )
-    // .option("--from-example <exampleName>", "create a project from examples.")
+    .option(
+      "--from-template <projectTemplateName>",
+      "create a project from a template."
+    )
+    .option("--from-example <exampleName>", "create a project from examples.")
     .action((projectName, options) => {
       create(projectName, options, version);
     });

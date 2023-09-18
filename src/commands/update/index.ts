@@ -52,6 +52,7 @@ export default async (options: PlainObject, clieVersion: string) => {
       projectName,
       process.cwd(),
       godspeedOptions,
+      "hello-world",
       true
     );
 

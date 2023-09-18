@@ -254,6 +254,7 @@ export const generateProjectFromDotGodspeed = async (
   projectName: string,
   projectDirPath: string,
   godspeedOptions: GodspeedOptions,
+  exampleName: string,
   isUpdate?: boolean
 ) => {
   try {
@@ -303,24 +304,45 @@ export const generateProjectFromDotGodspeed = async (
       );
 
       // create folder structure
-      fsExtras.cpSync(
-        path.resolve(projectDirPath, ".template/defaults"),
-        path.resolve(projectDirPath),
-        {
-          recursive: true,
-          filter: (source: string, destination: string) => {
-            if (source.includes("mongo.prisma")) {
-              return mongodb ? true : false;
-            } else if (source.includes("postgres.prisma")) {
-              return postgresql ? true : false;
-            } else if (source.includes("mysql.prisma")) {
-              return mysql ? true : false;
-            } else {
-              return true;
-            }
-          },
-        }
-      );
+      if (exampleName) {
+        fsExtras.cpSync(
+          path.resolve(projectDirPath, `.template/examples/${exampleName}`),
+          path.resolve(projectDirPath),
+          {
+            recursive: true,
+            filter: (source: string, destination: string) => {
+              if (source.includes("mongo.prisma")) {
+                return mongodb ? true : false;
+              } else if (source.includes("postgres.prisma")) {
+                return postgresql ? true : false;
+              } else if (source.includes("mysql.prisma")) {
+                return mysql ? true : false;
+              } else {
+                return true;
+              }
+            },
+          }
+        );
+      } else {
+        fsExtras.cpSync(
+          path.resolve(projectDirPath, `.template/defaults`),
+          path.resolve(projectDirPath),
+          {
+            recursive: true,
+            filter: (source: string, destination: string) => {
+              if (source.includes("mongo.prisma")) {
+                return mongodb ? true : false;
+              } else if (source.includes("postgres.prisma")) {
+                return postgresql ? true : false;
+              } else if (source.includes("mysql.prisma")) {
+                return mysql ? true : false;
+              } else {
+                return true;
+              }
+            },
+          }
+        );
+      }
 
       // create project folder structure
       // const projectStructure = [
