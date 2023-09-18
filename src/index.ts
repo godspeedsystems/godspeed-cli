@@ -88,11 +88,11 @@ export const isAGodspeedProject = () => {
     .command("create")
     .description("create a new godspeed project.")
     .argument("<projectName>", "name of the project.")
-    // .option(
-    //   "--from-template <projectTemplateName>",
-    //   "create a project from a template."
-    // )
-    // .option("--from-example <exampleName>", "create a project from examples.")
+    .option(
+      "--from-template <projectTemplateName>",
+      "create a project from a template."
+    )
+    .option("--from-example <exampleName>", "create a project from examples.")
     .action((projectName, options) => {
       create(projectName, options, version);
     });
@@ -125,13 +125,22 @@ export const isAGodspeedProject = () => {
       `clean the previous build.`
     )
     .action(async (options) => {
-      if (await isAGodspeedProject()) {
+      if (isAGodspeedProject()) {
         spawn("npm", ["run", "clean"], {
           stdio: "inherit",
         });
       }
     });
 
+  program
+    .command('gen-crud-api')
+    .description('scans your prisma datasources and generate CRUD APIs events and workflows')
+    .action(async () => {
+      if (isAGodspeedProject()) {
+        spawn('npm', ['run', 'gen-crud-api'], { stdio: 'inherit' });
+      }
+    })
+    ;
   program
     .command("build")
     .description("build the godspeed project.")

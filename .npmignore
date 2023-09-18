@@ -5,3 +5,4 @@ CHANGELOG.md
 tsconfig.json
 tsconfig.prod.json
 sandbox/
+.vscode/
