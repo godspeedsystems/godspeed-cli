@@ -2,7 +2,7 @@ import path from "path";
 const fsExtras = require("fs-extra");
 import inquirer from "inquirer";
 import { log } from "./signale";
-import glob from "glob";
+import { globSync } from "glob";
 import ejs from "ejs";
 import simpleGit from "simple-git";
 import chalk from "chalk";
@@ -148,97 +148,91 @@ export const compileAndCopyOrJustCopy = async (
   destinationFolder: string,
   templateData: PlainObject
 ) => {
-  return new Promise((resolve, reject) => {
-    glob(
-      path.resolve(projectDirPath, sourceFolder + "/**/*"),
-      async (error, fileList) => {
-        if (error) {
-          reject(error);
-        }
+  try {
+    const fileList = globSync(path.resolve(projectDirPath, sourceFolder + "/**/*"));
+    let isUpdateCall: boolean = false;
+    try {
+      isUpdateCall = fsExtras
+        .lstatSync(path.resolve(process.cwd(), ".godspeed"))
+        .isFile();
+    } catch (error) { }
 
-        let isUpdateCall: boolean = false;
-        try {
-          isUpdateCall = fsExtras
-            .lstatSync(path.resolve(process.cwd(), ".godspeed"))
-            .isFile();
-        } catch (error) { }
+    fileList.map(async (sourceFilePath: string) => {
+      if (fsExtras.lstatSync(sourceFilePath).isFile()) {
+        // CREATE = used from outside
+        // UPDATE = used from the directory itself
+        let relativeDestinationPath: string;
 
-        fileList.map(async (sourceFilePath) => {
-          if (fsExtras.lstatSync(sourceFilePath).isFile()) {
-            // CREATE = used from outside
-            // UPDATE = used from the directory itself
-            let relativeDestinationPath: string;
+        relativeDestinationPath = !isUpdateCall
+          ? path.relative(
+            path.resolve(projectDirPath, sourceFolder),
+            sourceFilePath
+          )
+          : path.resolve(
+            projectDirPath,
+            destinationFolder,
+            path.relative(
+              path.resolve(projectDirPath, sourceFolder),
+              sourceFilePath
+            )
+          );
 
-            relativeDestinationPath = !isUpdateCall
-              ? path.relative(
-                path.resolve(projectDirPath, sourceFolder),
-                sourceFilePath
-              )
-              : path.resolve(
-                projectDirPath,
-                destinationFolder,
-                path.relative(
-                  path.resolve(projectDirPath, sourceFolder),
-                  sourceFilePath
-                )
-              );
+        let finalDestinationWithFileName = path.resolve(
+          projectDirPath,
+          destinationFolder,
+          relativeDestinationPath
+        );
 
-            let finalDestinationWithFileName = path.resolve(
-              projectDirPath,
-              destinationFolder,
-              relativeDestinationPath
-            );
+        const finallFolderName = path.dirname(finalDestinationWithFileName);
 
-            const finallFolderName = path.dirname(finalDestinationWithFileName);
+        const finalFileName = finalDestinationWithFileName.substring(
+          finalDestinationWithFileName.lastIndexOf(path.sep) + 1
+        );
 
-            const finalFileName = finalDestinationWithFileName.substring(
-              finalDestinationWithFileName.lastIndexOf(path.sep) + 1
-            );
+        const fileName = sourceFilePath.split(path.sep).pop() || "";
+        const isTemplate = fileName.endsWith(".ejs");
 
-            const fileName = sourceFilePath.split(path.sep).pop() || "";
-            const isTemplate = fileName.endsWith(".ejs");
+        if (isTemplate) {
+          // compile and save
 
-            if (isTemplate) {
-              // compile and save
-
-              const template = await ejs.compile(
-                fsExtras.readFileSync(sourceFilePath, "utf-8")
-              );
-              const finalRender = await template(templateData);
-              if (!fsExtras.existsSync(finallFolderName)) {
-                await fsExtras.mkdirSync(finallFolderName, {
-                  recursive: true,
-                });
-              }
-
-              if (finallFolderName && finalFileName) {
-                await fsExtras.writeFileSync(
-                  path.resolve(finallFolderName, fileName.replace(".ejs", "")),
-                  finalRender.replace(/^\s*\n/gm, "")
-                );
-              }
-            } else {
-              // just copy
-              if (fileName) {
-                try {
-                  await fsExtras.cpSync(
-                    sourceFilePath,
-                    path.resolve(finallFolderName, finalFileName),
-                    {
-                      recursive: true,
-                    }
-                  );
-                } catch (error) {
-                  reject(error);
-                }
-              }
-            }
-            resolve("");
+          const template = await ejs.compile(
+            fsExtras.readFileSync(sourceFilePath, "utf-8")
+          );
+          const finalRender = await template(templateData);
+          if (!fsExtras.existsSync(finallFolderName)) {
+            await fsExtras.mkdirSync(finallFolderName, {
+              recursive: true,
+            });
           }
-        });
+
+          if (finallFolderName && finalFileName) {
+            await fsExtras.writeFileSync(
+              path.resolve(finallFolderName, fileName.replace(".ejs", "")),
+              finalRender.replace(/^\s*\n/gm, "")
+            );
+          }
+        } else {
+          // just copy
+          if (fileName) {
+            try {
+              await fsExtras.cpSync(
+                sourceFilePath,
+                path.resolve(finallFolderName, finalFileName),
+                {
+                  recursive: true,
+                }
+              );
+            } catch (error) {
+              throw error;
+            }
+          }
+        }
       }
-    );
-  });
+    });
+
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const installDependencies = async (projectDirPath: string) => {

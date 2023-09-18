@@ -5,10 +5,11 @@ import { Command } from "commander";
 import create from "./commands/create/index";
 // import update from "./commands/update/index";
 import path from "path";
-import { spawn } from "child_process";
+import { spawn, spawnSync } from "child_process";
 
 import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
+import prismaCommands from './commands/prisma';
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
 import { readFileSync } from "fs";
@@ -30,7 +31,7 @@ const detectOSType = () => {
     default: return 'UNKNOWN';
   }
 };
-async function isAGodspeedProject() {
+export const isAGodspeedProject = () => {
   // verify .godspeed file, only then, it is a godspeed project
   try {
     readFileSync(path.join(cwd(), ".godspeed"))
@@ -81,7 +82,6 @@ async function isAGodspeedProject() {
       write(chalk.red(str));
     },
   });
-
 
   program
     .command("create")
@@ -161,6 +161,18 @@ async function isAGodspeedProject() {
     .description(
       `manage(add, remove, update) eventsource and datasource plugins for godspeed.`
     );
+
+  // bypass all conmmands to prisma CLI, except godspeed prepare
+  if (process.argv[2] === 'prisma') {
+    if (process.argv[3] !== 'prepare') {
+      spawnSync('npx', ['prisma'].concat(process.argv.slice(3)))
+    }
+  }
+
+  program
+    .command('prisma')
+    .description('proxy to prisma commands with some add-on commands to handle prisma datasources.')
+    .addCommand(prismaCommands.prepare)
 
   program.parse();
 })();

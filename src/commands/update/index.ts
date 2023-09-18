@@ -2,7 +2,6 @@ const fsExtras = require("fs-extra");
 import interactiveMode from "../../utils/interactiveMode";
 
 import {
-  buildContainers,
   getComposeOptions,
   prepareToStartContainers,
 } from "../../utils/dockerUtility";
@@ -67,7 +66,7 @@ export default async (options: PlainObject, clieVersion: string) => {
     // check if there are already running resources
     await prepareToStartContainers(projectName, composeOptions);
 
-    await buildContainers(projectName, godspeedOptions, composeOptions, "");
+    // await buildContainers(projectName, godspeedOptions, composeOptions, "");
 
     log.success(
       `\n\n${chalk.green("Successfully updated the project")} ${chalk.yellow(

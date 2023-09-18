@@ -1,4 +1,4 @@
-import glob from "glob";
+import { glob } from "glob";
 import dockerCompose, {
   type IDockerComposeOptions,
   type IDockerComposeResult,
@@ -37,7 +37,7 @@ export const getComposeOptions = async (): Promise<IDockerComposeOptions> => {
       res = execSync(`docker-compose -v`, {
         stdio: ["pipe", "pipe", "ignore"],
       });
-    } catch (err) {}
+    } catch (err) { }
 
     if (!res) {
       composeOptions = {
@@ -115,70 +115,70 @@ const prepareMongoDb = async (
   log.success(`Successfully setup MongoDB replica cluster.`);
 };
 
-const generatePrismaClients = async (
-  composeOptions: IDockerComposeOptions,
-  projectDirPath: string
-) => {
-  return new Promise((resolve, reject) => {
-    glob(
-      path.resolve(projectDirPath, "src/datasources/*.prisma"),
-      async (err, matches) => {
-        if (err) {
-          reject(err);
-        } else {
-          if (matches.length) {
-            log.wait("Generating client for prisma datasources.");
+// const generatePrismaClients = async (
+//   composeOptions: IDockerComposeOptions,
+//   projectDirPath: string
+// ) => {
+//   return new Promise((resolve, reject) => {
+//     glob(
+//       path.resolve(projectDirPath, "src/datasources/*.prisma"),
+//       async (err: Error, matches: string[]) => {
+//         if (err) {
+//           reject(err);
+//         } else {
+//           if (matches.length) {
+//             log.wait("Generating client for prisma datasources.");
 
-            try {
-              const responseUpAll: IDockerComposeResult =
-                await dockerCompose.upAll(composeOptions);
+//             try {
+//               const responseUpAll: IDockerComposeResult =
+//                 await dockerCompose.upAll(composeOptions);
 
-              const responseExec: IDockerComposeResult =
-                await dockerCompose.exec(
-                  `node`,
-                  [
-                    "/bin/bash",
-                    "-c",
-                    "for i in src/datasources/*.prisma; do npx --yes prisma generate --schema $i && npx --yes prisma db push --schema $i; done",
-                  ],
-                  composeOptions
-                );
-            } catch (error) {
-              console.log(error);
-            }
-            log.success(
-              "Successfully generated client for prisma datasources."
-            );
-          }
-          resolve("");
-        }
-      }
-    );
-  });
-};
+//               const responseExec: IDockerComposeResult =
+//                 await dockerCompose.exec(
+//                   `node`,
+//                   [
+//                     "/bin/bash",
+//                     "-c",
+//                     "for i in src/datasources/*.prisma; do npx --yes prisma generate --schema $i && npx --yes prisma db push --schema $i; done",
+//                   ],
+//                   composeOptions
+//                 );
+//             } catch (error) {
+//               console.log(error);
+//             }
+//             log.success(
+//               "Successfully generated client for prisma datasources."
+//             );
+//           }
+//           resolve("");
+//         }
+//       }
+//     );
+//   });
+// };
 
-export const buildContainers = async (
-  projectName: string,
-  godspeedOptions: PlainObject,
-  composeOptions: IDockerComposeOptions,
-  projectDirPath: string
-) => {
-  try {
-    log.wait(`Building containers for project ${chalk.yellow(projectName)}`);
-    const response = await dockerCompose.buildAll(composeOptions);
+// export const buildContainers = async (
+//   projectName: string,
+//   godspeedOptions: PlainObject,
+//   composeOptions: IDockerComposeOptions,
+//   projectDirPath: string
+// ) => {
+//   try {
+//     log.wait(`Building containers for project ${chalk.yellow(projectName)}`);
+//     const response = await dockerCompose.buildAll(composeOptions);
 
-    log.success(
-      `Successfully build all containers for project ${chalk.yellow(
-        projectName
-      )}`
-    );
+//     log.success(
+//       `Successfully build all containers for project ${chalk.yellow(
+//         projectName
+//       )}`
+//     );
 
-    await prepareMongoDb(godspeedOptions, composeOptions);
+//     await prepareMongoDb(godspeedOptions, composeOptions);
 
-    await generatePrismaClients(composeOptions, projectDirPath);
+//     await generatePrismaClients(composeOptions, projectDirPath);
 
-    await dockerCompose.stop(composeOptions);
-  } catch (error) {
-    console.log(error);
-  }
-};
+//     await dockerCompose.stop(composeOptions);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };

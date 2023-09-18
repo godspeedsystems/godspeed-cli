@@ -14,7 +14,6 @@ import { generateFromExamples } from "../../utils";
 import { generateProjectFromDotGodspeed } from "../../utils";
 import { log } from "../../utils/signale";
 import chalk from "chalk";
-import { spawnSync } from "child_process";
 
 /**
  * options = {
@@ -70,6 +69,7 @@ export default async function create(
     godspeedOptions
   );
   await installDependencies(projectDirPath);
+
   try {
     // the NEW flow [without containers]
     log.success(
