@@ -39,12 +39,12 @@ Once installed, You will be access to `godspeed` in yor command prompt.
   | Command               |     Options       | Description                                                                 |
   |-----------------------|-------------------|-----------------------------------------------------------------------------|
   | create <projectName>  | --from-template, --from-example| create a new godspeed project.                                 |
-  | dev                   |                   | Start the dev server.                                                       |
+  | dev                   |                   | start the dev server.                                                       |
   | clean                 |                   | clean the previous build.                                                   |
   | build                 |                   | build the godspeed project.                                                 |
   | devops-plugins                 |                   | manage devops plugins for godspeed.                                                 |
   | plugins                 |                   | manage eventsource and datasource plugins for godspeed.                                                 |
-  | generate          |                   | generate different kinds of project artifacts. as of now, CRUD APIs based on prisma schema.           |
+  | gen-crud-api          |                   | scans your prisma datasources and generate CRUD APIs events and workflows           |
 
 
 ## Exit codes and their meanings
@@ -62,6 +62,7 @@ Once installed, You will be access to `godspeed` in yor command prompt.
 | ----------------------------------- | -------------------------------------------------------------------   |
 | `DEBUG_MODE`                        | when `true` it will print all the debug logs including from `docker`. |
 
+[npm]: https://img.shields.io/npm/v/%40godspeedsystems/godspeed
 [npm-url]: https://www.npmjs.com/package/@godspeedsystems/godspeed
 [size]: https://packagephobia.com/badge?p=@godspeedsystems/godspeed
 [size-url]: https://packagephobia.com/result?p=@godspeedsystems/godspeed
