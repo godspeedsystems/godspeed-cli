@@ -66,7 +66,8 @@ export default async function create(
   await generateProjectFromDotGodspeed(
     projectName,
     projectDirPath,
-    godspeedOptions
+    godspeedOptions,
+    options.fromExample
   );
   await installDependencies(projectDirPath);
 
