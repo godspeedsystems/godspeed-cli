@@ -15,8 +15,7 @@
     "local": "sudo npm uninstall -g && sudo npm install -g && godspeed"
   },
   "dependencies": {
-    "@godspeedsystems/core": "^2.0.0-pre-alpha",
-    "@godspeedsystems/godspeed": "^2.7.3",
+    "@godspeedsystems/core": "latest",
     "axios": "^0.27.2",
     "chalk": "^4.1.0",
     "clear": "^0.1.0",
