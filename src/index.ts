@@ -58,9 +58,10 @@ export const isAGodspeedProject = () => {
   console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
   if (detectOSType() === 'Windows') {
     console.log(chalk.yellow('Coming Soon! Support for Windows OS.'));
-    console.log('If you would love to give it a try to our Alpha realease of Godspeed Framework. You can use these online cloud-development platform.');
+    console.log('\nIf you would love to give it a try to our Alpha realease of Godspeed Framework. You can use these online cloud-development platform.');
     console.log(`1. CodeSandbox `);
-    console.log(`2. Github Codespaces `)
+    console.log(`2. Github Codespaces `);
+    return;
   }
 
   const program = new Command();
