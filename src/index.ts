@@ -66,9 +66,8 @@ export const isAGodspeedProject = () => {
 
   if (detectOSType() === 'Windows') {
     console.log(chalk.yellow('Coming Soon! Support for Windows OS.'));
-    console.log('\nIf you would love to give it a try to our Alpha realease of Godspeed Framework. You can use these online cloud-development platform.');
-    console.log(`1. CodeSandbox `);
-    console.log(`2. Github Codespaces `);
+    console.log('\nIf you would love to give it a try to our Alpha realease of Godspeed Framework. You can use this online cloud-development platform.');
+    console.log(`1. CodeSandbox: https://github.com/godspeedsystems/godspeed-codesandbox`);
     return;
   }
 
