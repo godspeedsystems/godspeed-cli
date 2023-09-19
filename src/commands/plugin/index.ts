@@ -332,7 +332,7 @@ const update = program
       {
         type: "list",
         name: "gsPlugin",
-        message: "Please select a eventsource/datasource plugin to remove.",
+        message: "Please select a eventsource/datasource plugin to update.",
         default: "",
         choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
         loop: false,

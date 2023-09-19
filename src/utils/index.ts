@@ -304,17 +304,6 @@ export const generateProjectFromDotGodspeed = async (
           path.resolve(projectDirPath),
           {
             recursive: true,
-            filter: (source: string, destination: string) => {
-              if (source.includes("mongo.prisma")) {
-                return mongodb ? true : false;
-              } else if (source.includes("postgres.prisma")) {
-                return postgresql ? true : false;
-              } else if (source.includes("mysql.prisma")) {
-                return mysql ? true : false;
-              } else {
-                return true;
-              }
-            },
           }
         );
       } else {
@@ -323,17 +312,6 @@ export const generateProjectFromDotGodspeed = async (
           path.resolve(projectDirPath),
           {
             recursive: true,
-            filter: (source: string, destination: string) => {
-              if (source.includes("mongo.prisma")) {
-                return mongodb ? true : false;
-              } else if (source.includes("postgres.prisma")) {
-                return postgresql ? true : false;
-              } else if (source.includes("mysql.prisma")) {
-                return mysql ? true : false;
-              } else {
-                return true;
-              }
-            },
           }
         );
       }

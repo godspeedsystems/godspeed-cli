@@ -56,6 +56,14 @@ export const isAGodspeedProject = () => {
 
 (async function main() {
   console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
+
+  if (new Date() > new Date('October 15, 2023')) {
+    console.log(chalk.yellowBright('This was a time bound `Alpha release of Godspeed CLI`.'));
+    console.log('Please upgrade to new the new version.\n');
+    console.log(chalk.yellow('npm install -g @godspeedsystems/godspeed\n'));
+    return;
+  }
+
   if (detectOSType() === 'Windows') {
     console.log(chalk.yellow('Coming Soon! Support for Windows OS.'));
     console.log('\nIf you would love to give it a try to our Alpha realease of Godspeed Framework. You can use these online cloud-development platform.');
@@ -63,6 +71,7 @@ export const isAGodspeedProject = () => {
     console.log(`2. Github Codespaces `);
     return;
   }
+
 
   const program = new Command();
 
