@@ -1,12 +1,12 @@
 {
-  "include": ["src"],
+  "include": ["test/**/*", "src/**/*"],
   "compilerOptions": {
     "target": "es2021",
     "module": "commonjs",
     "lib": ["es6", "es2021", "dom"],
     "declaration": true,
     "outDir": "lib",
-    "rootDir": "src",
+    "rootDir": "./",
     "strict": true,
     "types": ["node"],
     "allowJs": true,

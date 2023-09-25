@@ -149,13 +149,15 @@ export const compileAndCopyOrJustCopy = async (
   templateData: PlainObject
 ) => {
   try {
-    const fileList = globSync(path.resolve(projectDirPath, sourceFolder + "/**/*"));
+    const fileList = globSync(
+      path.resolve(projectDirPath, sourceFolder + "/**/*")
+    );
     let isUpdateCall: boolean = false;
     try {
       isUpdateCall = fsExtras
         .lstatSync(path.resolve(process.cwd(), ".godspeed"))
         .isFile();
-    } catch (error) { }
+    } catch (error) {}
 
     fileList.map(async (sourceFilePath: string) => {
       if (fsExtras.lstatSync(sourceFilePath).isFile()) {
@@ -165,17 +167,17 @@ export const compileAndCopyOrJustCopy = async (
 
         relativeDestinationPath = !isUpdateCall
           ? path.relative(
-            path.resolve(projectDirPath, sourceFolder),
-            sourceFilePath
-          )
-          : path.resolve(
-            projectDirPath,
-            destinationFolder,
-            path.relative(
               path.resolve(projectDirPath, sourceFolder),
               sourceFilePath
             )
-          );
+          : path.resolve(
+              projectDirPath,
+              destinationFolder,
+              path.relative(
+                path.resolve(projectDirPath, sourceFolder),
+                sourceFilePath
+              )
+            );
 
         let finalDestinationWithFileName = path.resolve(
           projectDirPath,
@@ -229,18 +231,16 @@ export const compileAndCopyOrJustCopy = async (
         }
       }
     });
-
   } catch (error) {
     throw error;
   }
 };
 
 export const installDependencies = async (projectDirPath: string) => {
-  log.wait('Installing project dependencies.');
+  log.wait("Installing project dependencies.");
   try {
-    spawnSync('npm', ['install'], { cwd: projectDirPath });
-  } catch (error) {
-  }
+    spawnSync("npm", ["install"], { cwd: projectDirPath });
+  } catch (error) {}
   log.success("Successfully installed project dependencies.");
 };
 
