@@ -117,7 +117,7 @@ export const generateFromExamples = async (
   }
 
   fsExtras.cpSync(
-    path.resolve(projectDirPath, `.template/examples/${exampleName}`),
+    path.resolve(projectDirPath, ".template", "examples", exampleName),
     path.resolve(projectDirPath),
     {
       recursive: true,
@@ -276,7 +276,7 @@ export const generateProjectFromDotGodspeed = async (
     // generate all the dot config files
     if (!isUpdate) {
       await fsExtras.cpSync(
-        path.resolve(projectDirPath, ".template/dot-configs/"),
+        path.resolve(projectDirPath, ".template", "dot-configs"),
         path.resolve(projectDirPath),
         { recursive: true }
       );
@@ -300,7 +300,7 @@ export const generateProjectFromDotGodspeed = async (
       // create folder structure
       if (exampleName) {
         fsExtras.cpSync(
-          path.resolve(projectDirPath, `.template/examples/${exampleName}`),
+          path.resolve(projectDirPath, ".template", "examples", exampleName),
           path.resolve(projectDirPath),
           {
             recursive: true,
@@ -308,7 +308,7 @@ export const generateProjectFromDotGodspeed = async (
         );
       } else {
         fsExtras.cpSync(
-          path.resolve(projectDirPath, `.template/defaults`),
+          path.resolve(projectDirPath, ".template", "defaults"),
           path.resolve(projectDirPath),
           {
             recursive: true,
