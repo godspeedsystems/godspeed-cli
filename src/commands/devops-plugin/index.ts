@@ -32,6 +32,25 @@ const addAction = async (gsDevOpsPlugin: string) => {
   }
 };
 
+const list = program
+  .command("list")
+  .description(`List of available godspeed devops plugins.`)
+  .action(async () => {
+    // fetch the list of packages, maybe from the plugins repository
+    let npmSearch = spawnSync(
+      "npm",
+      ["search", `@godspeedsystems/devops-plugin`, "--json"],
+      { encoding: "utf-8" }
+    );
+    let availablePlugins:
+      | [{ name: string }]
+      | [] = JSON.parse(npmSearch.stdout) || [];
+
+    let result = availablePlugins.map(item => item.name).join('\n');
+    console.log("List of available devops plugins:");
+    console.log(result);
+  });
+
 const add = program
   .command("add")
   .description(`Add a godspeed devops plugin.`)
@@ -39,7 +58,7 @@ const add = program
     // fetch the list of packages, maybe from the plugins repository
     let npmSearch = spawnSync(
       "npm",
-      ["search", `@godspeedsystems/plugins`, "--json"],
+      ["search", `@godspeedsystems/devops-plugin`, "--json"],
       { encoding: "utf-8" }
     );
     let availablePlugins:
@@ -138,4 +157,4 @@ const update = program
     });
   });
 
-export default { add, remove, update };
+export default { add, list, remove, update };

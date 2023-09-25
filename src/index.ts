@@ -165,10 +165,11 @@ export const isAGodspeedProject = () => {
   program
     .command('devops-plugin')
     .addCommand(devOpsPluginCommands.add)
+    .addCommand(devOpsPluginCommands.list)
     .addCommand(devOpsPluginCommands.remove)
     .addCommand(devOpsPluginCommands.update)
     .description(
-      `manage(add, remove, update) godspeed plugins for devops.`
+      `manage(add, list, remove, update) godspeed devops-plugins.`
     );
 
 
