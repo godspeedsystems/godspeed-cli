@@ -4,6 +4,8 @@ import { homedir } from "node:os";
 import fs, { existsSync, readFileSync } from "fs";
 import { spawnSync } from "child_process";
 import inquirer from "inquirer";
+import {readdir} from 'fs/promises';
+
 const program = new Command();
 
 const gsDevopsPluginsDir = path.join(
@@ -35,7 +37,7 @@ const addAction = async (gsDevOpsPlugin: string) => {
 const list = program
   .command("list")
   .description(`List of available godspeed devops plugins.`)
-  .action(async () => {
+  .action(async (options) => {    
     // fetch the list of packages, maybe from the plugins repository
     let npmSearch = spawnSync(
       "npm",
@@ -50,6 +52,25 @@ const list = program
     console.log("List of available devops plugins:");
     console.log(result);
   });
+
+const listInstalled = program
+  .command("list-installed")
+  .description(`List of installed godspeed devops plugins.`)
+  .action(async () => {
+    // fetch the list of installed devops-plugins
+    const pluginPath = path.resolve(homedir(), `.godspeed/devops-plugins/node_modules/@godspeedsystems/`);
+
+    // check if devops-plugin is installed.
+    if (!fs.existsSync(pluginPath)) {
+      console.error("No devops-plugin is installed");
+      return
+    } 
+
+    const installedPlugins = await readdir(pluginPath);
+    for (const installedPlugin of installedPlugins) {
+      console.log(installedPlugin);
+    }
+  });  
 
 const add = program
   .command("add")
@@ -157,4 +178,12 @@ const update = program
     });
   });
 
-export default { add, list, remove, update };
+// const showPlugin = function(devopsPluginPath: string, installedPluginName: string) {
+//     const installedPluginPath = path.resolve(devopsPluginPath, installedPluginName, "dist/index.js");
+//     spawnSync(
+//       "node",
+//       [`${installedPluginPath}`]
+//     );
+//   };
+
+export default { add, list, listInstalled, remove, update };
