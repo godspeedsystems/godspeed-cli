@@ -166,16 +166,11 @@ export const isAGodspeedProject = () => {
   const devopsPluginSubCommand = program.command('devops-plugin')
     .description(`manages godspeed devops-plugins.`);
 
-  devopsPluginSubCommand.helpOption(false);
-    
   devopsPluginSubCommand
-    .addCommand(devOpsPluginCommands.add);
+    .addCommand(devOpsPluginCommands.install);
 
   devopsPluginSubCommand
-    .addCommand(devOpsPluginCommands.list);  
-    
-  devopsPluginSubCommand
-    .addCommand(devOpsPluginCommands.listInstalled);     
+    .addCommand(devOpsPluginCommands.list);    
   
   devopsPluginSubCommand
     .addCommand(devOpsPluginCommands.remove);
@@ -183,37 +178,41 @@ export const isAGodspeedProject = () => {
   devopsPluginSubCommand
     .addCommand(devOpsPluginCommands.update);     
 
-  const devopsPluginHelp = `    <plugin-name> help  display help for an installed devops-plugin`;
+  const devopsPluginHelp = `
+  To see help for installed devops plugins, you can run:
+  <plugin-name> help
+  `;
 
   devopsPluginSubCommand.on('--help', () => {
     console.log(devopsPluginHelp);
   });
 
-  // // fetch the list of installed devops-plugins
-  // const pluginPath = path.resolve(homedir(), `.godspeed/devops-plugins/node_modules/@godspeedsystems/`);
+  // fetch the list of installed devops-plugins
+  const pluginPath = path.resolve(homedir(), `.godspeed/devops-plugins/node_modules/@godspeedsystems/`);
 
-  // // check if devops-plugin is installed.
-  // if (fs.existsSync(pluginPath)) {
-  //   const installedPlugins = await readdir(pluginPath);
-  //   for (const installedPluginName of installedPlugins) {
-  //     devopsPluginSubCommand
-  //       .command(`${installedPluginName}`)
-  //       .action(() => {
-  //         const installedPluginPath = path.resolve(pluginPath, installedPluginName, "dist/index.js");
+  // check if devops-plugin is installed.
+  if (fs.existsSync(pluginPath)) {
+    const installedPlugins = await readdir(pluginPath);
+    for (const installedPluginName of installedPlugins) {
+      devopsPluginSubCommand
+        .command(`${installedPluginName}`)
+        .description("installed godspeed devops plugin")
+        .action(() => {
+          const installedPluginPath = path.resolve(pluginPath, installedPluginName, "dist/index.js");
 
-  //         // check if installedPluginPath exists.
-  //         if (!fs.existsSync(installedPluginPath)) {
-  //           console.error(`${installedPluginName} is installed properly. Please make sure ${installedPluginPath} exists.`);
-  //           return
-  //         } 
+          // check if installedPluginPath exists.
+          if (!fs.existsSync(installedPluginPath)) {
+            console.error(`${installedPluginName} is installed properly. Please make sure ${installedPluginPath} exists.`);
+            return
+          } 
 
-  //         spawnSync("node", [`${installedPluginPath}`], {
-  //           stdio: "inherit",
-  //         }
-  //         );  
-  //       });
-  //   }
-  // } 
+          spawnSync("node", [`${installedPluginPath}`], {
+            stdio: "inherit",
+          }
+          );  
+        });
+    }
+  } 
     
   // program
   //   .command('devops-plugin')
