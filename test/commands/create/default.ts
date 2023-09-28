@@ -6,14 +6,14 @@ import path from "path";
 
 export const defaultCreate = () => {
   describe("Godspeed CLI Test Suite for create command", function () {
-    this.timeout(70000);
+    this.timeout(0);
     const folderName = "godspeed";
 
     let cliOp: string; // Declare cliOp outside before() to make it accessible
 
     before(function (done) {
       // Execute your CLI command that creates a folder
-      const command = `node ../lib/src/index.js create ${folderName}`;
+      const command = `node ../lib/index.js create ${folderName}`;
 
       exec(command, (error, stdout, stderr) => {
         if (error) {

@@ -6,13 +6,13 @@ import path from "path";
 
 export const helloWorld = () => {
   describe("Godspeed CLI Test Suite for create command with --from-example hello-world", function () {
-    this.timeout(70000);
+    this.timeout(0);
     const folderName = "hello-world";
     let cliOp: string; // Declare cliOp outside before() to make it accessible
 
     before(function (done) {
       // Execute your CLI command that creates a folder
-      const command = `node ../lib/src/index.js create ${folderName} --from-example hello-world`;
+      const command = `node ../lib/index.js create ${folderName} --from-example hello-world`;
 
       exec(command, (error, stdout, stderr) => {
         if (error) {

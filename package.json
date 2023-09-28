@@ -12,7 +12,9 @@
     "build:prod": "tsc --project tsconfig.json",
     "build:dev": "tsc --project tsconfig.json --sourceMap --watch",
     "prepublishOnly": "npm run clean && npm run build:prod",
-    "local": "sudo npm uninstall -g && sudo npm install -g && godspeed"
+    "local": "sudo npm uninstall -g && sudo npm install -g && godspeed",
+    "build:test": "tsc --project test/tsconfig.json --sourceMap --watch",
+    "test": " cd sandbox && mocha ../dist/commands/create/index.js"
   },
   "dependencies": {
     "@godspeedsystems/core": "latest",
@@ -21,6 +23,7 @@
     "chalk": "^4.1.0",
     "clear": "^0.1.0",
     "commander": "^10.0.1",
+    "cross-spawn": "^7.0.3",
     "docker-compose": "^0.23.17",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.8",
@@ -41,6 +44,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.3.6",
+    "@types/cross-spawn": "^6.0.3",
     "@types/dotenv": "^8.2.0",
     "@types/ejs": "^3.1.1",
     "@types/glob": "^7.2.0",

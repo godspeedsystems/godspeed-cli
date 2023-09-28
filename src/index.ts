@@ -5,7 +5,8 @@ import { Command } from "commander";
 import create from "./commands/create/index";
 // import update from "./commands/update/index";
 import path from "path";
-import { spawn, spawnSync } from "child_process";
+// import { spawn, spawnSync } from "child_process";
+import spawnSync from "cross-spawn";
 
 import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
@@ -15,7 +16,7 @@ import { cwd } from "process";
 import { readFileSync } from "fs";
 
 // load .env
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // added a new ENV variable in docker-compose.yml
 // const isInsideDevContainer = (): boolean => {
@@ -85,23 +86,20 @@ export const isAGodspeedProject = () => {
     return;
   }
 
-  if (detectOSType() === "Windows") {
-    console.log(chalk.yellow("Coming Soon! Support for Windows OS."));
-    console.log(
-      "\nIf you would love to give it a try to our Alpha realease of Godspeed Framework. You can use these online cloud-development platform."
-    );
-    console.log(`1. CodeSandbox `);
-    console.log(`2. Github Codespaces `);
-    return;
-  }
+  // if (detectOSType() === "Windows") {
+  //   console.log(chalk.yellow("Coming Soon! Support for Windows OS."));
+  //   console.log(
+  //     "\nIf you would love to give it a try to our Alpha realease of Godspeed Framework. You can use these online cloud-development platform."
+  //   );
+  //   console.log(`1. CodeSandbox `);
+  //   console.log(`2. Github Codespaces `);
+  //   return;
+  // }
 
   const program = new Command();
 
   // @ts-ignore
-  let { version, homepage } = require(path.join(
-    __dirname,
-    "../../package.json"
-  ));
+  let { version, homepage } = require(path.join(__dirname, "../package.json"));
 
   // remove @godspeedsystems from the name
   program
@@ -150,7 +148,7 @@ export const isAGodspeedProject = () => {
     .description("run godspeed development server.")
     .action(async () => {
       if (await isAGodspeedProject()) {
-        spawn("npm", ["run", "dev"], {
+        spawnSync("npm", ["run", "dev"], {
           stdio: "inherit",
         });
       }
@@ -161,7 +159,7 @@ export const isAGodspeedProject = () => {
     .description(`clean the previous build.`)
     .action(async (options) => {
       if (isAGodspeedProject()) {
-        spawn("npm", ["run", "clean"], {
+        spawnSync("npm", ["run", "clean"], {
           stdio: "inherit",
         });
       }
@@ -174,7 +172,7 @@ export const isAGodspeedProject = () => {
     )
     .action(async () => {
       if (isAGodspeedProject()) {
-        spawn("npm", ["run", "gen-crud-api"], { stdio: "inherit" });
+        spawnSync("npm", ["run", "gen-crud-api"], { stdio: "inherit" });
       }
     });
   program
@@ -182,7 +180,7 @@ export const isAGodspeedProject = () => {
     .description("build the godspeed project.")
     .action(async (options) => {
       if (await isAGodspeedProject()) {
-        spawn("npm", ["run", "build"], {
+        spawnSync("npm", ["run", "build"], {
           stdio: "inherit",
         });
       }

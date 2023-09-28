@@ -7,6 +7,7 @@ import ejs from "ejs";
 import simpleGit from "simple-git";
 import chalk from "chalk";
 import { spawnSync } from "child_process";
+import crossSpawn from "cross-spawn";
 
 const userID = (): string => {
   if (process.platform == "linux") {
@@ -239,7 +240,7 @@ export const compileAndCopyOrJustCopy = async (
 export const installDependencies = async (projectDirPath: string) => {
   log.wait("Installing project dependencies.");
   try {
-    spawnSync("npm", ["install"], { cwd: projectDirPath });
+    crossSpawn("npm", ["install"], { cwd: projectDirPath });
   } catch (error) {}
   log.success("Successfully installed project dependencies.");
 };
