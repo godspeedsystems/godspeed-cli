@@ -36,26 +36,23 @@ const installAction = async (gsDevOpsPlugin: string) => {
 
 const list = program
   .command("list")
-  .description(`list of available godspeed devops plugins.`)
+  .description(`list of available godspeed devops plugins`)
   .option(
     "--installed",
-    "list of installed godspeed devops plugins."
+    "list of installed godspeed devops plugins"
   )
   .action(async (options: PlainObject) => {    
     if (options.installed) {
-      // fetch the list of installed devops-plugins
-      const pluginPath = path.resolve(homedir(), `.godspeed/devops-plugins/node_modules/@godspeedsystems/`);
-
-      // check if devops-plugin is installed.
-      if (!fs.existsSync(pluginPath)) {
+      if (!existsSync(path.join(gsDevopsPluginsDir, 'package.json'))) {
         console.error("No devops-plugin is installed");
         return
-      } 
+      }
 
-      console.log("List of installed devops-plugins:");
-      const installedPlugins = await readdir(pluginPath);
-      for (const installedPlugin of installedPlugins) {
-        console.log(installedPlugin);
+      // @ts-ignore
+      let { dependencies } = require(path.join(gsDevopsPluginsDir, 'package.json'));
+
+      for (const installedPlugin of Object.keys(dependencies)) {
+        console.log(`-> ${installedPlugin}`);
       }
     } else {
       // fetch the list of packages, maybe from the plugins repository
@@ -70,13 +67,13 @@ const list = program
 
       let result = availablePlugins.map(item => item.name).join('\n');
       console.log("List of available devops plugins:");
-      console.log(result);
+      console.log(`-> ${result}`);
     }    
   });
 
 const install = program
   .command("install")
-  .description(`install a godspeed devops plugin.`)
+  .description(`install a godspeed devops plugin`)
   .action(async () => {
     // fetch the list of packages, maybe from the plugins repository
     let npmSearch = spawnSync(
@@ -111,7 +108,7 @@ const install = program
 
 const remove = program
   .command("remove")
-  .description(`remove a godspeed devops plugin.`)
+  .description(`remove a godspeed devops plugin`)
   .action(async () => {
     let pluginsList;
     try {
@@ -146,7 +143,7 @@ const remove = program
 
 const update = program
   .command("update")
-  .description(`update a godspeed devops plugin.`)
+  .description(`update a godspeed devops plugin`)
   .action(async () => {
     let pluginsList;
     try {
