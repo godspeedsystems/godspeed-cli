@@ -1,7 +1,14 @@
 import { Command } from "commander";
+import spawnSync from "cross-spawn";
 import path from "path";
-import fs, { existsSync, mkdirSync, readFileSync, readSync, writeFileSync } from "fs";
-import { spawnSync } from "child_process";
+import fs, {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readSync,
+  writeFileSync,
+} from "fs";
+import { execSync } from "child_process";
 import inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import { cwd } from "process";
@@ -152,20 +159,26 @@ const add = program
   .description(`Add an eventsource/datasource plugin.`)
   .action(async () => {
     // fetch the list of packages, maybe from the plugins repository
-    let npmSearch = spawnSync(
-      "npm",
-      ["search", `@godspeedsystems/plugins`, "--json"],
-      { encoding: "utf-8" }
-    );
-    let availablePlugins:
-      | [{ name: string; description: string; version: string }]
-      | [] = JSON.parse(npmSearch.stdout) || [];
+    // let npmSearch = spawnSync(
+    //   "npm",
+    //   ["search", `@godspeedsystems/plugins`, "--json"],
+    //   { encoding: "utf-8" }
+    // );
+    // let availablePlugins:
+    //   | [{ name: string; description: string; version: string }]
+    //   | [] = JSON.parse(npmSearch.stdout) || [];
 
-    let result = availablePlugins.map(({ name, description, version }) => ({
-      name,
-      description,
-      version,
-    }));
+    // let result = availablePlugins.map(({ name, description, version }) => ({
+    //   name,
+    //   description,
+    //   version,
+    // }));
+    const command = "npm search @godspeedsystems/plugins --json";
+    const stdout = execSync(command, { encoding: "utf-8" });
+    const availablePlugins = JSON.parse(stdout.trim());
+    const pluginNames = availablePlugins.map(
+      (plugin: { name: any }) => plugin.name
+    );
 
     // list all the packages starting with plugins
     const answer = await inquirer.prompt([
@@ -174,7 +187,7 @@ const add = program
         name: "gsPlugin",
         message: "Please select godspeed plugin to install.",
         default: "latest",
-        choices: result,
+        choices: pluginNames,
         loop: false,
       },
     ]);
@@ -228,7 +241,7 @@ const removeAction = async (pluginName: string) => {
         break;
     }
 
-    spawnSync('npm', ['uninstall', pluginName], { stdio: 'inherit' });
+    spawnSync("npm", ["uninstall", pluginName], { stdio: "inherit" });
   } catch (error) {
     console.error("Unable to remove the plugin.", error);
   }
@@ -256,8 +269,8 @@ const removeModule = async (
 
     // Check if the TypeScript and YAML files exist and remove them
     await Promise.all([
-      fs.unlink(tsFilePath, (err) => { }),
-      fs.unlink(yamlFilePath, (err) => { }),
+      fs.unlink(tsFilePath, (err) => {}),
+      fs.unlink(yamlFilePath, (err) => {}),
     ]);
   } catch (error) {
     console.error(
@@ -274,19 +287,21 @@ const remove = program
     let pluginsList;
     try {
       // list all the installed plugins
-      let pkgPath = path.join(cwd(), 'package.json');
-      pluginsList = existsSync(pkgPath) ? JSON.parse(readFileSync(pkgPath, { encoding: 'utf-8' })).dependencies : [];
+      let pkgPath = path.join(cwd(), "package.json");
+      pluginsList = existsSync(pkgPath)
+        ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
+        : [];
 
       for (const pluginName in pluginsList) {
         // if the dependency name does not start with @godspeedsystems/plugin-, then it's not a godspeed plugin
-        const isGSPlugin = pluginName.includes('@godspeedsystems/plugins');
+        const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
         !isGSPlugin && delete pluginsList[pluginName];
       }
 
       // id package.json dont have "dependencies" key
       if (!pluginsList || pluginsList.length) throw new Error();
     } catch (error) {
-      console.error('There are no eventsource/datasource plugins installed.');
+      console.error("There are no eventsource/datasource plugins installed.");
       return;
     }
 
@@ -297,7 +312,10 @@ const remove = program
         name: "gsPlugin",
         message: "Please select a eventsource/datasource plugin to remove.",
         default: "",
-        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
+        choices: Object.keys(pluginsList).map((pluginName) => ({
+          name: pluginName,
+          value: pluginName,
+        })),
         loop: false,
       },
     ]);
@@ -311,19 +329,21 @@ const update = program
     let pluginsList;
     try {
       // list all the installed plugins
-      let pkgPath = path.join(cwd(), 'package.json');
-      pluginsList = existsSync(pkgPath) ? JSON.parse(readFileSync(pkgPath, { encoding: 'utf-8' })).dependencies : [];
+      let pkgPath = path.join(cwd(), "package.json");
+      pluginsList = existsSync(pkgPath)
+        ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
+        : [];
 
       for (const pluginName in pluginsList) {
         // if the dependency name does not start with @godspeedsystems/plugin-, then it's not a godspeed plugin
-        const isGSPlugin = pluginName.includes('@godspeedsystems/plugins');
+        const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
         !isGSPlugin && delete pluginsList[pluginName];
       }
 
       // id package.json dont have "dependencies" key
       if (!pluginsList || pluginsList.length) throw new Error();
     } catch (error) {
-      console.error('There are no eventsource/datasource plugins installed.');
+      console.error("There are no eventsource/datasource plugins installed.");
       return;
     }
 
@@ -334,12 +354,15 @@ const update = program
         name: "gsPlugin",
         message: "Please select a eventsource/datasource plugin to update.",
         default: "",
-        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
+        choices: Object.keys(pluginsList).map((pluginName) => ({
+          name: pluginName,
+          value: pluginName,
+        })),
         loop: false,
       },
     ]);
 
-    spawnSync('npm', ['update', answer.gsPlugin], { stdio: "inherit" });
+    spawnSync("npm", ["update", answer.gsPlugin], { stdio: "inherit" });
   });
 
 export default { add, remove, update };

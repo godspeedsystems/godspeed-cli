@@ -7,6 +7,7 @@ import ejs from "ejs";
 import simpleGit from "simple-git";
 import chalk from "chalk";
 import { spawnSync } from "child_process";
+import crossSpawn from "cross-spawn";
 
 const userID = (): string => {
   if (process.platform == "linux") {
@@ -117,7 +118,7 @@ export const generateFromExamples = async (
   }
 
   fsExtras.cpSync(
-    path.resolve(projectDirPath, `.template/examples/${exampleName}`),
+    path.resolve(projectDirPath, ".template", "examples", exampleName),
     path.resolve(projectDirPath),
     {
       recursive: true,
@@ -149,13 +150,15 @@ export const compileAndCopyOrJustCopy = async (
   templateData: PlainObject
 ) => {
   try {
-    const fileList = globSync(path.resolve(projectDirPath, sourceFolder + "/**/*"));
+    const fileList = globSync(
+      path.resolve(projectDirPath, sourceFolder + "/**/*")
+    );
     let isUpdateCall: boolean = false;
     try {
       isUpdateCall = fsExtras
         .lstatSync(path.resolve(process.cwd(), ".godspeed"))
         .isFile();
-    } catch (error) { }
+    } catch (error) {}
 
     fileList.map(async (sourceFilePath: string) => {
       if (fsExtras.lstatSync(sourceFilePath).isFile()) {
@@ -165,17 +168,17 @@ export const compileAndCopyOrJustCopy = async (
 
         relativeDestinationPath = !isUpdateCall
           ? path.relative(
-            path.resolve(projectDirPath, sourceFolder),
-            sourceFilePath
-          )
-          : path.resolve(
-            projectDirPath,
-            destinationFolder,
-            path.relative(
               path.resolve(projectDirPath, sourceFolder),
               sourceFilePath
             )
-          );
+          : path.resolve(
+              projectDirPath,
+              destinationFolder,
+              path.relative(
+                path.resolve(projectDirPath, sourceFolder),
+                sourceFilePath
+              )
+            );
 
         let finalDestinationWithFileName = path.resolve(
           projectDirPath,
@@ -229,18 +232,16 @@ export const compileAndCopyOrJustCopy = async (
         }
       }
     });
-
   } catch (error) {
     throw error;
   }
 };
 
 export const installDependencies = async (projectDirPath: string) => {
-  log.wait('Installing project dependencies.');
+  log.wait("Installing project dependencies.");
   try {
-    spawnSync('npm', ['install'], { cwd: projectDirPath });
-  } catch (error) {
-  }
+    crossSpawn("npm", ["install"], { cwd: projectDirPath });
+  } catch (error) {}
   log.success("Successfully installed project dependencies.");
 };
 
@@ -276,7 +277,7 @@ export const generateProjectFromDotGodspeed = async (
     // generate all the dot config files
     if (!isUpdate) {
       await fsExtras.cpSync(
-        path.resolve(projectDirPath, ".template/dot-configs/"),
+        path.resolve(projectDirPath, ".template", "dot-configs"),
         path.resolve(projectDirPath),
         { recursive: true }
       );
@@ -300,7 +301,7 @@ export const generateProjectFromDotGodspeed = async (
       // create folder structure
       if (exampleName) {
         fsExtras.cpSync(
-          path.resolve(projectDirPath, `.template/examples/${exampleName}`),
+          path.resolve(projectDirPath, ".template", "examples", exampleName),
           path.resolve(projectDirPath),
           {
             recursive: true,
@@ -308,7 +309,7 @@ export const generateProjectFromDotGodspeed = async (
         );
       } else {
         fsExtras.cpSync(
-          path.resolve(projectDirPath, `.template/defaults`),
+          path.resolve(projectDirPath, ".template", "defaults"),
           path.resolve(projectDirPath),
           {
             recursive: true,

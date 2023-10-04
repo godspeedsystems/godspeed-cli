@@ -1,16 +1,13 @@
 import { Command } from "commander";
+import spawnSync from "cross-spawn";
 import path from "path";
 import { homedir } from "node:os";
 import fs, { existsSync, readFileSync } from "fs";
-import { spawnSync } from "child_process";
+import { execSync } from "child_process";
 import inquirer from "inquirer";
 const program = new Command();
 
-const gsDevopsPluginsDir = path.join(
-  homedir(),
-  ".godspeed",
-  "devops-plugins"
-);
+const gsDevopsPluginsDir = path.join(homedir(), ".godspeed", "devops-plugins");
 
 const addAction = async (gsDevOpsPlugin: string) => {
   try {
@@ -18,8 +15,8 @@ const addAction = async (gsDevOpsPlugin: string) => {
       fs.mkdirSync(gsDevopsPluginsDir, { recursive: true });
     }
 
-    if (!existsSync(path.join(gsDevopsPluginsDir, 'package.json'))) {
-      spawnSync('npm', ['init', '--yes'], { cwd: gsDevopsPluginsDir })
+    if (!existsSync(path.join(gsDevopsPluginsDir, "package.json"))) {
+      spawnSync("npm", ["init", "--yes"], { cwd: gsDevopsPluginsDir });
     }
 
     // npm install <gsDevOpsPlugin> in the <gsDevopsPluginsDir> directory
@@ -37,20 +34,29 @@ const add = program
   .description(`Add a godspeed devops plugin.`)
   .action(async () => {
     // fetch the list of packages, maybe from the plugins repository
-    let npmSearch = spawnSync(
-      "npm",
-      ["search", `@godspeedsystems/plugins`, "--json"],
-      { encoding: "utf-8" }
+    // let npmSearch = execSync(
+    //   "npm",
+    //   ["search", `@godspeedsystems/plugins`, "--json"],
+    //   { encoding: "utf-8" }
+    // );
+    const command = "npm search @godspeedsystems/plugins --json";
+    const stdout = execSync(command, { encoding: "utf-8" });
+    const availablePlugins = JSON.parse(stdout.trim());
+    const pluginNames = availablePlugins.map(
+      (plugin: { name: any }) => plugin.name
     );
-    let availablePlugins:
-      | [{ name: string; description: string; version: string }]
-      | [] = JSON.parse(npmSearch.stdout) || [];
 
-    let result = availablePlugins.map(({ name, description, version }) => ({
-      name,
-      description,
-      version,
-    }));
+    // Print the list of plugin names
+    // console.log(availablePlugins);
+    // let availablePlugins:
+    // | [{ name: string; description: string; version: string }]
+    // | [] = JSON.parse(npmSearch.stdout) || [];
+
+    // let result = availablePlugins.map(({ name:string, description: string, version: string }) => ({
+    //   name,
+    //   description,
+    //   version,
+    // }));
 
     // list all the packages starting with plugins
     const answer = await inquirer.prompt([
@@ -59,12 +65,12 @@ const add = program
         name: "gsDevOpsPlugin",
         message: "Please select devops plugin to install.",
         default: "latest",
-        choices: result,
+        choices: pluginNames,
         loop: false,
       },
     ]);
 
-    await addAction(answer.gsDevOpsPlugin)
+    await addAction(answer.gsDevOpsPlugin);
   });
 
 const remove = program
@@ -74,12 +80,16 @@ const remove = program
     let pluginsList;
     try {
       // list all the installed plugins
-      pluginsList = JSON.parse(readFileSync(path.join(gsDevopsPluginsDir, 'package.json'), { encoding: 'utf-8' })).dependencies;
+      pluginsList = JSON.parse(
+        readFileSync(path.join(gsDevopsPluginsDir, "package.json"), {
+          encoding: "utf-8",
+        })
+      ).dependencies;
 
       // id package.json dont have "dependencies" key
       if (!pluginsList) throw new Error();
     } catch (error) {
-      console.error('There are no devops plugins installed.');
+      console.error("There are no devops plugins installed.");
       return;
     }
 
@@ -90,7 +100,10 @@ const remove = program
         name: "gsDevOpsPlugin",
         message: "Please select a devops plugin to remove.",
         default: "",
-        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
+        choices: Object.keys(pluginsList).map((pluginName) => ({
+          name: pluginName,
+          value: pluginName,
+        })),
         loop: false,
       },
     ]);
@@ -110,12 +123,16 @@ const update = program
     try {
       // list all the installed plugins
       // if, file not found, throws error
-      pluginsList = JSON.parse(readFileSync(path.join(gsDevopsPluginsDir, 'package.json'), { encoding: 'utf-8' })).dependencies;
+      pluginsList = JSON.parse(
+        readFileSync(path.join(gsDevopsPluginsDir, "package.json"), {
+          encoding: "utf-8",
+        })
+      ).dependencies;
 
       // id package.json dont have "dependencies" key
       if (!pluginsList) throw new Error();
     } catch (error) {
-      console.error('There are no devops plugins installed.');
+      console.error("There are no devops plugins installed.");
       return;
     }
 
@@ -126,7 +143,10 @@ const update = program
         name: "gsDevOpsPlugin",
         message: "Please select devops plugin to update.",
         default: "",
-        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
+        choices: Object.keys(pluginsList).map((pluginName) => ({
+          name: pluginName,
+          value: pluginName,
+        })),
         loop: false,
       },
     ]);

@@ -7,7 +7,10 @@ import path from "path";
 //   prepareToStartContainers,
 // } from "../../utils/dockerUtility";
 // import checkPrerequisite from "../../utils/checkPrerequisite";
-import { installDependencies, validateAndCreateProjectDirectory } from "../../utils/index";
+import {
+  installDependencies,
+  validateAndCreateProjectDirectory,
+} from "../../utils/index";
 import { copyingLocalTemplate } from "../../utils";
 import { cloneProjectTemplate } from "../../utils";
 import { generateFromExamples } from "../../utils";
@@ -80,9 +83,9 @@ export default async function create(
     );
 
     console.log(
-      `${chalk.green("Use `godspeed help` command for available commands.")} ${chalk.yellow(
-        "Happy building microservices with Godspeed!"
-      )}.`
+      `${chalk.green(
+        "Use `godspeed help` command for available commands."
+      )} ${chalk.yellow("Happy building microservices with Godspeed!")}.`
     );
 
     // const composeOptions = await getComposeOptions();
