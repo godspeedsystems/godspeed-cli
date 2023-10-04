@@ -8,45 +8,43 @@ export const defaultCreate = () => {
   describe("Godspeed CLI Test Suite for create command", function () {
     this.timeout(0);
     const folderName = "godspeed";
-
+    const tempDirectory = "sandbox";
     let cliOp: string; // Declare cliOp outside before() to make it accessible
 
     before(function (done) {
+      fs.mkdirSync(tempDirectory, { recursive: true });
       // Execute your CLI command that creates a folder
-      const command = `node ../lib/index.js create ${folderName}`;
-
+      const command = `cd ${tempDirectory} && node ../lib/index.js create ${folderName}`;
       exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error(`Error executing CLI: ${error}`);
           return done(error); // Pass the error to done() to fail the test
         }
-
         cliOp = stdout; // Assign the result to cliOp
         done();
       });
     });
 
-    it("Cloning a template", function () {
-      //   expect(cliOp).to.include("Cloning template successful.");
+    after(function () {
+      // Cleanup the temporary directory after the test suite
+      fs.rmSync(tempDirectory, { recursive: true, force: true });
+    });
+
+    it("Cloning a template", () => {
       expect(cliOp).not.to.include("Not able to reach template repository.");
     });
 
-    it("Creating a project folder", function () {
-      fs.stat(folderName, (err, stats) => {
-        if (err) {
-          console.error(`Error checking folder existence: ${err}`);
-          return;
-        }
-        expect(stats.isDirectory()).to.be.true;
-      });
+    it("Creating a project folder", () => {
+      const folderPath = path.join(process.cwd(), tempDirectory, folderName);
+      const folderExists = fs.existsSync(folderPath);
+      expect(folderExists).to.be.true;
     });
 
-    it("Generating project files", function () {
+    it("Generating project files", () => {
       expect(cliOp).to.include(
         `Successfully generated godspeed project files.`
       );
-      const folderPath = path.join(process.cwd(), folderName);
-
+      const folderPath = path.join(process.cwd(), tempDirectory, folderName);
       // Check if the main folder exists
       assert.isTrue(fs.existsSync(folderPath), "Main folder exists.");
 
@@ -77,9 +75,9 @@ export const defaultCreate = () => {
       );
     });
 
-    it("Installing project dependencies", function () {
+    it("Installing project dependencies", () => {
       expect(cliOp).to.include("Successfully installed project dependencies");
-      const folderPath = path.join(process.cwd(), folderName);
+      const folderPath = path.join(process.cwd(), tempDirectory, folderName);
       // Check if the "node_modules"  exists within the project folder
       const datasourcesPath = path.join(folderPath, "node_modules");
       assert.isTrue(

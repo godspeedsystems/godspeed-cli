@@ -8,43 +8,44 @@ export const helloWorld = () => {
   describe("Godspeed CLI Test Suite for create command with --from-example hello-world", function () {
     this.timeout(0);
     const folderName = "hello-world";
+    const exampleName = "hello-world";
+    const tempDirectory = "sandbox";
     let cliOp: string; // Declare cliOp outside before() to make it accessible
 
     before(function (done) {
+      fs.mkdirSync(tempDirectory, { recursive: true });
       // Execute your CLI command that creates a folder
-      const command = `node ../lib/index.js create ${folderName} --from-example hello-world`;
-
+      const command = `cd ${tempDirectory} && node ../lib/index.js create ${folderName} --from-example ${exampleName}`;
       exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error(`Error executing CLI: ${error}`);
           return done(error); // Pass the error to done() to fail the test
         }
-
         cliOp = stdout; // Assign the result to cliOp
         done();
       });
     });
 
+    after(function () {
+      // Cleanup the temporary directory after the test suite
+      fs.rmSync(tempDirectory, { recursive: true, force: true });
+    });
+
     it("Cloning a template", function () {
-      //   expect(cliOp).to.include("Cloning template successful.");
       expect(cliOp).not.to.include("Not able to reach template repository.");
     });
 
-    it("Creating a project folder", function () {
-      fs.stat(folderName, (err, stats) => {
-        if (err) {
-          console.error(`Error checking folder existence: ${err}`);
-          return;
-        }
-        expect(stats.isDirectory()).to.be.true;
-      });
+    it("Creating a project folder", () => {
+      const folderPath = path.join(process.cwd(), tempDirectory, folderName);
+      const folderExists = fs.existsSync(folderPath);
+      expect(folderExists).to.be.true;
     });
 
     it("Generating project files", function () {
       expect(cliOp).to.include(
         `Successfully generated godspeed project files.`
       );
-      const folderPath = path.join(process.cwd(), folderName);
+      const folderPath = path.join(process.cwd(), tempDirectory, folderName);
 
       // Check if the main folder exists
       assert.isTrue(fs.existsSync(folderPath), "Main folder exists.");
@@ -78,7 +79,7 @@ export const helloWorld = () => {
 
     it("Installing project dependencies", function () {
       expect(cliOp).to.include("Successfully installed project dependencies");
-      const folderPath = path.join(process.cwd(), folderName);
+      const folderPath = path.join(process.cwd(), tempDirectory, folderName);
       // Check if the "node_modules" subfolder exists within the project folder
       const datasourcesPath = path.join(folderPath, "node_modules");
       assert.isTrue(
