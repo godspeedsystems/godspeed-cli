@@ -8,14 +8,14 @@
     "godspeed": "./lib/index.js"
   },
   "scripts": {
-    "clean": "rm -rf lib/ dist/",
+    "clean": "rm -rf lib/ dist-test/",
     "build:prod": "tsc --project tsconfig.json",
     "build:test:prod": "tsc --project test/tsconfig.json",
     "build:dev": "tsc --project tsconfig.json --sourceMap --watch",
     "prepublishOnly": "npm run clean && npm run build:prod",
     "local": "sudo npm uninstall -g && sudo npm install -g && godspeed",
     "build:test": "tsc --project test/tsconfig.json --sourceMap --watch",
-    "test": " mocha dist-test/commands/create/index.js"
+    "test": " mocha dist-test/commands/index.js"
   },
   "dependencies": {
     "@godspeedsystems/core": "latest",

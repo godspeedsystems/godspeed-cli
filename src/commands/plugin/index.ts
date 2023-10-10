@@ -12,14 +12,21 @@ import { execSync } from "child_process";
 import inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import { cwd } from "process";
+import chalk from "chalk";
+
 const program = new Command();
 
 type ModuleType = "DS" | "ES" | "BOTH";
 
 const addAction = async (pluginName: string) => {
   // install that package
-  spawnSync("npm", ["install", `${pluginName}`], { stdio: "inherit" });
-
+  spawnSync.sync(
+    "npm",
+    ["install", `${pluginName}`, "--quiet", "--no-warnings", "--silent"],
+    {
+      stdio: "inherit",
+    }
+  );
   // create folder for eventsource or datasource respective file
   try {
     const Module = await import(
@@ -155,45 +162,53 @@ export default EventSource;
 };
 
 const add = program
-  .command("add")
+  .command("add [pluginName]")
   .description(`Add an eventsource/datasource plugin.`)
-  .action(async () => {
-    // fetch the list of packages, maybe from the plugins repository
-    // let npmSearch = spawnSync(
-    //   "npm",
-    //   ["search", `@godspeedsystems/plugins`, "--json"],
-    //   { encoding: "utf-8" }
-    // );
-    // let availablePlugins:
-    //   | [{ name: string; description: string; version: string }]
-    //   | [] = JSON.parse(npmSearch.stdout) || [];
+  .action(async (pluginName) => {
+    let chosenPluginName = pluginName;
 
-    // let result = availablePlugins.map(({ name, description, version }) => ({
-    //   name,
-    //   description,
-    //   version,
-    // }));
-    const command = "npm search @godspeedsystems/plugins --json";
-    const stdout = execSync(command, { encoding: "utf-8" });
-    const availablePlugins = JSON.parse(stdout.trim());
-    const pluginNames = availablePlugins.map(
-      (plugin: { name: any }) => plugin.name
+    if (!chosenPluginName) {
+      const command = "npm search @godspeedsystems/plugins --json";
+      const stdout = execSync(command, { encoding: "utf-8" });
+      console.log(stdout);
+      const availablePlugins = JSON.parse(stdout.trim());
+
+      const pluginNames = availablePlugins.map((plugin: any) => plugin.name);
+
+      if (pluginNames.length === 0) {
+        console.error("No plugins found.");
+        process.exit(1);
+      }
+
+      // Prompt the user to select a plugin
+      const answer = await inquirer.prompt([
+        {
+          type: "list",
+          name: "gsPlugin",
+          message: "Please select a godspeed plugin to install.",
+          default: "latest",
+          choices: pluginNames,
+          loop: false,
+        },
+      ]);
+
+      chosenPluginName = answer.gsPlugin;
+    }
+
+    // Make sure a plugin name is provided or selected
+    if (!chosenPluginName) {
+      console.error("Please provide a plugin name.");
+      process.exit(1);
+    }
+
+    // Call the add action with the specified pluginName
+    await addAction(chosenPluginName);
+    console.log(
+      chalk.cyan("\nFor detailed documentation and examples, visit:")
     );
-
-    // list all the packages starting with plugins
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
-        name: "gsPlugin",
-        message: "Please select godspeed plugin to install.",
-        default: "latest",
-        choices: pluginNames,
-        loop: false,
-      },
-    ]);
-
-    // call the add action with pluginName
-    await addAction(answer.gsPlugin);
+    console.log(
+      chalk.yellow.bold(`https://www.npmjs.com/package/${chosenPluginName}\n`)
+    );
   });
 
 const removeAction = async (pluginName: string) => {
@@ -281,45 +296,52 @@ const removeModule = async (
 };
 
 const remove = program
-  .command("remove")
-  .description(`Remove an eventsource/datasource plugin.`)
-  .action(async () => {
-    let pluginsList;
-    try {
-      // list all the installed plugins
-      let pkgPath = path.join(cwd(), "package.json");
-      pluginsList = existsSync(pkgPath)
-        ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
-        : [];
+  .command("remove [pluginName]")
+  .description("Remove an eventsource/datasource plugin.")
+  .action(async (pluginName) => {
+    if (pluginName) {
+      await removeAction(pluginName);
+    } else {
+      let pluginsList;
+      try {
+        // List all the installed plugins
+        let pkgPath = path.join(cwd(), "package.json");
+        pluginsList = existsSync(pkgPath)
+          ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" }))
+              .dependencies
+          : {};
 
-      for (const pluginName in pluginsList) {
-        // if the dependency name does not start with @godspeedsystems/plugin-, then it's not a godspeed plugin
-        const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
-        !isGSPlugin && delete pluginsList[pluginName];
+        for (const pluginName in pluginsList) {
+          const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
+          !isGSPlugin && delete pluginsList[pluginName];
+        }
+
+        // If package.json doesn't have "dependencies" key or no valid plugins are found
+        if (!pluginsList || Object.keys(pluginsList).length === 0) {
+          throw new Error();
+        }
+      } catch (error) {
+        console.error("There are no eventsource/datasource plugins installed.");
+        return;
       }
 
-      // id package.json dont have "dependencies" key
-      if (!pluginsList || pluginsList.length) throw new Error();
-    } catch (error) {
-      console.error("There are no eventsource/datasource plugins installed.");
-      return;
-    }
+      // Ask the user to select the plugin to remove using a dropdown
+      const answer = await inquirer.prompt([
+        {
+          type: "list",
+          name: "gsPlugin",
+          message: "Please select an eventsource/datasource plugin to remove:",
+          default: "",
+          choices: Object.keys(pluginsList).map((pluginName) => ({
+            name: pluginName,
+            value: pluginName,
+          })),
+          loop: false,
+        },
+      ]);
 
-    // ask user to select the plugin to remove
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
-        name: "gsPlugin",
-        message: "Please select a eventsource/datasource plugin to remove.",
-        default: "",
-        choices: Object.keys(pluginsList).map((pluginName) => ({
-          name: pluginName,
-          value: pluginName,
-        })),
-        loop: false,
-      },
-    ]);
-    await removeAction(answer.gsPlugin);
+      await removeAction(answer.gsPlugin);
+    }
   });
 
 const update = program
