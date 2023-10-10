@@ -33,7 +33,7 @@ export const pluginRemove = () => {
     }
 
     for (const pluginName of pluginNames) {
-      it(`Plugin ${pluginName} is installed and respective files created `, async () => {
+      it(`Plugin ${pluginName} is uninstalled and respective files removed `, async () => {
         const Module = await import(
           path.join(folderPath, "node_modules", pluginName)
         );

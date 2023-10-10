@@ -5,7 +5,7 @@ import * as fs from "fs";
 import path from "path";
 
 export const helloWorld = () => {
-  describe("Godspeed CLI Test Suite for create command with --from-example hello-world", function () {
+  describe("For create command with --from-example hello-world", function () {
     this.timeout(0);
     const folderName = "hello-world";
     const exampleName = "hello-world";
@@ -13,7 +13,6 @@ export const helloWorld = () => {
     let cliOp: string; // Declare cliOp outside before() to make it accessible
 
     before(function (done) {
-      fs.mkdirSync(tempDirectory, { recursive: true });
       // Execute your CLI command that creates a folder
       const command = `cd ${tempDirectory} && node ../lib/index.js create ${folderName} --from-example ${exampleName}`;
       exec(command, (error, stdout, stderr) => {
@@ -24,11 +23,6 @@ export const helloWorld = () => {
         cliOp = stdout; // Assign the result to cliOp
         done();
       });
-    });
-
-    after(function () {
-      // Cleanup the temporary directory after the test suite
-      fs.rmSync(tempDirectory, { recursive: true, force: true });
     });
 
     it("Cloning a template", function () {
