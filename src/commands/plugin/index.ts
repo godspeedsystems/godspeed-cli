@@ -170,7 +170,6 @@ const add = program
     if (!chosenPluginName) {
       const command = "npm search @godspeedsystems/plugins --json";
       const stdout = execSync(command, { encoding: "utf-8" });
-      console.log(stdout);
       const availablePlugins = JSON.parse(stdout.trim());
 
       const pluginNames = availablePlugins.map((plugin: any) => plugin.name);
@@ -284,8 +283,8 @@ const removeModule = async (
 
     // Check if the TypeScript and YAML files exist and remove them
     await Promise.all([
-      fs.unlink(tsFilePath, (err) => {}),
-      fs.unlink(yamlFilePath, (err) => {}),
+      fs.unlink(tsFilePath, (err) => { }),
+      fs.unlink(yamlFilePath, (err) => { }),
     ]);
   } catch (error) {
     console.error(
@@ -308,7 +307,7 @@ const remove = program
         let pkgPath = path.join(cwd(), "package.json");
         pluginsList = existsSync(pkgPath)
           ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" }))
-              .dependencies
+            .dependencies
           : {};
 
         for (const pluginName in pluginsList) {
