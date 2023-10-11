@@ -73,7 +73,32 @@ export const isAGodspeedProject = () => {
 };
 
 (async function main() {
-  console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
+  // console.log(chalk.bold(chalk.green("\n~~~~~~ Godspeed CLI ~~~~~~\n")));
+  console.log("\n");
+  console.log(
+    chalk.magenta("       ,_,   ") +
+      chalk.red.bold("--------------------------------------")
+  );
+  console.log(
+    chalk.bold("      (o") +
+      chalk.red.bold(",") +
+      chalk.yellow.bold("o") +
+      chalk.bold(")  ") +
+      chalk.red.bold("|") +
+      chalk.yellow.bold("        Welcome to Godspeed         ") +
+      chalk.red.bold("|")
+  );
+  console.log(
+    chalk.blue("      {___}  ") +
+      chalk.red.bold("|") +
+      chalk.yellow.bold("    World's First Meta Framework    ") +
+      chalk.red.bold("|")
+  );
+  console.log(
+    chalk.bold('       " "   ') +
+      chalk.red.bold("--------------------------------------")
+  );
+  console.log("\n");
   const program = new Command();
 
   // @ts-ignore

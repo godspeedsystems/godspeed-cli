@@ -30,90 +30,90 @@ const addAction = async (gsDevOpsPlugin: string) => {
 };
 
 const add = program
-  .command("add")
+  .command("add [pluginName]")
   .description(`Add a godspeed devops plugin.`)
-  .action(async () => {
-    // fetch the list of packages, maybe from the plugins repository
-    // let npmSearch = execSync(
-    //   "npm",
-    //   ["search", `@godspeedsystems/plugins`, "--json"],
-    //   { encoding: "utf-8" }
-    // );
-    const command = "npm search @godspeedsystems/plugins --json";
-    const stdout = execSync(command, { encoding: "utf-8" });
-    const availablePlugins = JSON.parse(stdout.trim());
-    const pluginNames = availablePlugins.map(
-      (plugin: { name: any }) => plugin.name
-    );
+  .action(async (pluginName) => {
+    let chosenPluginName = pluginName;
 
-    // Print the list of plugin names
-    // console.log(availablePlugins);
-    // let availablePlugins:
-    // | [{ name: string; description: string; version: string }]
-    // | [] = JSON.parse(npmSearch.stdout) || [];
+    if (!chosenPluginName) {
+      const command = "npm search @godspeedsystems/plugins --json";
+      const stdout = execSync(command, { encoding: "utf-8" });
+      const availablePlugins = JSON.parse(stdout.trim());
+      const pluginNames = availablePlugins.map((plugin: any) => plugin.name);
+      const answer = await inquirer.prompt([
+        {
+          type: "list",
+          name: "gsDevOpsPlugin",
+          message: "Please select devops plugin to install.",
+          default: "latest",
+          choices: pluginNames,
+          loop: false,
+        },
+      ]);
+      chosenPluginName = answer.gsDevOpsPlugin;
+    }
 
-    // let result = availablePlugins.map(({ name:string, description: string, version: string }) => ({
-    //   name,
-    //   description,
-    //   version,
-    // }));
+    // Make sure a plugin name is provided or selected
+    if (!chosenPluginName) {
+      console.error("Please provide a plugin name.");
+      process.exit(1);
+    }
 
-    // list all the packages starting with plugins
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
-        name: "gsDevOpsPlugin",
-        message: "Please select devops plugin to install.",
-        default: "latest",
-        choices: pluginNames,
-        loop: false,
-      },
-    ]);
-
-    await addAction(answer.gsDevOpsPlugin);
+    // Call the add action with the specified pluginName
+    await addAction(chosenPluginName);
   });
 
 const remove = program
-  .command("remove")
-  .description(`Remove a godspeed devops plugin.`)
-  .action(async () => {
-    let pluginsList;
-    try {
-      // list all the installed plugins
-      pluginsList = JSON.parse(
-        readFileSync(path.join(gsDevopsPluginsDir, "package.json"), {
-          encoding: "utf-8",
-        })
-      ).dependencies;
+  .command("remove [pluginName]")
+  .description("Remove a godspeed devops plugin.")
+  .action(async (pluginName) => {
+    if (pluginName) {
+      // If the optional argument is provided, directly remove that plugin
+      uninstallDevOpsPlugin(pluginName);
+    } else {
+      let pluginsList;
+      try {
+        // List all the installed plugins
+        pluginsList = JSON.parse(
+          readFileSync(path.join(gsDevopsPluginsDir, "package.json"), {
+            encoding: "utf-8",
+          })
+        ).dependencies;
 
-      // id package.json dont have "dependencies" key
-      if (!pluginsList) throw new Error();
-    } catch (error) {
-      console.error("There are no devops plugins installed.");
-      return;
+        // If package.json doesn't have "dependencies" key
+        if (!pluginsList) throw new Error();
+      } catch (error) {
+        console.error("There are no devops plugins installed.");
+        return;
+      }
+
+      // Ask the user to select the plugin to remove
+      const answer = await inquirer.prompt([
+        {
+          type: "list",
+          name: "gsDevOpsPlugin",
+          message: "Please select a devops plugin to remove.",
+          default: "",
+          choices: Object.keys(pluginsList).map((pluginName) => ({
+            name: pluginName,
+            value: pluginName,
+          })),
+          loop: false,
+        },
+      ]);
+
+      // Remove the selected plugin
+      uninstallDevOpsPlugin(answer.gsDevOpsPlugin);
     }
-
-    // ask user to select the plugin to remove
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
-        name: "gsDevOpsPlugin",
-        message: "Please select a devops plugin to remove.",
-        default: "",
-        choices: Object.keys(pluginsList).map((pluginName) => ({
-          name: pluginName,
-          value: pluginName,
-        })),
-        loop: false,
-      },
-    ]);
-
-    // npm install <gsDevOpsPlugin> in the <gsDevopsPluginsDir> directory
-    spawnSync("npm", ["uninstall", `${answer.gsDevOpsPlugin}`], {
-      cwd: gsDevopsPluginsDir,
-      stdio: "inherit",
-    });
   });
+
+function uninstallDevOpsPlugin(pluginName: any) {
+  // Use npm to uninstall the plugin
+  const result = spawnSync("npm", ["uninstall", `${pluginName}`], {
+    cwd: gsDevopsPluginsDir,
+    stdio: "inherit",
+  });
+}
 
 const update = program
   .command("update")

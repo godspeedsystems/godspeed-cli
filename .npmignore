@@ -6,3 +6,7 @@ tsconfig.json
 tsconfig.prod.json
 sandbox/
 .vscode/
+dist-test/
+test/
+logo.png
+.github/

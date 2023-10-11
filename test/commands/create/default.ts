@@ -5,14 +5,13 @@ import * as fs from "fs";
 import path from "path";
 
 export const defaultCreate = () => {
-  describe("Godspeed CLI Test Suite for create command", function () {
+  describe("For create command with no argument(default)", function () {
     this.timeout(0);
     const folderName = "godspeed";
     const tempDirectory = "sandbox";
     let cliOp: string; // Declare cliOp outside before() to make it accessible
 
     before(function (done) {
-      fs.mkdirSync(tempDirectory, { recursive: true });
       // Execute your CLI command that creates a folder
       const command = `cd ${tempDirectory} && node ../lib/index.js create ${folderName}`;
       exec(command, (error, stdout, stderr) => {
@@ -23,11 +22,6 @@ export const defaultCreate = () => {
         cliOp = stdout; // Assign the result to cliOp
         done();
       });
-    });
-
-    after(function () {
-      // Cleanup the temporary directory after the test suite
-      fs.rmSync(tempDirectory, { recursive: true, force: true });
     });
 
     it("Cloning a template", () => {
