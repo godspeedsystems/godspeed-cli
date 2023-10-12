@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import spawnCommand from "cross-spawn";
 import spawnSync from "cross-spawn";
 import path from "path";
 import fs, {
@@ -13,6 +14,7 @@ import inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import { cwd } from "process";
 import chalk from "chalk";
+import ora from 'ora';
 
 const program = new Command();
 
@@ -20,13 +22,35 @@ type ModuleType = "DS" | "ES" | "BOTH";
 
 const addAction = async (pluginName: string) => {
   // install that package
-  spawnSync.sync(
-    "npm",
-    ["install", `${pluginName}`, "--quiet", "--no-warnings", "--silent"],
-    {
-      stdio: "inherit",
+  const spinner = ora({
+    text: 'Installing plugin... ',
+    spinner: {
+    frames: ['🌍 ', '🌎 ', '🌏 ', '🌐 ', '🌑 ', '🌒 ', '🌓 ', '🌔 '],
+      interval: 180,
+    },
+  });
+
+  async function installPlugin(pluginName: string) {
+    try {
+      spinner.start();
+  
+      // Use spawnCommand instead of spawnSync
+      const child = spawnCommand('npm', ['install', `${pluginName}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
+        stdio: 'inherit', // Redirect output
+      });
+      child.on('close', () => {
+        spinner.stop(); // Stop the spinner when the installation is complete
+        console.log('\nPlugin installed successfully!');
+        console.log(chalk.cyan.bold('Happy coding with Godspeed! 🚀🎉\n'));
+      });
+    } catch (error:any) {
+      spinner.stop(); // Stop the spinner in case of an error
+      console.error('Error during installation:', error.message);
     }
-  );
+  }
+
+  // Call the installPlugin function
+  await installPlugin(pluginName);
   // create folder for eventsource or datasource respective file
   try {
     const Module = await import(
@@ -164,50 +188,55 @@ export default EventSource;
 const add = program
   .command("add [pluginName]")
   .description(`Add an eventsource/datasource plugin.`)
-  .action(async (pluginName) => {
-    let chosenPluginName = pluginName;
+  .action(async (pluginName: string) => {
+    let givenPluginName = pluginName;
 
-    if (!chosenPluginName) {
-      const command = "npm search @godspeedsystems/plugins --json";
-      const stdout = execSync(command, { encoding: "utf-8" });
-      const availablePlugins = JSON.parse(stdout.trim());
+    const command = "npm search @godspeedsystems/plugins --json";
+    const stdout = execSync(command, { encoding: "utf-8" });
+    const availablePlugins = JSON.parse(stdout.trim());
+    const pluginNames: string[] = availablePlugins.map(
+      (plugin: any) => plugin.name
+    );
+    let chosenPluginName: string;
 
-      const pluginNames = availablePlugins.map((plugin: any) => plugin.name);
-
+    if (!givenPluginName) {
       if (pluginNames.length === 0) {
         console.error("No plugins found.");
         process.exit(1);
+      } else {
+        // Prompt the user to select a plugin
+        const answer = await inquirer.prompt([
+          {
+            type: "list",
+            name: "gsPlugin",
+            message: "Please select a godspeed plugin to install.",
+            default: "latest",
+            choices: pluginNames,
+            loop: false,
+          },
+        ]);
+
+        chosenPluginName = answer.gsPlugin;
+
+        await addAction(chosenPluginName);
       }
-
-      // Prompt the user to select a plugin
-      const answer = await inquirer.prompt([
-        {
-          type: "list",
-          name: "gsPlugin",
-          message: "Please select a godspeed plugin to install.",
-          default: "latest",
-          choices: pluginNames,
-          loop: false,
-        },
-      ]);
-
-      chosenPluginName = answer.gsPlugin;
+    } else {
+      if (pluginNames.includes(givenPluginName)) {
+        chosenPluginName = givenPluginName;
+        await addAction(chosenPluginName);
+        console.log(
+          chalk.cyan("\nFor detailed documentation and examples, visit:")
+        );
+        console.log(
+          chalk.yellow.bold(
+            `https://www.npmjs.com/package/${chosenPluginName}\n`
+          )
+        );
+      } else {
+        console.error(chalk.red("\nPlease provide a valid plugin name.\n"));
+        process.exit(1);
+      }
     }
-
-    // Make sure a plugin name is provided or selected
-    if (!chosenPluginName) {
-      console.error("Please provide a plugin name.");
-      process.exit(1);
-    }
-
-    // Call the add action with the specified pluginName
-    await addAction(chosenPluginName);
-    console.log(
-      chalk.cyan("\nFor detailed documentation and examples, visit:")
-    );
-    console.log(
-      chalk.yellow.bold(`https://www.npmjs.com/package/${chosenPluginName}\n`)
-    );
   });
 
 const removeAction = async (pluginName: string) => {
@@ -283,8 +312,8 @@ const removeModule = async (
 
     // Check if the TypeScript and YAML files exist and remove them
     await Promise.all([
-      fs.unlink(tsFilePath, (err) => { }),
-      fs.unlink(yamlFilePath, (err) => { }),
+      fs.unlink(tsFilePath, (err) => {}),
+      fs.unlink(yamlFilePath, (err) => {}),
     ]);
   } catch (error) {
     console.error(
@@ -297,7 +326,7 @@ const removeModule = async (
 const remove = program
   .command("remove [pluginName]")
   .description("Remove an eventsource/datasource plugin.")
-  .action(async (pluginName) => {
+  .action(async (pluginName: string) => {
     if (pluginName) {
       await removeAction(pluginName);
     } else {
@@ -307,7 +336,7 @@ const remove = program
         let pkgPath = path.join(cwd(), "package.json");
         pluginsList = existsSync(pkgPath)
           ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" }))
-            .dependencies
+              .dependencies
           : {};
 
         for (const pluginName in pluginsList) {
@@ -346,7 +375,7 @@ const remove = program
 const update = program
   .command("update")
   .description(`Update an eventsource/datasource plugin.`)
-  .action(async (pluginName) => {
+  .action(async (pluginName: string) => {
     let pluginsList;
     try {
       // list all the installed plugins
