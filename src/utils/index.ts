@@ -252,6 +252,7 @@ export const installDependencies = async (projectDirPath: string, projectName:st
     try {
       // Use spawnCommand instead of spawnSync
       const child = spawnCommand('npm', ['install', '--quiet', '--no-warnings', '--silent', '--progress=false'], {
+        cwd: projectDirPath,
         stdio: 'inherit', // Redirect output
       });
       child.on('close', () => {
@@ -267,7 +268,7 @@ export const installDependencies = async (projectDirPath: string, projectName:st
         console.log(
           `${chalk.green(
             "Use `godspeed help` command for available commands."
-          )} ${chalk.hex("#bf2feb").bold("\n\nHappy building microservices with Godspeed! 🚀🎉\n")}`
+          )} ${chalk.green.bold("\n\nHappy building microservices with Godspeed! 🚀🎉\n")}`
         );
       });
     } catch (error:any) {

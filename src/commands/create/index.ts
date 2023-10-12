@@ -72,7 +72,7 @@ export default async function create(
     godspeedOptions,
     options.fromExample
   );
-  await installDependencies(projectDirPath,projectName,);
+  await installDependencies(projectDirPath,projectName);
 
   try {
     // the NEW flow [without containers]

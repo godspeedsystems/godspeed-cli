@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import spawnCommand from "cross-spawn";
-import spawnSync from "cross-spawn";
+import {spawnSync} from "child_process";
 import path from "path";
 import fs, {
   existsSync,
@@ -30,27 +30,67 @@ const addAction = async (pluginName: string) => {
     },
   });
 
-  async function installPlugin(pluginName: string) {
-    try {
-      spinner.start();
   
       // Use spawnCommand instead of spawnSync
-      const child = spawnCommand('npm', ['install', `${pluginName}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
-        stdio: 'inherit', // Redirect output
-      });
-      child.on('close', () => {
+      // const child = spawnCommand('npm', ['install', `${pluginName}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
+      //   stdio: 'inherit', // Redirect output
+      // });
+      // child.on('close', () => {
+      //   spinner.stop(); // Stop the spinner when the installation is complete
+      //   console.log('\nPlugin installed successfully!');
+      //   console.log(chalk.cyan.bold('Happy coding with Godspeed! 🚀🎉\n'));
+      // });
+    async  function installPlugin(pluginName:any) {
+      try {
+        spinner.start();
+    
+        // Use spawnCommand instead of spawnSync
+        const child = spawnCommand('npm', ['install', `${pluginName}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
+          stdio: 'inherit', // Redirect output
+        });
+    
+        await new Promise<void>((resolve) => {
+          child.on('close', () => {
+            resolve();
+          });
+        });
+    
         spinner.stop(); // Stop the spinner when the installation is complete
         console.log('\nPlugin installed successfully!');
         console.log(chalk.cyan.bold('Happy coding with Godspeed! 🚀🎉\n'));
-      });
-    } catch (error:any) {
-      spinner.stop(); // Stop the spinner in case of an error
-      console.error('Error during installation:', error.message);
+      } catch (error:any) {
+        spinner.stop(); // Stop the spinner in case of an error
+        console.error('Error during installation:', error.message);
+      }
     }
-  }
+    
+    // Call the installPlugin function
+    await installPlugin(pluginName);
+  //       try {
+  //         spinner.start();
+      
+  //         const result = spawnSync('npm', ['install', `${pluginName}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
+  //           stdio: 'inherit',
+  //         });
+      
+  //         if (result.status === 0) {
+  //           spinner.stop(); // Stop the spinner when the installation is complete
+  //           console.log('\nPlugin installed successfully!');
+  //           console.log(chalk.cyan.bold('Happy coding with Godspeed! 🚀🎉\n'));
+  //         } else {
+  //           spinner.stop(); // Stop the spinner in case of an error
+  //           console.error('Error during installation:', result.error || result.stderr.toString());
+  //         }
+  //       } catch (error:any) {
+  //         spinner.stop(); // Stop the spinner in case of an error
+  //         console.error('Error during installation:', error.message);
+  //       }
+  //     }
+      
+  // // Call the installPlugin function
+  //  installPlugin(pluginName);
 
-  // Call the installPlugin function
-  await installPlugin(pluginName);
+
   // create folder for eventsource or datasource respective file
   try {
     const Module = await import(
@@ -219,6 +259,14 @@ const add = program
         chosenPluginName = answer.gsPlugin;
 
         await addAction(chosenPluginName);
+        console.log(
+          chalk.cyan("\nFor detailed documentation and examples, visit:")
+        );
+        console.log(
+          chalk.yellow.bold(
+            `https://www.npmjs.com/package/${chosenPluginName}\n`
+          )
+        );
       }
     } else {
       if (pluginNames.includes(givenPluginName)) {
