@@ -1,6 +1,5 @@
 import { Command } from "commander";
-import spawnCommand from "cross-spawn";
-import {spawnSync} from "child_process";
+import spawnSync from "cross-spawn";
 import path from "path";
 import fs, {
   existsSync,
@@ -36,7 +35,7 @@ const addAction = async (pluginName: string) => {
         spinner.start();
     
         // Use spawnCommand instead of spawnSync
-        const child = spawnCommand('npm', ['install', `${pluginName}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
+        const child = spawnSync('npm', ['install', `${pluginName}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
           stdio: 'inherit', // Redirect output
         });
     

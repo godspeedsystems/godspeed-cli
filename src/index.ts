@@ -80,9 +80,9 @@ export const isAGodspeedProject = () => {
       chalk.red.bold("╔════════════════════════════════════╗")
   );
   console.log(
-    chalk.bold("      (◉") +
+    chalk.bold("      (o") +
       chalk.red.bold(",") +
-      chalk.yellow.bold("◉") +
+      chalk.yellow.bold("o") +
       chalk.bold(")  ") +
       chalk.red.bold("║") +
       chalk.yellow.bold("        Welcome to Godspeed         ") +
