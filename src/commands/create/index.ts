@@ -72,21 +72,11 @@ export default async function create(
     godspeedOptions,
     options.fromExample
   );
-  await installDependencies(projectDirPath);
+  await installDependencies(projectDirPath,projectName);
 
   try {
     // the NEW flow [without containers]
-    log.success(
-      `\n\n${chalk.green("Successfully created the project")} ${chalk.yellow(
-        projectName
-      )}.`
-    );
-
-    console.log(
-      `${chalk.green(
-        "Use `godspeed help` command for available commands."
-      )} ${chalk.yellow("Happy building microservices with Godspeed!")}.`
-    );
+    
 
     // const composeOptions = await getComposeOptions();
 
