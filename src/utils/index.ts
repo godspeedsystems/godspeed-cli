@@ -8,6 +8,8 @@ import simpleGit from "simple-git";
 import chalk from "chalk";
 import { spawnSync } from "child_process";
 import crossSpawn from "cross-spawn";
+import spawnCommand from 'cross-spawn'
+import ora from 'ora'
 
 const userID = (): string => {
   if (process.platform == "linux") {
@@ -237,12 +239,47 @@ export const compileAndCopyOrJustCopy = async (
   }
 };
 
-export const installDependencies = async (projectDirPath: string) => {
-  log.wait("Installing project dependencies.");
-  try {
-    crossSpawn("npm", ["install"], { cwd: projectDirPath });
-  } catch (error) {}
-  log.success("Successfully installed project dependencies.");
+export const installDependencies = async (projectDirPath: string, projectName:string) => {
+  
+  async function installPlugin() {
+    const spinner = ora({
+      
+      spinner: {
+      frames: ['🌍 ', '🌎 ', '🌏 ', '🌐 ', '🌑 ', '🌒 ', '🌓 ', '🌔 '],
+        interval: 180,
+      },
+    }).start("installing dependencies...");
+    try {
+      // Use spawnCommand instead of spawnSync
+      const child = spawnCommand('npm', ['install', '--quiet', '--no-warnings', '--silent', '--progress=false'], {
+        cwd: projectDirPath,
+        stdio: 'inherit', // Redirect output
+      });
+      child.on('close', () => {
+        spinner.stop(); // Stop the spinner when the installation is complete
+        console.log('\ndependencies installed successfully!');
+        
+        console.log(
+          `${chalk.green("\nSuccessfully created the project")} ${chalk.yellow(
+            projectName
+          )}.`
+        );
+      
+        console.log(
+          `${chalk.green(
+            "Use `godspeed help` command for available commands."
+          )} ${chalk.green.bold("\n\nHappy building microservices with Godspeed! 🚀🎉\n")}`
+        );
+      });
+    } catch (error:any) {
+      spinner.stop(); // Stop the spinner in case of an error
+      console.error('Error during installation:', error.message);
+    }
+  }
+
+  // Call the installPlugin function
+  await installPlugin();
+
 };
 
 export const generateProjectFromDotGodspeed = async (
@@ -378,7 +415,7 @@ export const generateProjectFromDotGodspeed = async (
       }
     );
 
-    log.success("Successfully generated godspeed project files.");
+    log.success("Successfully generated godspeed project files.\n");
   } catch (error) {
     log.fatal("Error while generating files.", error);
   }
