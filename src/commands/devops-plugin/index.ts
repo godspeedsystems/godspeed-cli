@@ -171,7 +171,7 @@ const update = program
     ]);
 
     // npm install <gsDevOpsPlugin> in the <gsDevopsPluginsDir> directory
-    spawnSync("npm", ["update", `${answer.gsDevOpsPlugin}`], {
+    spawnSync("npm", ["install", `${answer.gsDevOpsPlugin}@latest`], {
       cwd: gsDevopsPluginsDir,
       stdio: "inherit",
     });
