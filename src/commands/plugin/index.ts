@@ -237,14 +237,12 @@ const add = program
     const missingPlugins = pluginNames.filter(
       (plugin: { value: string | number }) => !localpluginsList[plugin.value]
     );
-    let chosenPluginName: string[];
-
+   
     if (!givenPluginName) {
       if (pluginNames.length === 0) {
         console.error("No plugins found.");
         process.exit(1);
       } else {
-
         const inquirerTableCheckbox = require("@adobe/inquirer-table-checkbox");
         inquirer.registerPrompt("search-table", inquirerTableCheckbox);
         const tableCheckboxPrompt = {
@@ -285,10 +283,16 @@ const add = program
 
         // Call the prompt function
         runPrompt();
-
       }
     } else {
-      if (pluginNames.includes(givenPluginName)) {
+      let chosenPluginName = null;
+      for (const plugin of pluginNames) {
+        if (plugin.value === givenPluginName) {
+          chosenPluginName = plugin;
+          break; // Exit the loop once a match is found
+        }
+      }
+      if (chosenPluginName !== null) {
         chosenPluginName = [`${givenPluginName}`];
         await addAction(chosenPluginName);
         console.log(
@@ -296,7 +300,7 @@ const add = program
         );
         console.log(
           chalk.yellow.bold(
-            `https://www.npmjs.com/package/${chosenPluginName}\n`
+            `https://www.npmjs.com/package/${givenPluginName}\n`
           )
         );
       } else {
@@ -469,7 +473,6 @@ const remove = program
         return;
       }
 
-
       const command = "npm search @godspeedsystems/plugins --json";
       const stdout = execSync(command, { encoding: "utf-8" });
       let pkgPath = path.join(cwd(), "package.json");
@@ -553,7 +556,6 @@ const update = program
       console.error("There are no eventsource/datasource plugins installed.");
       return;
     }
-
 
     const spinner = ora({
       text: "Updating plugins... ",
