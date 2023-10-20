@@ -2,18 +2,7 @@ import { Command } from "commander";
 import spawnSync from "cross-spawn";
 import path from "path";
 import { readFile, writeFile } from "fs/promises"
-import fs, {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readSync,
-  writeFileSync,
-} from "fs";
-import { execSync } from "child_process";
-import inquirer from "inquirer";
-import * as yaml from "js-yaml";
-import { cwd } from "process";
-import chalk from "chalk";
+import fs from "fs";
 import ora from 'ora';
 // const projectDirPath = path.resolve(process.cwd(), projectName);
     
@@ -54,7 +43,7 @@ const enableAction = async () => {
       }
       
       // Call the installPlugin function
-      await installtracing("@godspeedsystems/tracing");
+   
   
       try {
         const envFilePath = path.join(process.cwd(), ".env");
@@ -66,7 +55,7 @@ const enableAction = async () => {
           return;
         }else if (envFileContents.includes("OTEL_ENABLED=false")) {
           const updatedData = envFileContents.replace("OTEL_ENABLED=false", "OTEL_ENABLED=true");
-
+          await installtracing("@godspeedsystems/tracing");
         // Write the modified contents back to the .env file
         fs.writeFile('.env', updatedData, (writeErr) => {
           if (writeErr) {
@@ -77,6 +66,7 @@ const enableAction = async () => {
         })
         }else{
           envFileContents += "OTEL_ENABLED=true";
+          await installtracing("@godspeedsystems/tracing");
           await writeFile(envFilePath, envFileContents, "utf-8");
           console.log(`Observability has been enabled`);
         }
@@ -90,7 +80,7 @@ const enableAction = async () => {
 
 
   const disableAction = async () => {
-    // install that package
+    // uninstall that package
     const spinner = ora({
       text: 'Uninstalling packages... ',
       spinner: {
@@ -123,8 +113,7 @@ const enableAction = async () => {
         }
       }
       
-      // Call the installPlugin function
-      await uninstalltracing("@godspeedsystems/tracing");
+      // Call the uninstallPlugin function
   
       try {
         const envFilePath = path.join(process.cwd(), ".env");
@@ -136,6 +125,7 @@ const enableAction = async () => {
           return;
         }else if(envFileContents.includes("OTEL_ENABLED=true")){
           const updatedData = envFileContents.replace("OTEL_ENABLED=true", "OTEL_ENABLED=false");
+          await uninstalltracing("@godspeedsystems/tracing");
         // Write the modified contents back to the .env file
         fs.writeFile('.env', updatedData, (writeErr) => {
           if (writeErr) {
@@ -146,6 +136,7 @@ const enableAction = async () => {
         })
         }else{
           envFileContents += "\nOTEL_ENABLED=false";
+          await uninstalltracing("@godspeedsystems/tracing");
           await writeFile(envFilePath, envFileContents, "utf-8");
           console.log(`Observability has been disabled in the project`);
         }
