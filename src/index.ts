@@ -11,6 +11,7 @@ import spawnSync from "cross-spawn";
 import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 import prismaCommands from "./commands/prisma";
+import otelCommands from "./commands/otel";
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
 import { readFileSync } from "fs";
@@ -219,5 +220,12 @@ export const isAGodspeedProject = () => {
     )
     .addCommand(prismaCommands.prepare);
 
+    program
+    .command("otel")
+    .addCommand(otelCommands.enable)
+    .addCommand(otelCommands.disable)
+    .description(" enable/disable OTEL in Godspeed.")
+
   program.parse();
+  
 })();
