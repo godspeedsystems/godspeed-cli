@@ -72,6 +72,10 @@ export default async function create(
     godspeedOptions,
     options.fromExample
   );
+// removing .git folder in project folder.
+  const gitFilePath = path.join(process.cwd(),projectName, ".git");
+  fsExtras.removeSync(gitFilePath);
+
   await installDependencies(projectDirPath,projectName);
 
   try {

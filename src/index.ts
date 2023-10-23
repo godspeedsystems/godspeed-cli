@@ -11,6 +11,7 @@ import spawnSync from "cross-spawn";
 import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 import prismaCommands from "./commands/prisma";
+import otelCommands from "./commands/otel";
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
 import { readFileSync } from "fs";
@@ -99,10 +100,25 @@ export const isAGodspeedProject = () => {
       chalk.red.bold("╚════════════════════════════════════╝")
   );
   console.log("\n");
+//checking installed version
+  // const currentVersion = execSync('npm list -g @godspeedsystems/godspeed --json').toString();
+  // const parsedVersion = JSON.parse(currentVersion);
+  // const installedVersion = parsedVersion.dependencies["@godspeedsystems/godspeed"].version
+
+  // //checking latest from npm version
+  // const metadata = await pacote.manifest("@godspeedsystems/godspeed");
+  // const latestversion = metadata.version;
+
+  // if (latestversion !== installedVersion) {
+  //   console.log(chalk.yellow.bold(`\nWarning: A new version of the godspeed is available (${latestversion}). Update using:`));
+  //   console.log(chalk.cyan.bold('  npm i -g @godspeedsystems/godspeed\n'));
+  // }
+
   const program = new Command();
 
   // @ts-ignore
   let { version, homepage } = require(path.join(__dirname, "../package.json"));
+
 
   // remove @godspeedsystems from the name
   program
@@ -134,7 +150,7 @@ export const isAGodspeedProject = () => {
     .action((projectName, options) => {
       create(projectName, options, version);
     });
-
+  
   // program
   //   .command("update")
   //   .description(
@@ -219,5 +235,12 @@ export const isAGodspeedProject = () => {
     )
     .addCommand(prismaCommands.prepare);
 
+    program
+    .command("otel")
+    .addCommand(otelCommands.enable)
+    .addCommand(otelCommands.disable)
+    .description("enable/disable Observability in Godspeed.")
+
   program.parse();
+  
 })();
