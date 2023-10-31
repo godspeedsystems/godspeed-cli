@@ -335,6 +335,21 @@ export const generateProjectFromDotGodspeed = async (
         }
       );
 
+      // generate .swcrc file
+      const swcrc = await fsExtras.readJson(
+        path.resolve(projectDirPath, ".template/.swcrc")
+      );
+
+      await fsExtras.writeJsonSync(
+        path.resolve(projectDirPath, ".swcrc"),
+        {
+          ...swcrc,
+        },
+        {
+          spaces: "\t",
+        }
+      );
+
       // create folder structure
       if (exampleName) {
         fsExtras.cpSync(

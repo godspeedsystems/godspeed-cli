@@ -86,7 +86,7 @@ export const isAGodspeedProject = () => {
       chalk.yellow.bold("o") +
       chalk.bold(")  ") +
       chalk.red.bold("║") +
-      chalk.yellow.bold("        Welcome to Godspeed         ") +
+      chalk.yellow.bold("        Welcome to Godspeed       ") +
       chalk.red.bold("║")
   );
   console.log(
@@ -100,7 +100,7 @@ export const isAGodspeedProject = () => {
       chalk.red.bold("╚════════════════════════════════════╝")
   );
   console.log("\n");
-//checking installed version
+  //checking installed version
   // const currentVersion = execSync('npm list -g @godspeedsystems/godspeed --json').toString();
   // const parsedVersion = JSON.parse(currentVersion);
   // const installedVersion = parsedVersion.dependencies["@godspeedsystems/godspeed"].version
@@ -118,7 +118,6 @@ export const isAGodspeedProject = () => {
 
   // @ts-ignore
   let { version, homepage } = require(path.join(__dirname, "../package.json"));
-
 
   // remove @godspeedsystems from the name
   program
@@ -150,7 +149,7 @@ export const isAGodspeedProject = () => {
     .action((projectName, options) => {
       create(projectName, options, version);
     });
-  
+
   // program
   //   .command("update")
   //   .description(
@@ -196,10 +195,32 @@ export const isAGodspeedProject = () => {
     });
   program
     .command("build")
-    .description("build the godspeed project.")
+    .description("build the godspeed project. create a production build.")
     .action(async (options) => {
       if (await isAGodspeedProject()) {
         spawnSync("npm", ["run", "build"], {
+          stdio: "inherit",
+        });
+      }
+    });
+
+  program
+    .command("preview")
+    .description("preview the production build.")
+    .action(async (options) => {
+      if (await isAGodspeedProject()) {
+        spawnSync("npm", ["run", "build"], {
+          stdio: "inherit",
+        });
+      }
+    });
+
+  program
+    .command("serve")
+    .description("build and preview the production build in watch mode.")
+    .action(async (options) => {
+      if (await isAGodspeedProject()) {
+        spawnSync("npm", ["run", "serve"], {
           stdio: "inherit",
         });
       }
@@ -235,12 +256,11 @@ export const isAGodspeedProject = () => {
     )
     .addCommand(prismaCommands.prepare);
 
-    program
+  program
     .command("otel")
     .addCommand(otelCommands.enable)
     .addCommand(otelCommands.disable)
-    .description("enable/disable Observability in Godspeed.")
+    .description("enable/disable Observability in Godspeed.");
 
   program.parse();
-  
 })();
