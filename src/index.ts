@@ -209,7 +209,7 @@ export const isAGodspeedProject = () => {
     .description("preview the production build.")
     .action(async (options) => {
       if (await isAGodspeedProject()) {
-        spawnSync("npm", ["run", "build"], {
+        spawnSync("npm", ["run", "preview"], {
           stdio: "inherit",
         });
       }
