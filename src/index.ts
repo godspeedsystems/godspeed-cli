@@ -200,10 +200,13 @@ export const isAGodspeedProject = () => {
       if (await isAGodspeedProject()) {
         spawnSync("npm", ["run", "build"], {
           stdio: "inherit",
+          env: {
+            ...process.env,
+            NODE_ENV: "production",
+          },
         });
       }
     });
-
   program
     .command("preview")
     .description("preview the production build.")
@@ -211,6 +214,10 @@ export const isAGodspeedProject = () => {
       if (await isAGodspeedProject()) {
         spawnSync("npm", ["run", "preview"], {
           stdio: "inherit",
+          env: {
+            ...process.env,
+            NODE_ENV: "production",
+          },
         });
       }
     });
@@ -222,6 +229,10 @@ export const isAGodspeedProject = () => {
       if (await isAGodspeedProject()) {
         spawnSync("npm", ["run", "serve"], {
           stdio: "inherit",
+          env: {
+            ...process.env,
+            NODE_ENV: "production",
+          },
         });
       }
     });
