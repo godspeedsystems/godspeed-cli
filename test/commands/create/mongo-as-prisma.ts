@@ -92,6 +92,10 @@ export const mongoAsPrisma = () => {
         fs.existsSync(packageJsonPath),
         "package.json folder exists."
       );
+
+      // check is .swcrc file exists
+      const swcrcPath = path.join(folderPath, ".swcrc");
+      assert.isTrue(fs.existsSync(swcrcPath), ".swcrc file exists.");
     });
   });
 };
