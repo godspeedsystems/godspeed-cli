@@ -1,107 +1,132 @@
 import { Command } from "commander";
+import spawnSync from "cross-spawn";
 import path from "path";
-import fs, { existsSync, mkdirSync, readFileSync, readSync, writeFileSync } from "fs";
-import { spawnSync } from "child_process";
+import fs, {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readSync,
+  writeFileSync,
+} from "fs";
+import { execSync } from "child_process";
 import inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import { cwd } from "process";
+import chalk from "chalk";
+import ora from "ora";
+
 const program = new Command();
 
 type ModuleType = "DS" | "ES" | "BOTH";
 
-const addAction = async (pluginName: string) => {
+const addAction = async (pluginsList: string[]) => {
   // install that package
-  spawnSync("npm", ["install", `${pluginName}`], { stdio: "inherit" });
+  const spinner = ora({
+    text: "Installing plugins... ",
+    spinner: {
+      frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
+      interval: 180,
+    },
+  });
 
-  // create folder for eventsource or datasource respective file
-  try {
-    const Module = await import(
-      path.join(process.cwd(), "node_modules", pluginName)
-    );
+  async function installPlugin(pluginsList: string[]) {
+    try {
+      spinner.start();
 
-    let moduleType = Module.SourceType as ModuleType;
-    let loaderFileName = Module.Type as string;
-    let yamlFileName = Module.CONFIG_FILE_NAME as string;
-    let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
-
-    switch (moduleType) {
-      case "BOTH":
+      // Use spawnCommand instead of spawnSync
+      const child = spawnSync(
+        "npm",
+        [
+          "install",
+          ...pluginsList,
+          "--quiet",
+          "--no-warnings",
+          "--silent",
+          "--progress=false",
+        ],
         {
-          mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
-            recursive: true,
-          });
-          mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
-            recursive: true,
-          });
-
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "eventsources",
-              "types",
-              `${loaderFileName}.ts`
-            ),
-            `
-import { EventSource } from '${pluginName}';
-export default EventSource;
-          `
-          );
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "eventsources",
-              `${yamlFileName}.yaml`
-            ),
-            yaml.dump({ type: loaderFileName, ...defaultConfig })
-          );
-
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "datasources",
-              "types",
-              `${loaderFileName}.ts`
-            ),
-            `
-import { DataSource } from '${pluginName}';
-export default DataSource;
-          `
-          );
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "datasources",
-              `${yamlFileName}.yaml`
-            ),
-            yaml.dump({ type: loaderFileName, ...defaultConfig })
-          );
+          stdio: "inherit", // Redirect output
         }
-        break;
-      case "DS":
-        {
-          mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
-            recursive: true,
-          });
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "datasources",
-              "types",
-              `${loaderFileName}.ts`
-            ),
-            `
-import { DataSource } from '${pluginName}';
-export default DataSource;
-            `
-          );
-          // special case for prisma for now
-          // @ts-ignore
-          if (Module.Type !== "prisma") {
+      );
+
+      await new Promise<void>((resolve) => {
+        child.on("close", () => {
+          resolve();
+        });
+      });
+
+      spinner.stop(); // Stop the spinner when the installation is complete
+      console.log("\nPlugins installed successfully!");
+      console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
+    } catch (error: any) {
+      spinner.stop(); // Stop the spinner in case of an error
+      console.error("Error during installation:", error.message);
+    }
+  }
+
+  // Call the installPlugin function
+  await installPlugin(pluginsList);
+
+  pluginsList.map(async (pluginName: string) => {
+    try {
+      const Module = await import(
+        path.join(process.cwd(), "node_modules", pluginName)
+      );
+
+      let moduleType = Module.SourceType as ModuleType;
+      let loaderFileName = Module.Type as string;
+      let yamlFileName = Module.CONFIG_FILE_NAME as string;
+      let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
+
+      switch (moduleType) {
+        case "BOTH":
+          {
+            mkdirSync(
+              path.join(process.cwd(), "src", "eventsources", "types"),
+              {
+                recursive: true,
+              }
+            );
+            mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+              recursive: true,
+            });
+
+            writeFileSync(
+              path.join(
+                process.cwd(),
+                "src",
+                "eventsources",
+                "types",
+                `${loaderFileName}.ts`
+              ),
+              `
+    import { EventSource } from '${pluginName}';
+    export default EventSource;
+              `
+            );
+            writeFileSync(
+              path.join(
+                process.cwd(),
+                "src",
+                "eventsources",
+                `${yamlFileName}.yaml`
+              ),
+              yaml.dump({ type: loaderFileName, ...defaultConfig })
+            );
+
+            writeFileSync(
+              path.join(
+                process.cwd(),
+                "src",
+                "datasources",
+                "types",
+                `${loaderFileName}.ts`
+              ),
+              `
+    import { DataSource } from '${pluginName}';
+    export default DataSource;
+              `
+            );
             writeFileSync(
               path.join(
                 process.cwd(),
@@ -112,234 +137,525 @@ export default DataSource;
               yaml.dump({ type: loaderFileName, ...defaultConfig })
             );
           }
-        }
-        break;
-      case "ES": {
-        mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
-          recursive: true,
-        });
-        writeFileSync(
-          path.join(
-            process.cwd(),
-            "src",
-            "eventsources",
-            "types",
-            `${loaderFileName}.ts`
-          ),
-          `
-import { EventSource } from '${pluginName}';
-export default EventSource;
+          break;
+        case "DS":
+          {
+            mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+              recursive: true,
+            });
+            writeFileSync(
+              path.join(
+                process.cwd(),
+                "src",
+                "datasources",
+                "types",
+                `${loaderFileName}.ts`
+              ),
+              `
+    import { DataSource } from '${pluginName}';
+    export default DataSource;
+                `
+            );
+            // special case for prisma for now
+            // @ts-ignore
+            if (Module.Type !== "prisma") {
+              writeFileSync(
+                path.join(
+                  process.cwd(),
+                  "src",
+                  "datasources",
+                  `${yamlFileName}.yaml`
+                ),
+                yaml.dump({ type: loaderFileName, ...defaultConfig })
+              );
+            }
+          }
+          break;
+        case "ES": {
+          mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
+            recursive: true,
+          });
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              "types",
+              `${loaderFileName}.ts`
+            ),
             `
-        );
-        writeFileSync(
-          path.join(
-            process.cwd(),
-            "src",
-            "eventsources",
-            `${yamlFileName}.yaml`
-          ),
-          yaml.dump({ type: loaderFileName, ...defaultConfig })
-        );
+    import { EventSource } from '${pluginName}';
+    export default EventSource;
+                `
+          );
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              `${yamlFileName}.yaml`
+            ),
+            yaml.dump({ type: loaderFileName, ...defaultConfig })
+          );
+        }
       }
+    } catch (error) {
+      console.error("unable to import the module.", error);
     }
-  } catch (error) {
-    console.error("unable to import the module.", error);
-  }
+  });
+  // create folder for eventsource or datasource respective file
 };
 
 const add = program
-  .command("add")
+  .command("add [pluginName]")
   .description(`Add an eventsource/datasource plugin.`)
-  .action(async () => {
-    // fetch the list of packages, maybe from the plugins repository
-    let npmSearch = spawnSync(
-      "npm",
-      ["search", `@godspeedsystems/plugins`, "--json"],
-      { encoding: "utf-8" }
-    );
-    let availablePlugins:
-      | [{ name: string; description: string; version: string }]
-      | [] = JSON.parse(npmSearch.stdout) || [];
+  .action(async (pluginName: string) => {
+    let givenPluginName = pluginName;
 
-    let result = availablePlugins.map(({ name, description, version }) => ({
-      name,
-      description,
-      version,
-    }));
-
-    // list all the packages starting with plugins
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
-        name: "gsPlugin",
-        message: "Please select godspeed plugin to install.",
-        default: "latest",
-        choices: result,
-        loop: false,
-      },
-    ]);
-
-    // call the add action with pluginName
-    await addAction(answer.gsPlugin);
-  });
-
-const removeAction = async (pluginName: string) => {
-  try {
-    // Import the module dynamically
-    const Module = await import(
-      path.join(process.cwd(), "node_modules", pluginName)
+    const command = "npm search @godspeedsystems/plugins --json";
+    const stdout = execSync(command, { encoding: "utf-8" });
+    const availablePlugins = JSON.parse(stdout.trim());
+    const pluginNames = availablePlugins.map(
+      (plugin: { value: any; name: any; description: any }) => ({
+        value: plugin.name,
+        Name: plugin.name.split("plugins-")[1],
+        Description: plugin.description,
+      })
     );
 
-    // Define module-specific variables
-    let moduleType = Module.SourceType as ModuleType;
-    let loaderFileName = Module.Type as string;
-    let yamlFileName = Module.CONFIG_FILE_NAME as string;
-    let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
-
-    switch (moduleType) {
-      case "BOTH":
-        // Remove both EventSource and DataSource files
-        await removeModule("ES", pluginName, loaderFileName, yamlFileName);
-        await removeModule("DS", pluginName, loaderFileName, yamlFileName);
-        break;
-
-      // Remove either EventSource or DataSource files
-
-      case "ES":
-        await removeModule(
-          moduleType,
-          pluginName,
-          loaderFileName,
-          yamlFileName
-        );
-        break;
-
-      case "DS":
-        await removeModule(
-          moduleType,
-          pluginName,
-          loaderFileName,
-          yamlFileName
-        );
-        break;
-
-      default:
-        console.error("Invalid moduleType:", moduleType);
-        break;
+    let pkgPath = path.join(cwd(), "package.json");
+    let localpluginsList = existsSync(pkgPath)
+      ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
+      : {};
+    // console.log(pluginsList)
+    for (const pluginName in localpluginsList) {
+      const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
+      !isGSPlugin && delete localpluginsList[pluginName];
     }
 
-    spawnSync('npm', ['uninstall', pluginName], { stdio: 'inherit' });
-  } catch (error) {
-    console.error("Unable to remove the plugin.", error);
-  }
-};
+    // console.log(pluginsList)
+    const missingPlugins = pluginNames.filter(
+      (plugin: { value: string | number }) => !localpluginsList[plugin.value]
+    );
+   
+    if (!givenPluginName) {
+      if (pluginNames.length === 0) {
+        console.error("No plugins found.");
+        process.exit(1);
+      } else {
+        const inquirerTableCheckbox = require("@adobe/inquirer-table-checkbox");
+        inquirer.registerPrompt("search-table", inquirerTableCheckbox);
+        const tableCheckboxPrompt = {
+          type: "search-table",
+          name: "gsPlugin",
+          message: "Please select godspeed plugin to install:",
+          wordWrap: true,
+          pageSize: 5,
+          searchable: true,
+          style: {
+            "padding-left": 1,
+            "padding-right": 0,
+            head: [],
+            border: [],
+          },
+          colWidths: [40, 80],
+          columns: [
+            { name: "Name", wrapOnWordBoundary: true },
+            { name: "Description", wrapOnWordBoundary: true },
+          ],
+          rows: missingPlugins,
+        };
 
-// Define a function to remove EventSource or DataSource files
-const removeModule = async (
-  moduleType: ModuleType,
-  pluginName: string,
-  loaderFileName: string,
-  yamlFileName: string
-) => {
-  try {
-    // Determine the paths to the TypeScript and YAML files
-    const tsFilePath = path.join(
-      process.cwd(),
-      moduleType === "ES" ? "src/eventsources/types" : "src/datasources/types",
-      `${loaderFileName}.ts`
-    );
-    const yamlFilePath = path.join(
-      process.cwd(),
-      moduleType === "ES" ? "src/eventsources" : "src/datasources",
-      `${yamlFileName}.yaml`
-    );
+        async function runPrompt() {
+          try {
+            const answer = await inquirer.prompt([tableCheckboxPrompt]);
+            // console.log(answer);
+            // Call the add action with pluginName
+            if (answer.gsPlugin.length !== 0) {
+              await addAction(answer.gsPlugin);
+            } else {
+              console.log(chalk.red.bold("select atleast one plugin to add"));
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        }
 
-    // Check if the TypeScript and YAML files exist and remove them
-    await Promise.all([
-      fs.unlink(tsFilePath, (err) => { }),
-      fs.unlink(yamlFilePath, (err) => { }),
-    ]);
-  } catch (error) {
-    console.error(
-      `Unable to remove ${moduleType} module for '${pluginName}'.`,
-      error
-    );
+        // Call the prompt function
+        runPrompt();
+      }
+    } else {
+      let chosenPluginName = null;
+      for (const plugin of pluginNames) {
+        if (plugin.value === givenPluginName) {
+          chosenPluginName = plugin;
+          break; // Exit the loop once a match is found
+        }
+      }
+      if (chosenPluginName !== null) {
+        chosenPluginName = [`${givenPluginName}`];
+        await addAction(chosenPluginName);
+        console.log(
+          chalk.cyan("\nFor detailed documentation and examples, visit:")
+        );
+        console.log(
+          chalk.yellow.bold(
+            `https://www.npmjs.com/package/${givenPluginName}\n`
+          )
+        );
+      } else {
+        console.error(chalk.red("\nPlease provide a valid plugin name.\n"));
+        process.exit(1);
+      }
+    }
+  });
+
+const removeAction = async (pluginsList: string[]) => {
+  const spinner = ora({
+    text: "Uninstalling plugins... ",
+    spinner: {
+      frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
+      interval: 180,
+    },
+  });
+  async function uninstallPlugin(pluginsList: string[]) {
+    try {
+      spinner.start();
+
+      // Use spawnCommand instead of spawnSync
+      const child = spawnSync(
+        "npm",
+        [
+          "uninstall",
+          ...pluginsList,
+          "--quiet",
+          "--no-warnings",
+          "--silent",
+          "--progress=false",
+        ],
+        {
+          stdio: "inherit", // Redirect output
+        }
+      );
+
+      await new Promise<void>((resolve) => {
+        child.on("close", () => {
+          resolve();
+        });
+      });
+
+      spinner.stop(); // Stop the spinner when the installation is complete
+      console.log("\nPlugins uninstalled successfully!");
+      console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
+    } catch (error: any) {
+      spinner.stop(); // Stop the spinner in case of an error
+      console.error("Error during installation:", error.message);
+    }
   }
+
+  pluginsList.map(async (pluginName: string) => {
+    try {
+      // Import the module dynamically
+      const Module = await import(
+        path.join(process.cwd(), "node_modules", pluginName)
+      );
+
+      // Define module-specific variables
+      let moduleType = Module.SourceType as ModuleType;
+      let loaderFileName = Module.Type as string;
+      let yamlFileName = Module.CONFIG_FILE_NAME as string;
+      let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
+
+      switch (moduleType) {
+        case "BOTH":
+          // Remove both EventSource and DataSource files
+          await removeModule("ES", pluginName, loaderFileName, yamlFileName);
+          await removeModule("DS", pluginName, loaderFileName, yamlFileName);
+          break;
+
+        // Remove either EventSource or DataSource files
+
+        case "ES":
+          await removeModule(
+            moduleType,
+            pluginName,
+            loaderFileName,
+            yamlFileName
+          );
+          break;
+
+        case "DS":
+          await removeModule(
+            moduleType,
+            pluginName,
+            loaderFileName,
+            yamlFileName
+          );
+          break;
+
+        default:
+          console.error("Invalid moduleType:", moduleType);
+          break;
+      }
+
+      // spawnSync("npm", ["uninstall", pluginName], { stdio: "inherit" });
+      // Use spawnCommand instead of spawnSync
+    } catch (error) {
+      console.error("Unable to remove the plugin.", error);
+    }
+  });
+
+  // Define a function to remove EventSource or DataSource files
+  const removeModule = async (
+    moduleType: ModuleType,
+    pluginName: string,
+    loaderFileName: string,
+    yamlFileName: string
+  ) => {
+    try {
+      // Determine the paths to the TypeScript and YAML files
+      const tsFilePath = path.join(
+        process.cwd(),
+        moduleType === "ES"
+          ? "src/eventsources/types"
+          : "src/datasources/types",
+        `${loaderFileName}.ts`
+      );
+      const yamlFilePath = path.join(
+        process.cwd(),
+        moduleType === "ES" ? "src/eventsources" : "src/datasources",
+        `${yamlFileName}.yaml`
+      );
+
+      // Check if the TypeScript and YAML files exist and remove them
+      await Promise.all([
+        fs.unlink(tsFilePath, (err) => {}),
+        fs.unlink(yamlFilePath, (err) => {}),
+      ]);
+    } catch (error) {
+      console.error(
+        `Unable to remove ${moduleType} module for '${pluginName}'.`,
+        error
+      );
+    }
+  };
+
+  await uninstallPlugin(pluginsList);
 };
 
 const remove = program
-  .command("remove")
-  .description(`Remove an eventsource/datasource plugin.`)
-  .action(async () => {
-    let pluginsList;
-    try {
-      // list all the installed plugins
-      let pkgPath = path.join(cwd(), 'package.json');
-      pluginsList = existsSync(pkgPath) ? JSON.parse(readFileSync(pkgPath, { encoding: 'utf-8' })).dependencies : [];
+  .command("remove [pluginName]")
+  .description("Remove an eventsource/datasource plugin.")
+  .action(async (pluginName: string[]) => {
+    if (pluginName) {
+      await removeAction([`${pluginName}`]);
+    } else {
+      let pluginsList: any;
+      try {
+        // List all the installed plugins
+        let pkgPath = path.join(cwd(), "package.json");
+        pluginsList = existsSync(pkgPath)
+          ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" }))
+              .dependencies
+          : {};
+        // console.log(pluginsList)
+        for (const pluginName in pluginsList) {
+          const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
+          !isGSPlugin && delete pluginsList[pluginName];
+        }
 
+        // If package.json doesn't have "dependencies" key or no valid plugins are found
+        if (!pluginsList || Object.keys(pluginsList).length === 0) {
+          throw new Error();
+        }
+      } catch (error) {
+        console.error("There are no eventsource/datasource plugins installed.");
+        return;
+      }
+
+      const command = "npm search @godspeedsystems/plugins --json";
+      const stdout = execSync(command, { encoding: "utf-8" });
+      let pkgPath = path.join(cwd(), "package.json");
+      pluginsList = existsSync(pkgPath)
+        ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
+        : {};
+      // console.log(pluginsList)
       for (const pluginName in pluginsList) {
-        // if the dependency name does not start with @godspeedsystems/plugin-, then it's not a godspeed plugin
-        const isGSPlugin = pluginName.includes('@godspeedsystems/plugins');
+        const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
         !isGSPlugin && delete pluginsList[pluginName];
       }
 
-      // id package.json dont have "dependencies" key
-      if (!pluginsList || pluginsList.length) throw new Error();
-    } catch (error) {
-      console.error('There are no eventsource/datasource plugins installed.');
-      return;
-    }
+      // console.log(pluginsList)
+      const availablePlugins = JSON.parse(stdout.trim());
 
-    // ask user to select the plugin to remove
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
+      const pluginNames = availablePlugins.map(
+        (plugin: { value: any; name: any; description: any }) => ({
+          value: plugin.name,
+          Name: plugin.name.split("plugins-")[1],
+          Description: plugin.description,
+        })
+      );
+
+      const commonPlugins = pluginNames.filter(
+        (plugin: { value: string | number }) => pluginsList[plugin.value]
+      );
+      const inquirerTableCheckbox = require("@adobe/inquirer-table-checkbox");
+      inquirer.registerPrompt("search-table", inquirerTableCheckbox);
+      const tableCheckboxPrompt = {
+        type: "search-table",
         name: "gsPlugin",
-        message: "Please select a eventsource/datasource plugin to remove.",
-        default: "",
-        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
-        loop: false,
-      },
-    ]);
-    await removeAction(answer.gsPlugin);
+        message: "Please select godspeed plugin to install:",
+        wordWrap: true,
+        pageSize: 5,
+        searchable: true,
+        style: { "padding-left": 1, "padding-right": 0, head: [], border: [] },
+        colWidths: [40, 80],
+        columns: [
+          { name: "Name", wrapOnWordBoundary: true },
+          { name: "Description", wrapOnWordBoundary: true },
+        ],
+        rows: commonPlugins,
+      };
+      async function runPrompt() {
+        try {
+          const answer = await inquirer.prompt([tableCheckboxPrompt]);
+          if (answer.gsPlugin.length !== 0) {
+            await removeAction(answer.gsPlugin);
+          } else {
+            console.log(chalk.red.bold("select atleast one plugin to remove"));
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      runPrompt();
+    }
   });
 
 const update = program
   .command("update")
   .description(`Update an eventsource/datasource plugin.`)
-  .action(async (pluginName) => {
-    let pluginsList;
+  .action(async (pluginName: string) => {
+    let pluginsList: string[];
     try {
       // list all the installed plugins
-      let pkgPath = path.join(cwd(), 'package.json');
-      pluginsList = existsSync(pkgPath) ? JSON.parse(readFileSync(pkgPath, { encoding: 'utf-8' })).dependencies : [];
+      let pkgPath = path.join(cwd(), "package.json");
+      pluginsList = existsSync(pkgPath)
+        ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
+        : [];
 
       for (const pluginName in pluginsList) {
         // if the dependency name does not start with @godspeedsystems/plugin-, then it's not a godspeed plugin
-        const isGSPlugin = pluginName.includes('@godspeedsystems/plugins');
+        const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
         !isGSPlugin && delete pluginsList[pluginName];
       }
 
       // id package.json dont have "dependencies" key
       if (!pluginsList || pluginsList.length) throw new Error();
     } catch (error) {
-      console.error('There are no eventsource/datasource plugins installed.');
+      console.error("There are no eventsource/datasource plugins installed.");
       return;
     }
 
-    // ask user to select the plugin to remove
-    const answer = await inquirer.prompt([
-      {
-        type: "list",
-        name: "gsPlugin",
-        message: "Please select a eventsource/datasource plugin to update.",
-        default: "",
-        choices: Object.keys(pluginsList).map(pluginName => ({ name: pluginName, value: pluginName })),
-        loop: false,
+    const spinner = ora({
+      text: "Updating plugins... ",
+      spinner: {
+        frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
+        interval: 180,
       },
-    ]);
+    });
+    async function updatePlugin(pluginsList: string[]) {
+      try {
+        spinner.start();
 
-    spawnSync('npm', ['update', answer.gsPlugin], { stdio: "inherit" });
+        // Use spawnCommand instead of spawnSync
+        const child = spawnSync(
+          "npm",
+          [
+            "update",
+            ...pluginsList,
+            "--quiet",
+            "--no-warnings",
+            "--silent",
+            "--progress=false",
+          ],
+          {
+            stdio: "inherit", // Redirect output
+          }
+        );
+
+        await new Promise<void>((resolve) => {
+          child.on("close", () => {
+            resolve();
+          });
+        });
+
+        spinner.stop(); // Stop the spinner when the installation is complete
+        console.log("\nPlugins updated successfully!");
+        console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
+      } catch (error: any) {
+        spinner.stop(); // Stop the spinner in case of an error
+        console.error("Error during updation:", error.message);
+      }
+    }
+
+    const command = "npm search @godspeedsystems/plugins --json";
+    const stdout = execSync(command, { encoding: "utf-8" });
+    let pkgPath = path.join(cwd(), "package.json");
+    pluginsList = existsSync(pkgPath)
+      ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
+      : {};
+    // console.log(pluginsList)
+    for (const pluginName in pluginsList) {
+      const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
+      !isGSPlugin && delete pluginsList[pluginName];
+    }
+
+    // console.log(pluginsList)
+    const availablePlugins = JSON.parse(stdout.trim());
+
+    const pluginNames = availablePlugins.map(
+      (plugin: { value: string; name: string; description: string }) => ({
+        value: plugin.name,
+        Name: plugin.name.split("plugins-")[1],
+        Description: plugin.description,
+      })
+    );
+
+    const commonPlugins = pluginNames.filter(
+      (plugin: any) => pluginsList[plugin.value]
+    );
+
+    const inquirerTableCheckbox = require("@adobe/inquirer-table-checkbox");
+    inquirer.registerPrompt("search-table", inquirerTableCheckbox);
+    const tableCheckboxPrompt = {
+      type: "search-table",
+      name: "gsPlugin",
+      message: "Please select godspeed plugin to install:",
+      wordWrap: true,
+      pageSize: 5,
+      searchable: true,
+      style: { "padding-left": 1, "padding-right": 0, head: [], border: [] },
+      colWidths: [40, 80],
+      columns: [
+        { name: "Name", wrapOnWordBoundary: true },
+        { name: "Description", wrapOnWordBoundary: true },
+      ],
+      rows: commonPlugins,
+    };
+    async function runPrompt() {
+      try {
+        const answer = await inquirer.prompt([tableCheckboxPrompt]);
+        if (answer.gsPlugin.length !== 0) {
+          await updatePlugin(answer.gsPlugin);
+        } else {
+          console.log(chalk.red.bold("select atleast one plugin to update"));
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    runPrompt();
   });
 
 export default { add, remove, update };

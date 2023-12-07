@@ -5,7 +5,7 @@
 </div>
 <h1 align="center">Godspeed CLI</h1>
 <p align="center">
-  The official Command Line Interface of Godspeed Franework
+  The official Command Line Interface of Godspeed Framework
 </p>
 <br>
 
@@ -45,6 +45,7 @@ Once installed, You will be access to `godspeed` in yor command prompt.
   | devops-plugins                 |                   | manage devops plugins for godspeed.                                                 |
   | plugins                 |                   | manage eventsource and datasource plugins for godspeed.                                                 |
   | gen-crud-api          |                   | scans your prisma datasources and generate CRUD APIs events and workflows           |
+  | gen-graphql-schema          |                   | scans your graphql events and generate graphql schema .        |
 
 
 ## Exit codes and their meanings

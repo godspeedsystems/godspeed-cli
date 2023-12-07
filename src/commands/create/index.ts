@@ -7,7 +7,10 @@ import path from "path";
 //   prepareToStartContainers,
 // } from "../../utils/dockerUtility";
 // import checkPrerequisite from "../../utils/checkPrerequisite";
-import { installDependencies, validateAndCreateProjectDirectory } from "../../utils/index";
+import {
+  installDependencies,
+  validateAndCreateProjectDirectory,
+} from "../../utils/index";
 import { copyingLocalTemplate } from "../../utils";
 import { cloneProjectTemplate } from "../../utils";
 import { generateFromExamples } from "../../utils";
@@ -69,21 +72,15 @@ export default async function create(
     godspeedOptions,
     options.fromExample
   );
-  await installDependencies(projectDirPath);
+// removing .git folder in project folder.
+  const gitFilePath = path.join(process.cwd(),projectName, ".git");
+  fsExtras.removeSync(gitFilePath);
+
+  await installDependencies(projectDirPath,projectName);
 
   try {
     // the NEW flow [without containers]
-    log.success(
-      `\n\n${chalk.green("Successfully created the project")} ${chalk.yellow(
-        projectName
-      )}.`
-    );
-
-    console.log(
-      `${chalk.green("Use `godspeed help` command for available commands.")} ${chalk.yellow(
-        "Happy building microservices with Godspeed!"
-      )}.`
-    );
+    
 
     // const composeOptions = await getComposeOptions();
 
