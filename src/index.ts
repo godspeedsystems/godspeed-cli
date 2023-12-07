@@ -12,9 +12,12 @@ import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 import prismaCommands from "./commands/prisma";
 import otelCommands from "./commands/otel";
+import {genGraphqlSchema} from "./utils/index";
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
 import { readFileSync } from "fs";
+import { globSync } from "glob";
+import inquirer from "inquirer";
 
 // load .env
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
@@ -191,6 +194,16 @@ export const isAGodspeedProject = () => {
     .action(async () => {
       if (isAGodspeedProject()) {
         spawnSync("npm", ["run", "gen-crud-api"], { stdio: "inherit" });
+      }
+    });
+    program
+    .command("gen-graphql-schema")
+    .description(
+      "scans your graphql events and generate graphql schema"
+    )
+    .action(async () => {
+      if (isAGodspeedProject()) {
+        await genGraphqlSchema()
       }
     });
   program

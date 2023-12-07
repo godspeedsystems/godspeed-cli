@@ -10,6 +10,8 @@ import { spawnSync } from "child_process";
 import crossSpawn from "cross-spawn";
 import spawnCommand from "cross-spawn";
 import ora from "ora";
+import loadYaml from '@godspeedsystems/core/dist/core/yamlLoader';
+const { exec } = require('child_process');
 
 const userID = (): string => {
   if (process.platform == "linux") {
@@ -160,7 +162,7 @@ export const compileAndCopyOrJustCopy = async (
       isUpdateCall = fsExtras
         .lstatSync(path.resolve(process.cwd(), ".godspeed"))
         .isFile();
-    } catch (error) {}
+    } catch (error) { }
 
     fileList.map(async (sourceFilePath: string) => {
       if (fsExtras.lstatSync(sourceFilePath).isFile()) {
@@ -170,17 +172,17 @@ export const compileAndCopyOrJustCopy = async (
 
         relativeDestinationPath = !isUpdateCall
           ? path.relative(
+            path.resolve(projectDirPath, sourceFolder),
+            sourceFilePath
+          )
+          : path.resolve(
+            projectDirPath,
+            destinationFolder,
+            path.relative(
               path.resolve(projectDirPath, sourceFolder),
               sourceFilePath
             )
-          : path.resolve(
-              projectDirPath,
-              destinationFolder,
-              path.relative(
-                path.resolve(projectDirPath, sourceFolder),
-                sourceFilePath
-              )
-            );
+          );
 
         let finalDestinationWithFileName = path.resolve(
           projectDirPath,
@@ -440,4 +442,142 @@ export const generateProjectFromDotGodspeed = async (
   } catch (error) {
     log.fatal("Error while generating files.", error);
   }
+}
+
+export const genGraphqlSchema = async () => {
+  try {
+
+    const availableApoloeventsources = globSync(
+      path.join(process.cwd(), 'src/eventsources/*.yaml').replace(/\\/g, '/')
+    );
+    // Filter files that contain 'Apollo' in their name
+    const apolloEventsources = availableApoloeventsources
+      .map((file) => path.parse(file).name);
+
+    const questions = [
+      {
+        type: 'checkbox',
+        name: 'selectedOptions',
+        message: 'Please select the Graphql Event Sources for which you wish to generate the Graphql schema from Godspeed event defs:',
+        choices: apolloEventsources,
+      },
+    ];
+
+    async function runPrompt() {
+      try {
+        const answers = await inquirer.prompt(questions);
+        if (answers.selectedOptions.length == 0) {
+          console.log(chalk.red("Please select atleast one GraphQL eventsource"))
+        } else {
+          await createSwaggerFile(answers.selectedOptions)
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    runPrompt();
+  } catch (error) {
+    console.log(error)
+  };
+
+const createSwaggerFile = async (apolloEventsources: string[]) => {
+    const eventPath = path.join(process.cwd(), "/src/events");
+    const eventsSchema: PlainObject = await loadYaml(eventPath, true);
+    apolloEventsources.map(async (each: string) => {
+      const apolloEndpoints = Object.fromEntries(
+        Object.entries(eventsSchema).filter(([key]) => key.split(".")[0] == each)
+      );
+      if (Object.keys(apolloEndpoints).length === 0) {
+        console.log(chalk.red(`there is no events of ${each} eventsource`))
+        process.exit(1);
+      }
+      let swaggerSchema = await generateSwaggerui(apolloEndpoints);
+      const cwd = process.cwd();
+      const tempFolderPath = path.join(cwd, '.temp');
+      // Check if the .temp folder exists, and create it if not
+      if (!fsExtras.existsSync(tempFolderPath)) {
+        fsExtras.mkdirSync(tempFolderPath);
+      }
+      const swaggerFilePath = path.join(tempFolderPath, `${each}swagger.json`);
+      // Write the swagger.json file in the .temp folder
+      await fsExtras.writeFileSync(swaggerFilePath, JSON.stringify(swaggerSchema, null, 2));
+
+      const command = `npx swagger-to-graphql --swagger-schema=.temp/${each}swagger.json > ./src/eventsources/${each}.graphql`;
+      exec(command, (error: any, stdout: any, stderr: any) => {
+        if (error) {
+          console.log(
+            chalk.red.bold(`Failed to generate Graphql schema for eventsource ${each}`)
+          );
+          console.log(
+            chalk.red(error.message)
+          );
+          return;
+        }
+        if (stderr) {
+          console.error(`stderr: ${stderr}`);
+          return;
+        }
+        console.log(
+          chalk.green(`Graphql schema generated successfuly for eventsource ${each} at ./src/eventsources/${each}.graphql`)
+
+        );
+      });
+    })
+
+
+  } 
+}
+
+const generateSwaggerui = (eventsSchema: any) => {
+  let finalSpec: PlainObject = {};
+  const swaggerCommonPart = {
+    "openapi": "3.0.0",
+    "info": {
+      "version": "0.0.1",
+      "title": "Godspeed: Sample Microservice",
+      "description": "Sample API calls demonstrating the functionality of Godspeed framework",
+      "termsOfService": "http://swagger.io/terms/",
+      "contact": {
+        "name": "Mindgrep Technologies Pvt Ltd",
+        "email": "talktous@mindgrep.com",
+        "url": "https://docs.mindgrep.com/docs/microservices/intro"
+      },
+      "license": {
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+      }
+    },
+    "paths": {}
+  };
+  let swaggerSpecBase = JSON.parse(JSON.stringify(swaggerCommonPart));
+
+  finalSpec = swaggerSpecBase;
+
+  Object.keys(eventsSchema).forEach((event: any) => {
+    let apiEndPoint = event.split('.')[2];
+    apiEndPoint = apiEndPoint.replace(/:([^\/]+)/g, '{$1}'); //We take :path_param. OAS3 takes {path_param}
+    const method = event.split('.')[1];
+    const eventSchema = eventsSchema[event];
+
+    //Initialize the schema for this method, for given event
+    let methodSpec: PlainObject = {
+      summary: eventSchema.summary,
+      description: eventSchema.description,
+      requestBody: eventSchema.body || eventSchema.data?.schema?.body,
+      parameters:
+        eventSchema.parameters ||
+        eventSchema.params ||
+        eventSchema.data?.schema?.params,
+      responses: eventSchema.responses,
+    };
+
+    // Set it in the overall schema
+    finalSpec.paths[apiEndPoint] = {
+      ...finalSpec.paths[apiEndPoint],
+      [method]: methodSpec,
+    };
+  });
+
+  return finalSpec;
 };
+
