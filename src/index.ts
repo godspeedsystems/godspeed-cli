@@ -15,7 +15,10 @@ import otelCommands from "./commands/otel";
 import {genGraphqlSchema} from "./utils/index";
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
-import { readFileSync } from "fs";
+import fs, { readFileSync } from "fs";
+import { homedir } from "node:os";
+import { readdir } from 'fs/promises';
+
 import { globSync } from "glob";
 import inquirer from "inquirer";
 
@@ -129,6 +132,8 @@ export const isAGodspeedProject = () => {
     .version(version);
   program.showHelpAfterError();
   program.showSuggestionAfterError(true);
+  program.allowUnknownOption();
+  program.allowExcessArguments();
   program.configureOutput({
     writeOut: (str) => {
       console.log(`${str}\n`);
@@ -235,6 +240,58 @@ export const isAGodspeedProject = () => {
       }
     });
 
+  // fetch the list of installed devops-plugins
+  const pluginPath = path.resolve(homedir(), `.godspeed/devops-plugins/node_modules/@godspeedsystems/`);
+
+  const devopsPluginSubCommand = program.command('devops-plugin')
+    .description(`manages godspeed devops-plugins.`)
+
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.install);
+
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.list);    
+  
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.remove);
+  
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.update);  
+
+  const devopsPluginHelp = `
+  To see help for any installed devops plugin, you can run:
+  <plugin-name> help
+  `;
+  devopsPluginSubCommand.on('--help', () => {
+    console.log(devopsPluginHelp);
+  });
+
+  //check if devops-plugin is installed.
+  if (fs.existsSync(pluginPath)) {
+    const installedPlugins = await readdir(pluginPath);
+    for (const installedPluginName of installedPlugins) {
+      devopsPluginSubCommand
+        .command(`${installedPluginName}`)
+        .description("installed godspeed devops plugin")
+        .allowUnknownOption(true)
+        .action(async () => {
+          const installedPluginPath = path.resolve(pluginPath, installedPluginName, "dist/index.js");
+
+          // check if installedPluginPath exists.
+          if (!fs.existsSync(installedPluginPath)) {
+            console.error(`${installedPluginName} is not installed properly. Please make sure ${installedPluginPath} exists.`);
+            return;
+          }
+
+          const args = process.argv.slice(4);
+
+          // Spawn the plugin with all arguments and options
+          spawnSync('node', [installedPluginPath, ...args], {
+            stdio: 'inherit',
+          });
+        });
+    }
+  }
   program
     .command("serve")
     .description("build and preview the production build in watch mode.")
@@ -249,13 +306,6 @@ export const isAGodspeedProject = () => {
         });
       }
     });
-
-  program
-    .command("devops-plugin")
-    .addCommand(devOpsPluginCommands.add)
-    .addCommand(devOpsPluginCommands.remove)
-    .addCommand(devOpsPluginCommands.update)
-    .description(`manage(add, remove, update) godspeed plugins for devops.`);
 
   program
     .command("plugin")
