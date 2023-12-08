@@ -1,5 +1,6 @@
 const fsExtras = require("fs-extra");
-import path from "path";
+import path from "path"
+
 // import interactiveMode from "../../utils/interactiveMode";
 // import {
 //   buildContainers,
@@ -8,7 +9,7 @@ import path from "path";
 // } from "../../utils/dockerUtility";
 // import checkPrerequisite from "../../utils/checkPrerequisite";
 import {
-  installDependencies,
+  installDependencies, prismaPlugInstall,
   validateAndCreateProjectDirectory,
 } from "../../utils/index";
 import { copyingLocalTemplate } from "../../utils";
@@ -72,15 +73,19 @@ export default async function create(
     godspeedOptions,
     options.fromExample
   );
-// removing .git folder in project folder.
-  const gitFilePath = path.join(process.cwd(),projectName, ".git");
+  // removing .git folder in project folder.
+  const gitFilePath = path.join(process.cwd(), projectName, ".git");
   fsExtras.removeSync(gitFilePath);
 
-  await installDependencies(projectDirPath,projectName);
+
+
+  await prismaPlugInstall(projectDirPath)
+  await installDependencies(projectDirPath, projectName);
+
 
   try {
     // the NEW flow [without containers]
-    
+
 
     // const composeOptions = await getComposeOptions();
 

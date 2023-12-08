@@ -241,6 +241,59 @@ export const compileAndCopyOrJustCopy = async (
   }
 };
 
+
+
+// export const installDependencies = async (
+//   projectDirPath: string,
+//   projectName: string
+// ) => {
+//   async function installPlugin() {
+//     const spinner = ora({
+//       spinner: {
+//         frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
+//         interval: 180,
+//       },
+//     }).start("installing dependencies...");
+//     try {
+//       // Use spawnCommand instead of spawnSync
+//       const child = spawnCommand(
+//         "npm",
+//         ["install", "--quiet", "--no-warnings", "--silent", "--progress=false"],
+//         {
+//           cwd: projectDirPath,
+//           stdio: "inherit", // Redirect output
+//         }
+//       );
+//       child.on("close", () => {
+//         spinner.stop(); // Stop the spinner when the installation is complete
+//         console.log("\ndependencies installed successfully!");
+
+
+
+//         console.log(
+//           `${chalk.green("\nSuccessfully created the project")} ${chalk.yellow(
+//             projectName
+//           )}.`
+//         );
+
+//         console.log(
+//           `${chalk.green(
+//             "Use `godspeed help` command for available commands."
+//           )} ${chalk.green.bold(
+//             "\n\nHappy building microservices with Godspeed! 🚀🎉\n"
+//           )}`
+//         );
+//       });
+//     } catch (error: any) {
+//       spinner.stop(); // Stop the spinner in case of an error
+//       console.error("Error during installation:", error.message);
+//     }
+//   }
+
+//   // Call the installPlugin function
+//   await installPlugin();
+// };
+
 export const installDependencies = async (
   projectDirPath: string,
   projectName: string
@@ -256,7 +309,13 @@ export const installDependencies = async (
       // Use spawnCommand instead of spawnSync
       const child = spawnCommand(
         "npm",
-        ["install", "--quiet", "--no-warnings", "--silent", "--progress=false"],
+        [
+          "install",
+          "--quiet",
+          "--no-warnings",
+          "--silent",
+          "--progress=false"
+        ],
         {
           cwd: projectDirPath,
           stdio: "inherit", // Redirect output
@@ -286,9 +345,38 @@ export const installDependencies = async (
     }
   }
 
+
   // Call the installPlugin function
   await installPlugin();
+
 };
+
+export const prismaPlugInstall = async (projectDirPath: string) => {
+  async function installprisma(): Promise<void> {
+    const command = 'npm install @godspeedsystems/plugins-prisma-as-datastore';
+
+    return new Promise<void>((resolve, reject) => {
+      const child = exec(command, {
+        cwd: projectDirPath,
+        stdio: "inherit", // Redirect output
+      });
+
+      child.on('exit', (code: any) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Command exited with non-zero status code: ${code}`));
+        }
+      });
+
+      child.on('error', (error: any) => {
+        reject(error);
+      });
+    });
+  }
+  await installprisma()
+}
+
 
 export const generateProjectFromDotGodspeed = async (
   projectName: string,
@@ -480,7 +568,7 @@ export const genGraphqlSchema = async () => {
     console.log(error)
   };
 
-const createSwaggerFile = async (apolloEventsources: string[]) => {
+  const createSwaggerFile = async (apolloEventsources: string[]) => {
     const eventPath = path.join(process.cwd(), "/src/events");
     const eventsSchema: PlainObject = await loadYaml(eventPath, true);
     apolloEventsources.map(async (each: string) => {
@@ -525,7 +613,7 @@ const createSwaggerFile = async (apolloEventsources: string[]) => {
     })
 
 
-  } 
+  }
 }
 
 const generateSwaggerui = (eventsSchema: any) => {
