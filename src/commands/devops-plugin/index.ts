@@ -1,9 +1,9 @@
 import { Command } from "commander";
-import spawnSync from "cross-spawn";
+// import spawnSync from "cross-spawn";
 import path from "path";
 import { homedir } from "node:os";
 import fs, { existsSync, readFileSync } from "fs";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
 import inquirer from "inquirer";
 import {readdir} from 'fs/promises';
 
