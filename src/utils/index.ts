@@ -300,9 +300,9 @@ export const installDependencies = async (
 
 };
 
-export const prismaPlugInstall = async (projectDirPath: string) => {
+export const installPackage = async (projectDirPath: string,package_name:string) => {
   async function installprisma(): Promise<void> {
-    const command = 'npm install @godspeedsystems/plugins-prisma-as-datastore';
+    const command = `npm install ${package_name}`;
 
     return new Promise<void>((resolve, reject) => {
       const child = exec(command, {

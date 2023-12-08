@@ -9,7 +9,7 @@ import path from "path"
 // } from "../../utils/dockerUtility";
 // import checkPrerequisite from "../../utils/checkPrerequisite";
 import {
-  installDependencies, prismaPlugInstall,
+  installDependencies, installPackage,
   validateAndCreateProjectDirectory,
 } from "../../utils/index";
 import { copyingLocalTemplate } from "../../utils";
@@ -79,7 +79,7 @@ export default async function create(
 
 
 
-  await prismaPlugInstall(projectDirPath)
+  await installPackage(projectDirPath,'@godspeedsystems/plugins-prisma-as-datastore')
   await installDependencies(projectDirPath, projectName);
 
 
