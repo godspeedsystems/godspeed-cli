@@ -241,6 +241,8 @@ export const compileAndCopyOrJustCopy = async (
   }
 };
 
+
+
 export const installDependencies = async (
   projectDirPath: string,
   projectName: string
@@ -256,7 +258,13 @@ export const installDependencies = async (
       // Use spawnCommand instead of spawnSync
       const child = spawnCommand(
         "npm",
-        ["install", "--quiet", "--no-warnings", "--silent", "--progress=false"],
+        [
+          "install",
+          "--quiet",
+          "--no-warnings",
+          "--silent",
+          "--progress=false"
+        ],
         {
           cwd: projectDirPath,
           stdio: "inherit", // Redirect output
@@ -286,9 +294,38 @@ export const installDependencies = async (
     }
   }
 
+
   // Call the installPlugin function
   await installPlugin();
+
 };
+
+export const installPackage = async (projectDirPath: string,package_name:string) => {
+  async function installprisma(): Promise<void> {
+    const command = `npm install ${package_name}`;
+
+    return new Promise<void>((resolve, reject) => {
+      const child = exec(command, {
+        cwd: projectDirPath,
+        stdio: "inherit", // Redirect output
+      });
+
+      child.on('exit', (code: any) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Command exited with non-zero status code: ${code}`));
+        }
+      });
+
+      child.on('error', (error: any) => {
+        reject(error);
+      });
+    });
+  }
+  await installprisma()
+}
+
 
 export const generateProjectFromDotGodspeed = async (
   projectName: string,
@@ -480,7 +517,7 @@ export const genGraphqlSchema = async () => {
     console.log(error)
   };
 
-const createSwaggerFile = async (apolloEventsources: string[]) => {
+  const createSwaggerFile = async (apolloEventsources: string[]) => {
     const eventPath = path.join(process.cwd(), "/src/events");
     const eventsSchema: PlainObject = await loadYaml(eventPath, true);
     apolloEventsources.map(async (each: string) => {
@@ -525,7 +562,7 @@ const createSwaggerFile = async (apolloEventsources: string[]) => {
     })
 
 
-  } 
+  }
 }
 
 const generateSwaggerui = (eventsSchema: any) => {
