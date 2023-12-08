@@ -76,6 +76,45 @@ export default async function create(
   const gitFilePath = path.join(process.cwd(),projectName, ".git");
   fsExtras.removeSync(gitFilePath);
 
+  const addPackageToDependencies = (
+    packageName: string,
+    packageVersion: string,
+    packageJsonPath: string
+  ) => {
+    // Read the existing package.json file
+    fsExtras.readFile(packageJsonPath, 'utf8', (err: any, data: any) => {
+      if (err) {
+        console.error('Error reading package.json:', err);
+        return;
+      }
+  
+      try {
+        const packageJson = JSON.parse(data);
+  
+        // Add the package to the dependencies
+        packageJson.dependencies = packageJson.dependencies || {};
+        packageJson.dependencies[packageName] = packageVersion;
+  
+        // Write the updated package.json back to the file
+        fsExtras.writeFile(
+          packageJsonPath,
+          JSON.stringify(packageJson, null, 2),
+          'utf8',
+          (err: any) => {
+            if (err) {
+              console.error('Error writing package.json:', err);
+              return;
+            }
+          }
+        );
+      } catch (parseError) {
+        console.error('Error parsing package.json:', parseError);
+      }
+    });
+  };
+
+  await addPackageToDependencies('@godspeedsystems/plugins-prisma-as-datastore','latest',`${projectDirPath}/package.json`)
+
   await installDependencies(projectDirPath,projectName);
 
   try {
