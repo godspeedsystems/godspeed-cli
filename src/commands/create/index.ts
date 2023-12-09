@@ -78,8 +78,11 @@ export default async function create(
   fsExtras.removeSync(gitFilePath);
 
 
+console.log(options)
 
+if(options.fromExample === 'mongo-as-prisma'){
   await installPackage(projectDirPath,'@godspeedsystems/plugins-prisma-as-datastore')
+}
   await installDependencies(projectDirPath, projectName);
 
 
