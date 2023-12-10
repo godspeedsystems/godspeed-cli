@@ -525,7 +525,7 @@ export const genGraphqlSchema = async () => {
         Object.entries(eventsSchema).filter(([key]) => key.split(".")[0] == each)
       );
       if (Object.keys(apolloEndpoints).length === 0) {
-        console.log(chalk.red(`there is no events of ${each} eventsource`))
+        console.log(chalk.red(`Did not find any events for the ${each} eventsource. Why don't you define the first one in the events folder?`))
         process.exit(1);
       }
       let swaggerSchema = await generateSwaggerui(apolloEndpoints);
