@@ -588,11 +588,6 @@ const generateSwaggerui = async (eventsSchema: any,definitions:any) => {
     },
     "paths": {}
   };
-  try{
-
-  }catch{
-
-  }
   let swaggerSpecBase = JSON.parse(JSON.stringify(swaggerCommonPart));
 
   finalSpec = swaggerSpecBase;
