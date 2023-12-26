@@ -519,7 +519,9 @@ export const genGraphqlSchema = async () => {
 
   const createSwaggerFile = async (apolloEventsources: string[]) => {
     const eventPath = path.join(process.cwd(), "/src/events");
+    const definitionsPath = path.join(process.cwd(), "/src/definitions");
     const eventsSchema: PlainObject = await loadYaml(eventPath, true);
+    const definitions: PlainObject = await loadYaml(definitionsPath, false);
     apolloEventsources.map(async (each: string) => {
       const apolloEndpoints = Object.fromEntries(
         Object.entries(eventsSchema).filter(([key]) => key.split(".")[0] == each)
@@ -528,7 +530,7 @@ export const genGraphqlSchema = async () => {
         console.log(chalk.red(`Did not find any events for the ${each} eventsource. Why don't you define the first one in the events folder?`))
         process.exit(1);
       }
-      let swaggerSchema = await generateSwaggerui(apolloEndpoints);
+      let swaggerSchema = await generateSwaggerui(apolloEndpoints,definitions);
       const cwd = process.cwd();
       const tempFolderPath = path.join(cwd, '.temp');
       // Check if the .temp folder exists, and create it if not
@@ -565,7 +567,7 @@ export const genGraphqlSchema = async () => {
   }
 }
 
-const generateSwaggerui = (eventsSchema: any) => {
+const generateSwaggerui = async (eventsSchema: any,definitions:any) => {
   let finalSpec: PlainObject = {};
   const swaggerCommonPart = {
     "openapi": "3.0.0",
@@ -586,6 +588,11 @@ const generateSwaggerui = (eventsSchema: any) => {
     },
     "paths": {}
   };
+  try{
+
+  }catch{
+
+  }
   let swaggerSpecBase = JSON.parse(JSON.stringify(swaggerCommonPart));
 
   finalSpec = swaggerSpecBase;
@@ -614,6 +621,8 @@ const generateSwaggerui = (eventsSchema: any) => {
       [method]: methodSpec,
     };
   });
+
+  finalSpec.definitions = definitions;
 
   return finalSpec;
 };
