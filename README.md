@@ -31,9 +31,7 @@ or
 ```bash
 yarn global add @godspeedsystems/godspeed
 ```
-
-Once installed, You will be access to `godspeed` in yor command prompt.
-
+Once installed, you will have access to `Godspeed` in your command prompt
 ## Supported Commands & Arguments
 
   | Command               |     Options       | Description                                                                 |
