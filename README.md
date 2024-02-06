@@ -2,23 +2,31 @@
     <a href="https://github.com/godspeedsystems/">
         <img width="200" height="200" src="https://github.com/godspeedsystems/godspeed-cli/blob/main/logo.png">
     </a>
-</div>
-<h1 align="center">Godspeed CLI</h1>
+    <h1 align="center">Godspeed CLI</h1>
 <p align="center">
   The official Command Line Interface of Godspeed Framework
 </p>
 <br>
 
-[![npm][npm]][npm-url]
-[![Install Size][size]][size-url]
+  <p>
+
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?logo=github)](https://github.com/godspeedsystems/gs-node-service)
+ [![Discord](https://img.shields.io/badge/chat-discord-brightgreen.svg?logo=discord&style=flat)](https://discord.com/invite/MKjv3KdD7X)
+ [![Website](https://img.shields.io/website?url=https%3A%2F%2Fgodspeed.systems%2F)](https://godspeed.systems/)
+
+  </p>
+  <br />
+</div>
+
+
 
 # Godspeed CLI
 
-CLI to create and manage [Godspeed](https://github.com/godspeedsystems/core) projects.
+CLI to create and manage [Godspeed](https://github.com/godspeedsystems/gs-node-service) projects.
 
 # About
 
-Godspeed CLI is the primary way to interact with your Godspeed project from the command line. It provides a bunch of useful functionalities during the project development lifecycle.
+[Godspeed CLI](https://godspeed.systems/docs/microservices-framework/CLI) is the primary way to interact with your Godspeed project from the command line. It provides a bunch of useful functionalities during the project development lifecycle.
 
 ## How to install
 
