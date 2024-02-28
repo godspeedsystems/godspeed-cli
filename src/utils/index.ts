@@ -364,21 +364,24 @@ export const generateProjectFromDotGodspeed = async (
         { recursive: true }
       );
 
-      // generate package.json
-      const packageJson = await fsExtras.readJson(
-        path.resolve(projectDirPath, ".template/package.json")
-      );
-
-      await fsExtras.writeJsonSync(
-        path.resolve(projectDirPath, "package.json"),
-        {
-          ...packageJson,
-          name: projectName,
-        },
-        {
-          spaces: "\t",
-        }
-      );
+      // generate package.json, tsConfig.json
+      for (let file of ['package.json', 'tsconfig.json']) {
+        const packageJson = await fsExtras.readJson(
+          path.resolve(projectDirPath, `.template/${file}`)
+        );
+  
+        await fsExtras.writeJsonSync(
+          path.resolve(projectDirPath, file),
+          {
+            ...packageJson,
+            name: projectName,
+          },
+          {
+            spaces: "\t",
+          }
+        );
+      }
+      
 
       // generate .swcrc file
       const swcrc = await fsExtras.readJson(
