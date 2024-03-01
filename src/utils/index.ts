@@ -1,5 +1,7 @@
 import path from "path";
-const fsExtras = require("fs-extra");
+import fsExtras from "fs-extra";
+import os from "os";
+import yaml from "yaml";
 import inquirer from "inquirer";
 import { log } from "./signale";
 import { globSync } from "glob";
@@ -7,10 +9,9 @@ import ejs from "ejs";
 import simpleGit from "simple-git";
 import chalk from "chalk";
 import { spawnSync } from "child_process";
-import crossSpawn from "cross-spawn";
 import spawnCommand from "cross-spawn";
 import ora from "ora";
-import loadYaml from '@godspeedsystems/core/dist/core/yamlLoader';
+import { yamlLoader as loadYaml, generateSwaggerJSON, logger , PlainObject, yamlLoader} from '@godspeedsystems/core';
 const { exec } = require('child_process');
 
 const userID = (): string => {
@@ -300,7 +301,7 @@ export const installDependencies = async (
 
 };
 
-export const installPackage = async (projectDirPath: string,package_name:string) => {
+export const installPackage = async (projectDirPath: string, package_name: string) => {
   async function installprisma(): Promise<void> {
     const command = `npm install ${package_name}`;
 
@@ -369,7 +370,7 @@ export const generateProjectFromDotGodspeed = async (
         const packageJson = await fsExtras.readJson(
           path.resolve(projectDirPath, `.template/${file}`)
         );
-  
+
         await fsExtras.writeJsonSync(
           path.resolve(projectDirPath, file),
           {
@@ -381,7 +382,7 @@ export const generateProjectFromDotGodspeed = async (
           }
         );
       }
-      
+
 
       // generate .swcrc file
       const swcrc = await fsExtras.readJson(
@@ -520,57 +521,76 @@ export const genGraphqlSchema = async () => {
     console.log(error)
   };
 
-  const createSwaggerFile = async (apolloEventsources: string[]) => {
+  const createSwaggerFile = async (eventSources: string[]) => {
     const eventPath = path.join(process.cwd(), "/src/events");
     const definitionsPath = path.join(process.cwd(), "/src/definitions");
-    const eventsSchema: PlainObject = await loadYaml(eventPath, true);
+    const allEventsSchema: PlainObject = await loadYaml(eventPath, true); //all events of the project
     const definitions: PlainObject = await loadYaml(definitionsPath, false);
-    apolloEventsources.map(async (each: string) => {
-      const apolloEndpoints = Object.fromEntries(
-        Object.entries(eventsSchema).filter(([key]) => key.split(".")[0] == each)
+    eventSources.map(async (eventSourceName: string) => {
+      logger.info('Generating graphql schema for %s. First we will create swagger schema in %s', eventSourceName, os.tmpdir());
+      // Find out the events for this eventSourceName key
+      const eventSchemas = Object.fromEntries(
+        Object.entries(allEventsSchema).filter(([key]) => {
+          const eventSourceKey = key.split(".")[0];
+          // eventSourceKey is the name of eventsources in this event definition. 
+          // It could be one like 'http' or more like 'http & graphql'
+
+          if (eventSourceKey == eventSourceName) {
+            return true;
+          }
+          const eventSources = eventSourceKey.split('&').map((s) => s.trim());
+          return eventSources.includes(eventSourceName);
+        })
       );
-      if (Object.keys(apolloEndpoints).length === 0) {
-        console.log(chalk.red(`Did not find any events for the ${each} eventsource. Why don't you define the first one in the events folder?`))
+      if (Object.keys(eventSchemas).length === 0) {
+        logger.fatal(chalk.red(`Did not find any events for the ${eventSourceName} eventsource. Why don't you define the first one in the events folder?`))
         process.exit(1);
       }
-      let swaggerSchema = await generateSwaggerui(apolloEndpoints,definitions);
-      const cwd = process.cwd();
-      const tempFolderPath = path.join(cwd, '.temp');
-      // Check if the .temp folder exists, and create it if not
-      if (!fsExtras.existsSync(tempFolderPath)) {
-        fsExtras.mkdirSync(tempFolderPath);
-      }
-      const swaggerFilePath = path.join(tempFolderPath, `${each}swagger.json`);
-      // Write the swagger.json file in the .temp folder
+      // let swaggerSchema = await generateSwaggerui(eventSchemas,definitions);
+      let eventSourceConfig = yaml.parse(fsExtras.readFileSync(process.cwd() + `/src/eventsources/${eventSourceName}.yaml`, { encoding: 'utf-8' }) );
+      //The yaml file of the eventsource
+      let swaggerSchema = generateSwaggerJSON(eventSchemas, definitions, eventSourceConfig);
+
+      // For swagger-to-graphql plugin we need to save this file somewhere
+      const swaggerFilePath = path.join( os.tmpdir(), eventSourceName + '-swagger.json');
+      
+      // Write the swagger.json file in the temp folder
       await fsExtras.writeFileSync(swaggerFilePath, JSON.stringify(swaggerSchema, null, 2));
+      
+      logger.info('Generated and saved swagger schema at temporary location %s. Now generating graphql schema from the same.', swaggerFilePath);
+      
+      // genereate graphql schema
+      await generateGraphqlSchema(eventSourceName, swaggerFilePath);
 
-      const command = `npx swagger-to-graphql --swagger-schema=.temp/${each}swagger.json > ./src/eventsources/${each}.graphql`;
-      exec(command, (error: any, stdout: any, stderr: any) => {
-        if (error) {
-          console.log(
-            chalk.red.bold(`Failed to generate Graphql schema for eventsource ${each}`)
-          );
-          console.log(
-            chalk.red(error.message)
-          );
-          return;
-        }
-        if (stderr) {
-          console.error(`stderr: ${stderr}`);
-          return;
-        }
-        console.log(
-          chalk.green(`Graphql schema generated successfuly for eventsource ${each} at ./src/eventsources/${each}.graphql`)
-
-        );
-      });
-    })
+    });
 
 
   }
 }
 
-const generateSwaggerui = async (eventsSchema: any,definitions:any) => {
+async function generateGraphqlSchema(eventSourceName: string, swaggerFilePath: string) {
+  const command = `npx swagger-to-graphql --swagger-schema=${swaggerFilePath} > ./src/eventsources/${eventSourceName}.graphql`;
+  exec(command, (error: any, stdout: any, stderr: any) => {
+    if (error) {
+      console.log(
+        chalk.red.bold(`Failed to generate Graphql schema for eventsource ${eventSourceName}`)
+      );
+      console.log(
+        chalk.red(error.message)
+      );
+      return;
+    }
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(
+      chalk.green(`Graphql schema generated successfuly for eventsource ${eventSourceName} at ./src/eventsources/${eventSourceName}.graphql`)
+
+    );
+  });
+}
+const generateSwaggerui = async (eventsSchema: PlainObject, definitions: PlainObject) => {
   let finalSpec: PlainObject = {};
   const swaggerCommonPart = {
     "openapi": "3.0.0",
