@@ -2,6 +2,7 @@
   "include": ["src"],
   "compilerOptions": {
     "target": "es2021",
+    "skipLibCheck": true,
     "module": "commonjs",
     "lib": ["es6", "es2021", "dom"],
     "declaration": true,
