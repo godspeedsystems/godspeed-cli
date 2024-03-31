@@ -44,7 +44,22 @@ const list = program
         console.error("No devops-plugin is installed");
         return
       }
-
+      let pluginsList;
+      try {
+        // list all the installed plugins
+        // if, file not found, throws error
+        pluginsList = JSON.parse(
+          readFileSync(path.join(gsDevopsPluginsDir, "package.json"), {
+            encoding: "utf-8",
+          })
+        ).dependencies;
+  
+        // id package.json dont have "dependencies" key
+        if (!pluginsList) throw new Error();
+      } catch (error) {
+        console.error("There are no devops plugins installed.");
+        return;
+      }
       // @ts-ignore
       let { dependencies } = require(path.join(gsDevopsPluginsDir, 'package.json'));
 
@@ -118,15 +133,30 @@ const remove = program
       console.error('There are no devops plugins installed.');
       return;
     }
-  });
 
-function uninstallDevOpsPlugin(pluginName: any) {
-  // Use npm to uninstall the plugin
-  const result = spawnSync("npm", ["uninstall", `${pluginName}`], {
-    cwd: gsDevopsPluginsDir,
-    stdio: "inherit",
-  });
-}
+    const answer = await inquirer.prompt([
+      {
+        type: "list",
+        name: "gsDevOpsPlugin",
+        message: "Please select devops plugin to remove.",
+        default: "",
+        choices: Object.keys(pluginsList).map((pluginName) => ({
+          name: pluginName,
+          value: pluginName,
+        })),
+        loop: false,
+      },
+    ]);
+
+    // uninstallDevOpsPlugin(answer.gsDevOpsPlugin)
+    spawnSync("npm", ["uninstall", `${answer.gsDevOpsPlugin}`], {
+      cwd: gsDevopsPluginsDir,
+      stdio: "inherit",
+    });
+
+  }
+
+  );
 
 const update = program
   .command("update")
