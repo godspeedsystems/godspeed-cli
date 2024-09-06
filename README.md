@@ -40,7 +40,10 @@ or
 ```bash
 yarn global add @godspeedsystems/godspeed
 ```
-Once installed, you will have access to `Godspeed` in your command prompt
+
+## Basic Usage:
+Once installed, run godspeed from your terminal to see the available commands and usage information. The CLI provides detailed help messages for each command, guiding you through its functionalities and options.
+
 ## Supported Commands & Arguments
 
   | Command               |     Options       | Description                                                                 |
@@ -57,7 +60,7 @@ Once installed, you will have access to `Godspeed` in your command prompt
 
 ## 📖 Documentation <a name="Documentation"></a>
 
-You can find the complete documentation of Godspeed [here](https://godspeed.systems/docs/microservices-framework/getting-started/overview).
+For a comprehensive understanding of Godspeed CLI and its advanced features, explore the detailed documentation [here](https://godspeed.systems/docs/microservices-framework/guide/get-started).
 
 ## Show Your Love ❤️ & Support 🙏
 If you find the Godspeed Node.js Service helpful or interesting, we would greatly appreciate your support by following, starring, and subscribing.
