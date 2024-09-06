@@ -29,7 +29,9 @@ CLI to create and manage [Godspeed](https://github.com/godspeedsystems/gs-node-s
 
 [Godspeed CLI](https://godspeed.systems/docs/microservices-framework/CLI) is the primary way to interact with your Godspeed project from the command line. It provides a bunch of useful functionalities during the project development lifecycle.
 
-## How to install
+## Installation:
+
+Getting started is a breeze! Install Godspeed CLI globally using either npm or yarn:
 
 ```bash
 npm install -g @godspeedsystems/godspeed
