@@ -11,9 +11,13 @@ export const pluginAdd = () => {
     const tempDirectory = "sandbox";
     let cliOp: string; // Declare cliOp outside before() to make it accessible
 
-    const command = "npm search @godspeedsystems/plugins --json";
-    const stdout = execSync(command, { encoding: "utf-8" });
-    const availablePlugins = JSON.parse(stdout);
+    // const command = "npm search @godspeedsystems/plugins --json";
+    // const stdout = execSync(command, { encoding: "utf-8" });
+    // const availablePlugins = JSON.parse(stdout);
+    const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
+    const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: 'utf-8' });
+    const availablePlugins = JSON.parse(pluginsData);
+
     const folderPath = path.join(process.cwd(), tempDirectory, folderName);
     const pluginNames = availablePlugins.map((plugin: any) => plugin.name);
     // checking installation of plugin in package.json
