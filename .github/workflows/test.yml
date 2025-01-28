@@ -24,10 +24,10 @@ jobs:
         run: |
           npm run build:prod
       - name: Run build:test:prod
-        if: env.RUN_TESTS != 'FALSE'
+        if: env.RUN_TESTS != "FALSE"
         run: |
           npm run build:test:prod
       - name: Run test
-        if: env.RUN_TESTS != 'FALSE'
+        if: env.RUN_TESTS != "FALSE"
         run: |
           npm run test
