@@ -30,7 +30,7 @@ import ora from "ora";
       // const availablePlugins = JSON.parse(stdout.trim());
 
   // Map to the format expected by the UI
-    const pluginNames = availablePlugins.map((plugin: { value: any; name: any; description: any }) => ({
+    const pluginNames = availablePlugins.map((plugin: { value: string; name: string; description: string }) => ({
       value: plugin.value,
       Name: plugin.name.split("plugins-")[1],
       Description: plugin.description,
