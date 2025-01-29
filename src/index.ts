@@ -219,7 +219,7 @@ export const isAGodspeedProject = () => {
         spawnSync("npm", ["run", "build"], {
           stdio: "inherit",
           env: {
-            NODE_ENV: "production",
+            // NODE_ENV: "production",
             ...process.env,
           },
         });
@@ -233,7 +233,7 @@ export const isAGodspeedProject = () => {
         spawnSync("npm", ["run", "preview"], {
           stdio: "inherit",
           env: {
-            NODE_ENV: "production",
+            // NODE_ENV: "production",
             ...process.env,
           },
         });
@@ -300,7 +300,7 @@ export const isAGodspeedProject = () => {
         spawnSync("npm", ["run", "serve"], {
           stdio: "inherit",
           env: {
-            NODE_ENV: "production",
+            // NODE_ENV: "production",
             ...process.env,
           },
         });
