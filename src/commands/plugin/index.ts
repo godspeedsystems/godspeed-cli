@@ -15,6 +15,27 @@ import { cwd } from "process";
 import chalk from "chalk";
 import ora from "ora";
 
+// Load the plugins list from JSON file
+  const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
+  if (!fs.existsSync(pluginsFilePath)) {
+    console.error("Error: pluginsList.json file not found!");
+    process.exit(1);
+  }
+  const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: "utf-8" });
+  const availablePlugins = JSON.parse(pluginsData);
+
+    // or Search the plugins list from npm
+      // const command = "npm search @godspeedsystems/plugins --json";
+      // const stdout = execSync(command, { encoding: "utf-8" });
+      // const availablePlugins = JSON.parse(stdout.trim());
+
+  // Map to the format expected by the UI
+    const pluginNames = availablePlugins.map((plugin: { value: any; name: any; description: any }) => ({
+      value: plugin.value,
+      Name: plugin.name.split("plugins-")[1],
+      Description: plugin.description,
+    }));
+
 const program = new Command();
 
 type ModuleType = "DS" | "ES" | "BOTH";
@@ -212,37 +233,15 @@ const add = program
   .action(async (pluginName: string) => {
     let givenPluginName = pluginName;
 
-  // Search the plugins list from npm
-
-    // const command = "npm search @godspeedsystems/plugins --json";
-    // const stdout = execSync(command, { encoding: "utf-8" });
-    // const availablePlugins = JSON.parse(stdout.trim());
-        
-  // Load the plugins list from JSON file
-    const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
-    const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: 'utf-8' });
-    const availablePlugins = JSON.parse(pluginsData);
-
-    // Map to the format expected by the UI
-    const pluginNames = availablePlugins.map((plugin: { value: any; name: any; description: any }) => ({
-      value: plugin.value,
-      Name: plugin.name.split("plugins-")[1],
-      Description: plugin.description,
-    }));
-
-    console.log("Available plugins:", pluginNames);
-
     let pkgPath = path.join(cwd(), "package.json");
     let localpluginsList = existsSync(pkgPath)
       ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
       : {};
-    // console.log(pluginsList)
     for (const pluginName in localpluginsList) {
       const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
       !isGSPlugin && delete localpluginsList[pluginName];
     }
 
-    // console.log(pluginsList)
     const missingPlugins = pluginNames.filter(
       (plugin: { value: string | number }) => !localpluginsList[plugin.value]
     );
@@ -481,23 +480,7 @@ const remove = program
         console.error("There are no eventsource/datasource plugins installed.");
         return;
       }
-
-      // const command = "npm search @godspeedsystems/plugins --json";
-      // const stdout = execSync(command, { encoding: "utf-8" });
-      // const availablePlugins = JSON.parse(stdout.trim());
-
-  // Load the plugins list from JSON file
-      const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
-      const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: 'utf-8' });
-      const availablePlugins = JSON.parse(pluginsData);
-
-      // Map to the format expected by the UI
-      const pluginNames = availablePlugins.map((plugin: { value: any; name: any; description: any }) => ({
-        value: plugin.value,
-        Name: plugin.name.split("plugins-")[1],
-        Description: plugin.description,
-      }));
-
+   
       let pkgPath = path.join(cwd(), "package.json");
       pluginsList = existsSync(pkgPath)
         ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
@@ -611,23 +594,7 @@ const update = program
       }
     }
 
-    // const command = "npm search @godspeedsystems/plugins --json";
-    // const stdout = execSync(command, { encoding: "utf-8" });
-    // const availablePlugins = JSON.parse(stdout.trim());
-
-  // Load the plugins list from JSON file
-     const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
-     const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: 'utf-8' });
-     const availablePlugins = JSON.parse(pluginsData);
- 
-     // Map to the format expected by the UI
-     const pluginNames = availablePlugins.map((plugin: { value: any; name: any; description: any }) => ({
-       value: plugin.value,
-       Name: plugin.name.split("plugins-")[1],
-       Description: plugin.description,
-     }));
-
-
+    
     let pkgPath = path.join(cwd(), "package.json");
     pluginsList = existsSync(pkgPath)
       ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
