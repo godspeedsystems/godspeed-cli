@@ -1,0 +1,68 @@
+    [
+      {
+        "value": "@godspeedsystems/plugins-express-as-http",
+        "name": "plugins-express-as-http",
+        "description": "Express as HTTP server plugin for Godspeed Framework."
+      },
+     
+      {
+        "value": "@godspeedsystems/plugins-cron-as-eventsource",
+        "name": "plugins-cron-as-eventsource",
+        "description": "Cron as eventsource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-graphql-as-eventsource",
+        "name": "plugins-graphql-as-eventsource",
+        "description": "Graphql as eventsource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-prisma-as-datastore",
+        "name": "plugins-prisma-as-datastore",
+        "description": "Prisma as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-aws-as-datasource",
+        "name": "plugins-aws-as-datasource",
+        "description": "AWS as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-axios-as-datasource",
+        "name": "plugins-axios-as-datasource",
+        "description": "Axios as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-excel-as-datasource",
+        "name": "plugins-excel-as-datasource",
+        "description": "Excel as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-mailer-as-datasource",
+        "name": "plugins-mailer-as-datasource",
+        "description": "Mailer as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-mongoose-as-datasource",
+        "name": "plugins-mongoose-as-datasource",
+        "description": "Mongoose as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-redis-as-datasource",
+        "name": "plugins-redis-as-datasource",
+        "description": "Redis as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-kafka-as-datasource-as-eventsource",
+        "name": "plugins-kafka-as-datasource-as-eventsource",
+        "description": "Kafka as a datasource and eventsource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-elasticgraph-as-datasource",
+        "name": "plugins-elasticgraph-as-datasource",
+        "description": "Elasticgraph as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-salesforce-as-datasource-as-eventsource",
+        "name": "plugins-salesforce-as-datasource-as-eventsource",
+        "description": "Salesforce as a datasource plugin for Godspeed Framework."
+      }      
+    ]

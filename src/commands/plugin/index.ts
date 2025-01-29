@@ -15,6 +15,27 @@ import { cwd } from "process";
 import chalk from "chalk";
 import ora from "ora";
 
+// Load the plugins list from JSON file
+  const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
+  if (!fs.existsSync(pluginsFilePath)) {
+    console.error("Error: pluginsList.json file not found!");
+    process.exit(1);
+  }
+  const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: "utf-8" });
+  const availablePlugins = JSON.parse(pluginsData);
+
+    // or Search the plugins list from npm
+      // const command = "npm search @godspeedsystems/plugins --json";
+      // const stdout = execSync(command, { encoding: "utf-8" });
+      // const availablePlugins = JSON.parse(stdout.trim());
+
+  // Map to the format expected by the UI
+    const pluginNames = availablePlugins.map((plugin: { value: string; name: string; description: string }) => ({
+      value: plugin.value,
+      Name: plugin.name.split("plugins-")[1],
+      Description: plugin.description,
+    }));
+
 const program = new Command();
 
 type ModuleType = "DS" | "ES" | "BOTH";
@@ -78,7 +99,7 @@ const addAction = async (pluginsList: string[]) => {
       let yamlFileName = Module.CONFIG_FILE_NAME as string;
       let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
 
-      switch (moduleType) {
+      switch (moduleType) { 
         case "BOTH":
           {
             mkdirSync(
@@ -212,28 +233,15 @@ const add = program
   .action(async (pluginName: string) => {
     let givenPluginName = pluginName;
 
-    const command = "npm search @godspeedsystems/plugins --json";
-    const stdout = execSync(command, { encoding: "utf-8" });
-    const availablePlugins = JSON.parse(stdout.trim());
-    const pluginNames = availablePlugins.map(
-      (plugin: { value: any; name: any; description: any }) => ({
-        value: plugin.name,
-        Name: plugin.name.split("plugins-")[1],
-        Description: plugin.description,
-      })
-    );
-
     let pkgPath = path.join(cwd(), "package.json");
     let localpluginsList = existsSync(pkgPath)
       ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
       : {};
-    // console.log(pluginsList)
     for (const pluginName in localpluginsList) {
       const isGSPlugin = pluginName.includes("@godspeedsystems/plugins");
       !isGSPlugin && delete localpluginsList[pluginName];
     }
 
-    // console.log(pluginsList)
     const missingPlugins = pluginNames.filter(
       (plugin: { value: string | number }) => !localpluginsList[plugin.value]
     );
@@ -472,9 +480,7 @@ const remove = program
         console.error("There are no eventsource/datasource plugins installed.");
         return;
       }
-
-      const command = "npm search @godspeedsystems/plugins --json";
-      const stdout = execSync(command, { encoding: "utf-8" });
+   
       let pkgPath = path.join(cwd(), "package.json");
       pluginsList = existsSync(pkgPath)
         ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
@@ -485,17 +491,6 @@ const remove = program
         !isGSPlugin && delete pluginsList[pluginName];
       }
 
-      // console.log(pluginsList)
-      const availablePlugins = JSON.parse(stdout.trim());
-
-      const pluginNames = availablePlugins.map(
-        (plugin: { value: any; name: any; description: any }) => ({
-          value: plugin.name,
-          Name: plugin.name.split("plugins-")[1],
-          Description: plugin.description,
-        })
-      );
-
       const commonPlugins = pluginNames.filter(
         (plugin: { value: string | number }) => pluginsList[plugin.value]
       );
@@ -504,7 +499,7 @@ const remove = program
       const tableCheckboxPrompt = {
         type: "search-table",
         name: "gsPlugin",
-        message: "Please select godspeed plugin to install:",
+        message: "Please select godspeed plugin to uninstall:",
         wordWrap: true,
         pageSize: 5,
         searchable: true,
@@ -599,8 +594,7 @@ const update = program
       }
     }
 
-    const command = "npm search @godspeedsystems/plugins --json";
-    const stdout = execSync(command, { encoding: "utf-8" });
+    
     let pkgPath = path.join(cwd(), "package.json");
     pluginsList = existsSync(pkgPath)
       ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
@@ -612,16 +606,6 @@ const update = program
     }
 
     // console.log(pluginsList)
-    const availablePlugins = JSON.parse(stdout.trim());
-
-    const pluginNames = availablePlugins.map(
-      (plugin: { value: string; name: string; description: string }) => ({
-        value: plugin.name,
-        Name: plugin.name.split("plugins-")[1],
-        Description: plugin.description,
-      })
-    );
-
     const commonPlugins = pluginNames.filter(
       (plugin: any) => pluginsList[plugin.value]
     );
@@ -631,7 +615,7 @@ const update = program
     const tableCheckboxPrompt = {
       type: "search-table",
       name: "gsPlugin",
-      message: "Please select godspeed plugin to install:",
+      message: "Please select godspeed plugin to update:",
       wordWrap: true,
       pageSize: 5,
       searchable: true,

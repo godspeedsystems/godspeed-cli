@@ -12,9 +12,13 @@ export const pluginRemove = () => {
     const folderName = "godspeed";
     const tempDirectory = "sandbox";
 
-    const command = "npm search @godspeedsystems/plugins --json";
-    const stdout = execSync(command, { encoding: "utf-8" });
-    const availablePlugins = JSON.parse(stdout);
+    // const command = "npm search @godspeedsystems/plugins --json";
+    // const stdout = execSync(command, { encoding: "utf-8" });
+    // const availablePlugins = JSON.parse(stdout);
+    const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
+    const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: 'utf-8' });
+    const availablePlugins = JSON.parse(pluginsData);
+    
     const folderPath = path.join(process.cwd(), tempDirectory, folderName);
     const pluginNames = availablePlugins.map((plugin: any) => plugin.name);
     for (const pluginName of pluginNames) {
