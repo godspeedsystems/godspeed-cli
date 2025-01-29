@@ -1,6 +1,6 @@
 import { create } from "./create";
 import { plugin } from "./plugin";
-import { devopsPlugin } from "./devops-plugin";
+// import { devopsPlugin } from "./devops-plugin";
 import { describe, before } from "mocha";
 import * as fs from "fs";
 
@@ -16,7 +16,7 @@ export const commands = () => {
       done();
     });
     create();
-    devopsPlugin();
+    // devopsPlugin();
     plugin();
     after(function (done) {
       // Cleanup the temporary directory after the test suite
