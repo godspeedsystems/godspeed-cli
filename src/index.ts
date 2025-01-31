@@ -7,7 +7,7 @@ import create from "./commands/create/index";
 import path from "path";
 // import { spawn, spawnSync } from "child_process";
 import spawnSync from "cross-spawn";
-
+const os = require("os");
 import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 import prismaCommands from "./commands/prisma";
@@ -77,6 +77,42 @@ export const isAGodspeedProject = () => {
   }
 
   return true;
+};
+
+const updateServicesJson = async (add = true) => {
+  const servicesFile = path.join(os.homedir(), ".godspeed", "services.json");
+
+  try {
+    if (!fs.existsSync(servicesFile)) return;
+
+    const servicesData = JSON.parse(fs.readFileSync(servicesFile, "utf-8"));
+    const currentProject = {
+      serviceId: path.basename(process.cwd()),
+      name: path.basename(process.cwd()),
+      path: process.cwd(),
+      status: "active",
+      last_updated: new Date().toISOString(),
+      initialized: true,
+    };
+
+    if (add) {
+      const exists = servicesData.services.some((service: any) => service.path === process.cwd());
+      if (!exists) servicesData.services.push(currentProject);
+    } else {
+      servicesData.services = servicesData.services.filter((service: any) => service.path !== process.cwd());
+    }
+
+    await fs.promises.writeFile(servicesFile, JSON.stringify(servicesData, null, 2), "utf-8");
+    console.log(chalk.green("Project data updated successfully."));
+  } catch (error: any) {
+    if (error.code === "EACCES") {
+      const action = add ? "link" : "unlink";
+      console.error("\x1b[31mPermission denied: Cannot write to services.json\x1b[0m");
+      console.error(`\x1b[33mTry running: \x1b[1msudo godspeed ${action}\x1b[0m`);
+    } else {
+      console.error("\x1b[31mAn error occurred:\x1b[0m", error);
+    }
+  }
 };
 
 (async function main() {
@@ -169,6 +205,7 @@ export const isAGodspeedProject = () => {
   //     }
   //   });
 
+
   program
     .command("dev")
     .description("run godspeed development server.")
@@ -188,6 +225,24 @@ export const isAGodspeedProject = () => {
         spawnSync("npm", ["run", "clean"], {
           stdio: "inherit",
         });
+      }
+    });
+
+    program
+    .command("link")
+    .description("Link a local Godspeed project to the global environment for development in godspeed-daemon.")
+    .action(async () => {
+      if (await isAGodspeedProject()) {
+        updateServicesJson(true);
+      }
+    });
+  
+  program
+    .command("unlink")
+    .description("Unlink a local Godspeed project from the global environment.")
+    .action(async() => {
+      if (await isAGodspeedProject()) {
+        updateServicesJson(false);
       }
     });
 
