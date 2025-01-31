@@ -204,23 +204,7 @@ const updateServicesJson = async (add = true) => {
   //       update(options, version);
   //     }
   //   });
-  program
-  .command("link")
-  .description("Link a local Godspeed package for development.")
-  .action(async () => {
-    if (await isAGodspeedProject()) {
-      updateServicesJson(true);
-    }
-  });
 
-program
-  .command("unlink")
-  .description("Unlink a locally linked Godspeed package.")
-  .action(async() => {
-    if (await isAGodspeedProject()) {
-      updateServicesJson(false);
-    }
-  });
 
   program
     .command("dev")
@@ -241,6 +225,24 @@ program
         spawnSync("npm", ["run", "clean"], {
           stdio: "inherit",
         });
+      }
+    });
+
+    program
+    .command("link")
+    .description("Link a local Godspeed project to the global environment for development in godspeed-daemon.")
+    .action(async () => {
+      if (await isAGodspeedProject()) {
+        updateServicesJson(true);
+      }
+    });
+  
+  program
+    .command("unlink")
+    .description("Unlink a local Godspeed project from the global environment.")
+    .action(async() => {
+      if (await isAGodspeedProject()) {
+        updateServicesJson(false);
       }
     });
 
