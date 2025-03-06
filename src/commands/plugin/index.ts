@@ -14,34 +14,36 @@ import * as yaml from "js-yaml";
 import { cwd } from "process";
 import chalk from "chalk";
 import ora from "ora";
+import { spawn } from "child_process";
 
 // Load the plugins list from JSON file
-  const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
-  if (!fs.existsSync(pluginsFilePath)) {
-    console.error("Error: pluginsList.json file not found!");
-    process.exit(1);
-  }
-  const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: "utf-8" });
-  const availablePlugins = JSON.parse(pluginsData);
+const pluginsFilePath = path.resolve(__dirname, "../../../pluginsList.json");
+if (!fs.existsSync(pluginsFilePath)) {
+  console.error("Error: pluginsList.json file not found!");
+  process.exit(1);
+}
+const pluginsData = fs.readFileSync(pluginsFilePath, { encoding: "utf-8" });
+const availablePlugins = JSON.parse(pluginsData);
 
-    // or Search the plugins list from npm
-      // const command = "npm search @godspeedsystems/plugins --json";
-      // const stdout = execSync(command, { encoding: "utf-8" });
-      // const availablePlugins = JSON.parse(stdout.trim());
+// or Search the plugins list from npm
+// const command = "npm search @godspeedsystems/plugins --json";
+// const stdout = execSync(command, { encoding: "utf-8" });
+// const availablePlugins = JSON.parse(stdout.trim());
 
-  // Map to the format expected by the UI
-    const pluginNames = availablePlugins.map((plugin: { value: string; name: string; description: string }) => ({
-      value: plugin.value,
-      Name: plugin.name.split("plugins-")[1],
-      Description: plugin.description,
-    }));
+// Map to the format expected by the UI
+const pluginNames = availablePlugins.map(
+  (plugin: { value: string; name: string; description: string }) => ({
+    value: plugin.value,
+    Name: plugin.name.split("plugins-")[1],
+    Description: plugin.description,
+  })
+);
 
 const program = new Command();
 
 type ModuleType = "DS" | "ES" | "BOTH";
 
 const addAction = async (pluginsList: string[]) => {
-  // install that package
   const spinner = ora({
     text: "Installing plugins... ",
     spinner: {
@@ -54,177 +56,120 @@ const addAction = async (pluginsList: string[]) => {
     try {
       spinner.start();
 
-      // Use spawnCommand instead of spawnSync
-      const child = spawnSync(
-        "npm",
-        [
-          "install",
-          ...pluginsList,
-          "--quiet",
-          "--no-warnings",
-          "--silent",
-          "--progress=false",
-        ],
-        {
-          stdio: "inherit", // Redirect output
-        }
-      );
+      const child = spawn("pnpm", ["add", ...pluginsList, "--silent"], {
+        stdio: "inherit",
+      });
 
-      await new Promise<void>((resolve) => {
-        child.on("close", () => {
-          resolve();
+      await new Promise<void>((resolve, reject) => {
+        child.on("close", (code) => {
+          if (code === 0) resolve();
+          else reject(new Error(`pnpm install failed with code ${code}`));
         });
       });
 
-      spinner.stop(); // Stop the spinner when the installation is complete
-      console.log("\nPlugins installed successfully!");
+      spinner.succeed("Plugins installed successfully!");
       console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
     } catch (error: any) {
-      spinner.stop(); // Stop the spinner in case of an error
+      spinner.fail("Failed to install plugins.");
       console.error("Error during installation:", error.message);
     }
   }
 
-  // Call the installPlugin function
+  // Install plugins before proceeding
   await installPlugin(pluginsList);
 
-  pluginsList.map(async (pluginName: string) => {
-    try {
-      const Module = await import(
-        path.join(process.cwd(), "node_modules", pluginName)
-      );
+  await Promise.all(
+    pluginsList.map(async (pluginName) => {
+      try {
+        const Module = await import(
+          path.join(process.cwd(), "node_modules", pluginName)
+        );
 
-      let moduleType = Module.SourceType as ModuleType;
-      let loaderFileName = Module.Type as string;
-      let yamlFileName = Module.CONFIG_FILE_NAME as string;
-      let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
+        let moduleType = Module.SourceType;
+        let loaderFileName = Module.Type as string;
+        let yamlFileName = Module.CONFIG_FILE_NAME as string;
+        let defaultConfig = Module.DEFAULT_CONFIG || {};
 
-      switch (moduleType) { 
-        case "BOTH":
-          {
-            mkdirSync(
-              path.join(process.cwd(), "src", "eventsources", "types"),
-              {
-                recursive: true,
-              }
+        switch (moduleType) {
+          case "BOTH": {
+            const eventSourcePath = path.join(
+              process.cwd(),
+              "src",
+              "eventsources"
             );
-            mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
-              recursive: true,
-            });
+            const dataSourcePath = path.join(
+              process.cwd(),
+              "src",
+              "datasources"
+            );
+
+            mkdirSync(path.join(eventSourcePath, "types"), { recursive: true });
+            mkdirSync(path.join(dataSourcePath, "types"), { recursive: true });
 
             writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "eventsources",
-                "types",
-                `${loaderFileName}.ts`
-              ),
-              `
-    import { EventSource } from '${pluginName}';
-    export default EventSource;
-              `
+              path.join(eventSourcePath, "types", `${loaderFileName}.ts`),
+              `import { EventSource } from '${pluginName}';\nexport default EventSource;`
             );
             writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "eventsources",
-                `${yamlFileName}.yaml`
-              ),
+              path.join(eventSourcePath, `${yamlFileName}.yaml`),
               yaml.dump({ type: loaderFileName, ...defaultConfig })
             );
 
             writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "datasources",
-                "types",
-                `${loaderFileName}.ts`
-              ),
-              `
-    import { DataSource } from '${pluginName}';
-    export default DataSource;
-              `
+              path.join(dataSourcePath, "types", `${loaderFileName}.ts`),
+              `import { DataSource } from '${pluginName}';\nexport default DataSource;`
             );
             writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "datasources",
-                `${yamlFileName}.yaml`
-              ),
+              path.join(dataSourcePath, `${yamlFileName}.yaml`),
               yaml.dump({ type: loaderFileName, ...defaultConfig })
             );
+            break;
           }
-          break;
-        case "DS":
-          {
-            mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
-              recursive: true,
-            });
-            writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "datasources",
-                "types",
-                `${loaderFileName}.ts`
-              ),
-              `
-    import { DataSource } from '${pluginName}';
-    export default DataSource;
-                `
+          case "DS": {
+            const dataSourcePath = path.join(
+              process.cwd(),
+              "src",
+              "datasources"
             );
-            // special case for prisma for now
-            // @ts-ignore
+            mkdirSync(path.join(dataSourcePath, "types"), { recursive: true });
+
+            writeFileSync(
+              path.join(dataSourcePath, "types", `${loaderFileName}.ts`),
+              `import { DataSource } from '${pluginName}';\nexport default DataSource;`
+            );
+
             if (Module.Type !== "prisma") {
               writeFileSync(
-                path.join(
-                  process.cwd(),
-                  "src",
-                  "datasources",
-                  `${yamlFileName}.yaml`
-                ),
+                path.join(dataSourcePath, `${yamlFileName}.yaml`),
                 yaml.dump({ type: loaderFileName, ...defaultConfig })
               );
             }
+            break;
           }
-          break;
-        case "ES": {
-          mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
-            recursive: true,
-          });
-          writeFileSync(
-            path.join(
+          case "ES": {
+            const eventSourcePath = path.join(
               process.cwd(),
               "src",
-              "eventsources",
-              "types",
-              `${loaderFileName}.ts`
-            ),
-            `
-    import { EventSource } from '${pluginName}';
-    export default EventSource;
-                `
-          );
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "eventsources",
-              `${yamlFileName}.yaml`
-            ),
-            yaml.dump({ type: loaderFileName, ...defaultConfig })
-          );
+              "eventsources"
+            );
+            mkdirSync(path.join(eventSourcePath, "types"), { recursive: true });
+
+            writeFileSync(
+              path.join(eventSourcePath, "types", `${loaderFileName}.ts`),
+              `import { EventSource } from '${pluginName}';\nexport default EventSource;`
+            );
+            writeFileSync(
+              path.join(eventSourcePath, `${yamlFileName}.yaml`),
+              yaml.dump({ type: loaderFileName, ...defaultConfig })
+            );
+            break;
+          }
         }
+      } catch (error) {
+        console.error(`Unable to import module '${pluginName}':`, error);
       }
-    } catch (error) {
-      console.error("unable to import the module.", error);
-    }
-  });
-  // create folder for eventsource or datasource respective file
+    })
+  );
 };
 
 const add = program
@@ -245,7 +190,7 @@ const add = program
     const missingPlugins = pluginNames.filter(
       (plugin: { value: string | number }) => !localpluginsList[plugin.value]
     );
-   
+
     if (!givenPluginName) {
       if (pluginNames.length === 0) {
         console.error("No plugins found.");
@@ -330,34 +275,26 @@ const removeAction = async (pluginsList: string[]) => {
     try {
       spinner.start();
 
-      // Use spawnCommand instead of spawnSync
-      const child = spawnSync(
-        "npm",
-        [
-          "uninstall",
-          ...pluginsList,
-          "--quiet",
-          "--no-warnings",
-          "--silent",
-          "--progress=false",
-        ],
-        {
-          stdio: "inherit", // Redirect output
-        }
-      );
+      const child = spawn("pnpm", ["remove", ...pluginsList, "--silent"], {
+        stdio: "inherit", // Ensure proper output handling
+      });
 
-      await new Promise<void>((resolve) => {
-        child.on("close", () => {
-          resolve();
+      await new Promise<void>((resolve, reject) => {
+        child.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`pnpm remove failed with code ${code}`));
+          }
         });
       });
 
-      spinner.stop(); // Stop the spinner when the installation is complete
+      spinner.stop(); // Stop the spinner when uninstallation is complete
       console.log("\nPlugins uninstalled successfully!");
       console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
     } catch (error: any) {
       spinner.stop(); // Stop the spinner in case of an error
-      console.error("Error during installation:", error.message);
+      console.error("Error during uninstallation:", error.message);
     }
   }
 
@@ -480,7 +417,7 @@ const remove = program
         console.error("There are no eventsource/datasource plugins installed.");
         return;
       }
-   
+
       let pkgPath = path.join(cwd(), "package.json");
       pluginsList = existsSync(pkgPath)
         ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
@@ -594,7 +531,6 @@ const update = program
       }
     }
 
-    
     let pkgPath = path.join(cwd(), "package.json");
     pluginsList = existsSync(pkgPath)
       ? JSON.parse(readFileSync(pkgPath, { encoding: "utf-8" })).dependencies
