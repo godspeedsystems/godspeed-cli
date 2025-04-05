@@ -64,5 +64,30 @@
         "value": "@godspeedsystems/plugins-salesforce-as-datasource-as-eventsource",
         "name": "plugins-salesforce-as-datasource-as-eventsource",
         "description": "Salesforce as a datasource plugin for Godspeed Framework."
-      }      
+      },
+      {
+        "value": "@godspeedsystems/plugins-chatgpt-as-datasource",
+        "name": "plugins-chatgpt-as-datasource",
+        "description": "ChatGPT as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-mistral-as-datasource",
+        "name": "plugins-mistral-as-datasource",
+        "description": "Mistral as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-sendgrip-as-datasource",
+        "name": "plugins-sendgrip-as-datasource",
+        "description": "Sendgrip as a datasource plugin for Godspeed Framework."
+      },      
+      {
+        "value": "@godspeedsystems/plugins-text-to-sql-as-datasource",
+        "name": "plugins-text-to-sql-as-datasource",
+        "description": "Text to Sql as a datasource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-mem-cache-as-datasource",
+        "name": "plugins-mem-cache-as-datasource",
+        "description": "Mem cache as a datasource plugin for Godspeed Framework."
+      }
     ]
