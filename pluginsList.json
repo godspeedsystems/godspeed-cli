@@ -76,9 +76,9 @@
         "description": "Mistral as a datasource plugin for Godspeed Framework."
       },
       {
-        "value": "@godspeedsystems/plugins-sendgrip-as-datasource",
-        "name": "plugins-sendgrip-as-datasource",
-        "description": "Sendgrip as a datasource plugin for Godspeed Framework."
+        "value": "@godspeedsystems/plugins-sendgrid-as-datasource",
+        "name": "plugins-sendgrid-as-datasource",
+        "description": "Sendgrid as a datasource plugin for Godspeed Framework."
       },      
       {
         "value": "@godspeedsystems/plugins-text-to-sql-as-datasource",
