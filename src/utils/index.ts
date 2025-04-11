@@ -262,7 +262,10 @@ export const installDependencies = async (
         chalk.yellow("\n⚠️  pnpm is not installed. Installing pnpm...")
       );
       try {
-        execSync("npm install -g pnpm", { stdio: "inherit" }); // Install pnpm globally
+        const installCmd = process.platform === "win32"
+        ? 'powershell.exe -Command "Set-ExecutionPolicy RemoteSigned -Scope Process; Invoke-WebRequest https://get.pnpm.io/install.ps1 -UseBasicParsing | Invoke-Expression"'
+        : "npm install -g pnpm";
+        execSync(installCmd, { stdio: "inherit" }); // Install pnpm globally
         console.log(chalk.green("\n✅ pnpm installed successfully!\n"));
         return true;
       } catch (err) {
