@@ -12,12 +12,12 @@ import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 import prismaCommands from "./commands/prisma";
 import otelCommands from "./commands/otel";
-import { genGraphqlSchema } from "./utils/index";
+import {genGraphqlSchema} from "./utils/index";
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
 import fs, { readFileSync } from "fs";
 import { homedir } from "node:os";
-import { readdir } from "fs/promises";
+import { readdir } from 'fs/promises';
 
 import { globSync } from "glob";
 import inquirer from "inquirer";
@@ -96,31 +96,19 @@ const updateServicesJson = async (add = true) => {
     };
 
     if (add) {
-      const exists = servicesData.services.some(
-        (service: any) => service.path === process.cwd()
-      );
+      const exists = servicesData.services.some((service: any) => service.path === process.cwd());
       if (!exists) servicesData.services.push(currentProject);
     } else {
-      servicesData.services = servicesData.services.filter(
-        (service: any) => service.path !== process.cwd()
-      );
+      servicesData.services = servicesData.services.filter((service: any) => service.path !== process.cwd());
     }
 
-    await fs.promises.writeFile(
-      servicesFile,
-      JSON.stringify(servicesData, null, 2),
-      "utf-8"
-    );
+    await fs.promises.writeFile(servicesFile, JSON.stringify(servicesData, null, 2), "utf-8");
     console.log(chalk.green("Project data updated successfully."));
   } catch (error: any) {
     if (error.code === "EACCES") {
       const action = add ? "link" : "unlink";
-      console.error(
-        "\x1b[31mPermission denied: Cannot write to services.json\x1b[0m"
-      );
-      console.error(
-        `\x1b[33mTry running: \x1b[1msudo godspeed ${action}\x1b[0m`
-      );
+      console.error("\x1b[31mPermission denied: Cannot write to services.json\x1b[0m");
+      console.error(`\x1b[33mTry running: \x1b[1msudo godspeed ${action}\x1b[0m`);
     } else {
       console.error("\x1b[31mAn error occurred:\x1b[0m", error);
     }
@@ -217,41 +205,44 @@ const updateServicesJson = async (add = true) => {
   //     }
   //   });
 
+
   program
     .command("dev")
     .description("run godspeed development server.")
     .action(async () => {
       if (await isAGodspeedProject()) {
-        spawnSync("pnpm", ["run", "dev"], { stdio: "inherit" });
+        spawnSync("npm", ["run", "dev"], {
+          stdio: "inherit",
+        });
       }
     });
 
   program
     .command("clean")
-    .description("clean the previous build.")
-    .action(async () => {
-      if (await isAGodspeedProject()) {
-        spawnSync("pnpm", ["run", "clean"], { stdio: "inherit" });
+    .description(`clean the previous build.`)
+    .action(async (options) => {
+      if (isAGodspeedProject()) {
+        spawnSync("npm", ["run", "clean"], {
+          stdio: "inherit",
+        });
       }
     });
 
-  program
+    program
     .command("link")
-    .description(
-      "Link a local Godspeed project to the global environment for development in godspeed-daemon."
-    )
+    .description("Link a local Godspeed project to the global environment for development in godspeed-daemon.")
     .action(async () => {
       if (await isAGodspeedProject()) {
-        await updateServicesJson(true);
+        updateServicesJson(true);
       }
     });
-
+  
   program
     .command("unlink")
     .description("Unlink a local Godspeed project from the global environment.")
-    .action(async () => {
+    .action(async() => {
       if (await isAGodspeedProject()) {
-        await updateServicesJson(false);
+        updateServicesJson(false);
       }
     });
 
@@ -261,42 +252,43 @@ const updateServicesJson = async (add = true) => {
       "scans your prisma datasources and generate CRUD APIs events and workflows"
     )
     .action(async () => {
-      if (await isAGodspeedProject()) {
-        spawnSync("pnpm", ["run", "gen-crud-api"], { stdio: "inherit" });
+      if (isAGodspeedProject()) {
+        spawnSync("npm", ["run", "gen-crud-api"], { stdio: "inherit" });
       }
     });
-
-  program
+    program
     .command("gen-graphql-schema")
-    .description("scans your graphql events and generate graphql schema")
+    .description(
+      "scans your graphql events and generate graphql schema"
+    )
     .action(async () => {
-      if (await isAGodspeedProject()) {
-        await genGraphqlSchema();
+      if (isAGodspeedProject()) {
+        await genGraphqlSchema()
       }
     });
-
   program
     .command("build")
     .description("build the godspeed project. create a production build.")
-    .action(async () => {
+    .action(async (options) => {
       if (await isAGodspeedProject()) {
-        spawnSync("pnpm", ["run", "build"], {
+        spawnSync("npm", ["run", "build"], {
           stdio: "inherit",
           env: {
+            // NODE_ENV: "production",
             ...process.env,
           },
         });
       }
     });
-
   program
     .command("preview")
     .description("preview the production build.")
-    .action(async () => {
+    .action(async (options) => {
       if (await isAGodspeedProject()) {
-        spawnSync("pnpm", ["run", "preview"], {
+        spawnSync("npm", ["run", "preview"], {
           stdio: "inherit",
           env: {
+            // NODE_ENV: "production",
             ...process.env,
           },
         });
@@ -304,28 +296,28 @@ const updateServicesJson = async (add = true) => {
     });
 
   // fetch the list of installed devops-plugins
-  const pluginPath = path.resolve(
-    homedir(),
-    `.godspeed/devops-plugins/node_modules/@godspeedsystems/`
-  );
+  const pluginPath = path.resolve(homedir(), `.godspeed/devops-plugins/node_modules/@godspeedsystems/`);
 
-  const devopsPluginSubCommand = program
-    .command("devops-plugin")
-    .description(`manages godspeed devops-plugins.`);
+  const devopsPluginSubCommand = program.command('devops-plugin')
+    .description(`manages godspeed devops-plugins.`)
 
-  devopsPluginSubCommand.addCommand(devOpsPluginCommands.install);
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.install);
 
-  devopsPluginSubCommand.addCommand(devOpsPluginCommands.list);
-
-  devopsPluginSubCommand.addCommand(devOpsPluginCommands.remove);
-
-  devopsPluginSubCommand.addCommand(devOpsPluginCommands.update);
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.list);    
+  
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.remove);
+  
+  devopsPluginSubCommand
+    .addCommand(devOpsPluginCommands.update);  
 
   const devopsPluginHelp = `
   To see help for any installed devops plugin, you can run:
   <plugin-name> help
   `;
-  devopsPluginSubCommand.on("--help", () => {
+  devopsPluginSubCommand.on('--help', () => {
     console.log(devopsPluginHelp);
   });
 
@@ -338,25 +330,19 @@ const updateServicesJson = async (add = true) => {
         .description("installed godspeed devops plugin")
         .allowUnknownOption(true)
         .action(async () => {
-          const installedPluginPath = path.resolve(
-            pluginPath,
-            installedPluginName,
-            "dist/index.js"
-          );
+          const installedPluginPath = path.resolve(pluginPath, installedPluginName, "dist/index.js");
 
           // check if installedPluginPath exists.
           if (!fs.existsSync(installedPluginPath)) {
-            console.error(
-              `${installedPluginName} is not installed properly. Please make sure ${installedPluginPath} exists.`
-            );
+            console.error(`${installedPluginName} is not installed properly. Please make sure ${installedPluginPath} exists.`);
             return;
           }
 
           const args = process.argv.slice(4);
 
           // Spawn the plugin with all arguments and options
-          spawnSync("node", [installedPluginPath, ...args], {
-            stdio: "inherit",
+          spawnSync('node', [installedPluginPath, ...args], {
+            stdio: 'inherit',
           });
         });
     }

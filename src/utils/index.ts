@@ -11,15 +11,8 @@ import chalk from "chalk";
 import { spawnSync } from "child_process";
 import spawnCommand from "cross-spawn";
 import ora from "ora";
-import {
-  yamlLoader as loadYaml,
-  generateSwaggerJSON,
-  logger,
-  PlainObject,
-  yamlLoader,
-} from "@godspeedsystems/core";
-const { exec } = require("child_process");
-import { spawn, execSync } from "child_process";
+import { yamlLoader as loadYaml, generateSwaggerJSON, logger , PlainObject, yamlLoader} from '@godspeedsystems/core';
+const { exec } = require('child_process');
 
 const userID = (): string => {
   if (process.platform == "linux") {
@@ -170,7 +163,7 @@ export const compileAndCopyOrJustCopy = async (
       isUpdateCall = fsExtras
         .lstatSync(path.resolve(process.cwd(), ".godspeed"))
         .isFile();
-    } catch (error) {}
+    } catch (error) { }
 
     fileList.map(async (sourceFilePath: string) => {
       if (fsExtras.lstatSync(sourceFilePath).isFile()) {
@@ -180,17 +173,17 @@ export const compileAndCopyOrJustCopy = async (
 
         relativeDestinationPath = !isUpdateCall
           ? path.relative(
+            path.resolve(projectDirPath, sourceFolder),
+            sourceFilePath
+          )
+          : path.resolve(
+            projectDirPath,
+            destinationFolder,
+            path.relative(
               path.resolve(projectDirPath, sourceFolder),
               sourceFilePath
             )
-          : path.resolve(
-              projectDirPath,
-              destinationFolder,
-              path.relative(
-                path.resolve(projectDirPath, sourceFolder),
-                sourceFilePath
-              )
-            );
+          );
 
         let finalDestinationWithFileName = path.resolve(
           projectDirPath,
@@ -249,87 +242,66 @@ export const compileAndCopyOrJustCopy = async (
   }
 };
 
+
+
 export const installDependencies = async (
   projectDirPath: string,
   projectName: string
 ) => {
-  async function ensurePnpmInstalled() {
-    try {
-      execSync("pnpm -v", { stdio: "ignore" }); // Check if pnpm exists
-      return true;
-    } catch {
-      console.log(
-        chalk.yellow("\n⚠️  pnpm is not installed. Installing pnpm...")
-      );
-      try {
-        execSync("npm install -g pnpm", { stdio: "inherit" }); // Install pnpm globally
-        console.log(chalk.green("\n✅ pnpm installed successfully!\n"));
-        return true;
-      } catch (err) {
-        console.error(
-          chalk.red(
-            "\n❌ Failed to install pnpm. Please install it manually: `npm install -g pnpm`\n"
-          )
-        );
-        return false;
-      }
-    }
-  }
-
   async function installPlugin() {
-    if (!(await ensurePnpmInstalled())) return; // Stop if pnpm installation fails
     const spinner = ora({
       spinner: {
         frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
         interval: 180,
       },
-    }).start("Installing dependencies...");
-
+    }).start("installing dependencies...");
     try {
-      const child = spawn("pnpm", ["install", "--ignore-scripts", "--silent"], {
-        cwd: projectDirPath,
-        stdio: "inherit",
-        shell: true,
-      });
-
-      child.on("close", (code) => {
-        spinner.stop();
-        if (code === 0) {
-          console.log("\n✅ Dependencies installed successfully!");
-          console.log(
-            `${chalk.green(
-              "\nSuccessfully created the project"
-            )} ${chalk.yellow(projectName)}.`
-          );
-          console.log(
-            `${chalk.green(
-              "Use `godspeed help` command for available commands."
-            )} ${chalk.green.bold(
-              "\n\nHappy building microservices with Godspeed! 🚀🎉\n"
-            )}`
-          );
-        } else {
-          spinner.fail("❌ Dependency installation failed.");
+      // Use spawnCommand instead of spawnSync
+      const child = spawnCommand(
+        "npm",
+        [
+          "install",
+          "--quiet",
+          "--no-warnings",
+          "--silent",
+          "--progress=false"
+        ],
+        {
+          cwd: projectDirPath,
+          stdio: "inherit", // Redirect output
         }
-      });
+      );
+      child.on("close", () => {
+        spinner.stop(); // Stop the spinner when the installation is complete
+        console.log("\ndependencies installed successfully!");
 
-      child.on("error", (err) => {
-        spinner.fail("❌ Error starting the installation process.");
-        console.error(err);
+        console.log(
+          `${chalk.green("\nSuccessfully created the project")} ${chalk.yellow(
+            projectName
+          )}.`
+        );
+
+        console.log(
+          `${chalk.green(
+            "Use `godspeed help` command for available commands."
+          )} ${chalk.green.bold(
+            "\n\nHappy building microservices with Godspeed! 🚀🎉\n"
+          )}`
+        );
       });
     } catch (error: any) {
-      spinner.stop();
-      console.error("❌ Error during installation:", error.message);
+      spinner.stop(); // Stop the spinner in case of an error
+      console.error("Error during installation:", error.message);
     }
   }
 
+
+  // Call the installPlugin function
   await installPlugin();
+
 };
 
-export const installPackage = async (
-  projectDirPath: string,
-  package_name: string
-) => {
+export const installPackage = async (projectDirPath: string, package_name: string) => {
   async function installprisma(): Promise<void> {
     const command = `npm install ${package_name}`;
 
@@ -339,23 +311,22 @@ export const installPackage = async (
         stdio: "inherit", // Redirect output
       });
 
-      child.on("exit", (code: any) => {
+      child.on('exit', (code: any) => {
         if (code === 0) {
           resolve();
         } else {
-          reject(
-            new Error(`Command exited with non-zero status code: ${code}`)
-          );
+          reject(new Error(`Command exited with non-zero status code: ${code}`));
         }
       });
 
-      child.on("error", (error: any) => {
+      child.on('error', (error: any) => {
         reject(error);
       });
     });
   }
-  await installprisma();
-};
+  await installprisma()
+}
+
 
 export const generateProjectFromDotGodspeed = async (
   projectName: string,
@@ -395,7 +366,7 @@ export const generateProjectFromDotGodspeed = async (
       );
 
       // generate package.json, tsConfig.json
-      for (let file of ["package.json", "tsconfig.json"]) {
+      for (let file of ['package.json', 'tsconfig.json']) {
         const packageJson = await fsExtras.readJson(
           path.resolve(projectDirPath, `.template/${file}`)
         );
@@ -411,6 +382,7 @@ export const generateProjectFromDotGodspeed = async (
           }
         );
       }
+
 
       // generate .swcrc file
       const swcrc = await fsExtras.readJson(
@@ -511,24 +483,23 @@ export const generateProjectFromDotGodspeed = async (
   } catch (error) {
     log.fatal("Error while generating files.", error);
   }
-};
+}
 
 export const genGraphqlSchema = async () => {
   try {
+
     const availableApoloeventsources = globSync(
-      path.join(process.cwd(), "src/eventsources/*.yaml").replace(/\\/g, "/")
+      path.join(process.cwd(), 'src/eventsources/*.yaml').replace(/\\/g, '/')
     );
     // Filter files that contain 'Apollo' in their name
-    const apolloEventsources = availableApoloeventsources.map(
-      (file) => path.parse(file).name
-    );
+    const apolloEventsources = availableApoloeventsources
+      .map((file) => path.parse(file).name);
 
     const questions = [
       {
-        type: "checkbox",
-        name: "selectedOptions",
-        message:
-          "Please select the Graphql Event Sources for which you wish to generate the Graphql schema from Godspeed event defs:",
+        type: 'checkbox',
+        name: 'selectedOptions',
+        message: 'Please select the Graphql Event Sources for which you wish to generate the Graphql schema from Godspeed event defs:',
         choices: apolloEventsources,
       },
     ];
@@ -537,11 +508,9 @@ export const genGraphqlSchema = async () => {
       try {
         const answers = await inquirer.prompt(questions);
         if (answers.selectedOptions.length == 0) {
-          console.log(
-            chalk.red("Please select atleast one GraphQL eventsource")
-          );
+          console.log(chalk.red("Please select atleast one GraphQL eventsource"))
         } else {
-          await createSwaggerFile(answers.selectedOptions);
+          await createSwaggerFile(answers.selectedOptions)
         }
       } catch (error) {
         console.error(error);
@@ -549,8 +518,8 @@ export const genGraphqlSchema = async () => {
     }
     runPrompt();
   } catch (error) {
-    console.log(error);
-  }
+    console.log(error)
+  };
 
   const createSwaggerFile = async (eventSources: string[]) => {
     const eventPath = path.join(process.cwd(), "/src/events");
@@ -558,83 +527,57 @@ export const genGraphqlSchema = async () => {
     const allEventsSchema: PlainObject = await loadYaml(eventPath, true); //all events of the project
     const definitions: PlainObject = await loadYaml(definitionsPath, false);
     eventSources.map(async (eventSourceName: string) => {
-      logger.info(
-        "Generating graphql schema for %s. First we will create swagger schema in %s",
-        eventSourceName,
-        os.tmpdir()
-      );
+      logger.info('Generating graphql schema for %s. First we will create swagger schema in %s', eventSourceName, os.tmpdir());
       // Find out the events for this eventSourceName key
       const eventSchemas = Object.fromEntries(
         Object.entries(allEventsSchema).filter(([key]) => {
           const eventSourceKey = key.split(".")[0];
-          // eventSourceKey is the name of eventsources in this event definition.
+          // eventSourceKey is the name of eventsources in this event definition. 
           // It could be one like 'http' or more like 'http & graphql'
 
           if (eventSourceKey == eventSourceName) {
             return true;
           }
-          const eventSources = eventSourceKey.split("&").map((s) => s.trim());
+          const eventSources = eventSourceKey.split('&').map((s) => s.trim());
           return eventSources.includes(eventSourceName);
         })
       );
       if (Object.keys(eventSchemas).length === 0) {
-        logger.fatal(
-          chalk.red(
-            `Did not find any events for the ${eventSourceName} eventsource. Why don't you define the first one in the events folder?`
-          )
-        );
+        logger.fatal(chalk.red(`Did not find any events for the ${eventSourceName} eventsource. Why don't you define the first one in the events folder?`))
         process.exit(1);
       }
       // let swaggerSchema = await generateSwaggerui(eventSchemas,definitions);
-      let eventSourceConfig = yaml.parse(
-        fsExtras.readFileSync(
-          process.cwd() + `/src/eventsources/${eventSourceName}.yaml`,
-          { encoding: "utf-8" }
-        )
-      );
+      let eventSourceConfig = yaml.parse(fsExtras.readFileSync(process.cwd() + `/src/eventsources/${eventSourceName}.yaml`, { encoding: 'utf-8' }) );
       //The yaml file of the eventsource
-      let swaggerSchema = generateSwaggerJSON(
-        eventSchemas,
-        definitions,
-        eventSourceConfig
-      );
+      let swaggerSchema = generateSwaggerJSON(eventSchemas, definitions, eventSourceConfig);
 
       // For swagger-to-graphql plugin we need to save this file somewhere
-      const swaggerFilePath = path.join(
-        os.tmpdir(),
-        eventSourceName + "-swagger.json"
-      );
-
+      const swaggerFilePath = path.join( os.tmpdir(), eventSourceName + '-swagger.json');
+      
       // Write the swagger.json file in the temp folder
-      await fsExtras.writeFileSync(
-        swaggerFilePath,
-        JSON.stringify(swaggerSchema, null, 2)
-      );
-
-      logger.info(
-        "Generated and saved swagger schema at temporary location %s. Now generating graphql schema from the same.",
-        swaggerFilePath
-      );
-
+      await fsExtras.writeFileSync(swaggerFilePath, JSON.stringify(swaggerSchema, null, 2));
+      
+      logger.info('Generated and saved swagger schema at temporary location %s. Now generating graphql schema from the same.', swaggerFilePath);
+      
       // genereate graphql schema
       await generateGraphqlSchema(eventSourceName, swaggerFilePath);
-    });
-  };
-};
 
-async function generateGraphqlSchema(
-  eventSourceName: string,
-  swaggerFilePath: string
-) {
+    });
+
+
+  }
+}
+
+async function generateGraphqlSchema(eventSourceName: string, swaggerFilePath: string) {
   const command = `npx swagger-to-graphql --swagger-schema=${swaggerFilePath} > ./src/eventsources/${eventSourceName}.graphql`;
   exec(command, (error: any, stdout: any, stderr: any) => {
     if (error) {
       console.log(
-        chalk.red.bold(
-          `Failed to generate Graphql schema for eventsource ${eventSourceName}`
-        )
+        chalk.red.bold(`Failed to generate Graphql schema for eventsource ${eventSourceName}`)
       );
-      console.log(chalk.red(error.message));
+      console.log(
+        chalk.red(error.message)
+      );
       return;
     }
     if (stderr) {
@@ -642,45 +585,40 @@ async function generateGraphqlSchema(
       return;
     }
     console.log(
-      chalk.green(
-        `Graphql schema generated successfuly for eventsource ${eventSourceName} at ./src/eventsources/${eventSourceName}.graphql`
-      )
+      chalk.green(`Graphql schema generated successfuly for eventsource ${eventSourceName} at ./src/eventsources/${eventSourceName}.graphql`)
+
     );
   });
 }
-const generateSwaggerui = async (
-  eventsSchema: PlainObject,
-  definitions: PlainObject
-) => {
+const generateSwaggerui = async (eventsSchema: PlainObject, definitions: PlainObject) => {
   let finalSpec: PlainObject = {};
   const swaggerCommonPart = {
-    openapi: "3.0.0",
-    info: {
-      version: "0.0.1",
-      title: "Godspeed: Sample Microservice",
-      description:
-        "Sample API calls demonstrating the functionality of Godspeed framework",
-      termsOfService: "http://swagger.io/terms/",
-      contact: {
-        name: "Mindgrep Technologies Pvt Ltd",
-        email: "talktous@mindgrep.com",
-        url: "https://docs.mindgrep.com/docs/microservices/intro",
+    "openapi": "3.0.0",
+    "info": {
+      "version": "0.0.1",
+      "title": "Godspeed: Sample Microservice",
+      "description": "Sample API calls demonstrating the functionality of Godspeed framework",
+      "termsOfService": "http://swagger.io/terms/",
+      "contact": {
+        "name": "Mindgrep Technologies Pvt Ltd",
+        "email": "talktous@mindgrep.com",
+        "url": "https://docs.mindgrep.com/docs/microservices/intro"
       },
-      license: {
-        name: "Apache 2.0",
-        url: "https://www.apache.org/licenses/LICENSE-2.0.html",
-      },
+      "license": {
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+      }
     },
-    paths: {},
+    "paths": {}
   };
   let swaggerSpecBase = JSON.parse(JSON.stringify(swaggerCommonPart));
 
   finalSpec = swaggerSpecBase;
 
   Object.keys(eventsSchema).forEach((event: any) => {
-    let apiEndPoint = event.split(".")[2];
-    apiEndPoint = apiEndPoint.replace(/:([^\/]+)/g, "{$1}"); //We take :path_param. OAS3 takes {path_param}
-    const method = event.split(".")[1];
+    let apiEndPoint = event.split('.')[2];
+    apiEndPoint = apiEndPoint.replace(/:([^\/]+)/g, '{$1}'); //We take :path_param. OAS3 takes {path_param}
+    const method = event.split('.')[1];
     const eventSchema = eventsSchema[event];
 
     //Initialize the schema for this method, for given event
@@ -706,3 +644,4 @@ const generateSwaggerui = async (
 
   return finalSpec;
 };
+
