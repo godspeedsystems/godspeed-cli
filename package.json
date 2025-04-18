@@ -2,7 +2,7 @@
   "name": "@godspeedsystems/godspeed",
   "description": "Godspeed CLI",
   "homepage": "https://godspeed.systems",
-  "version": "2.9.7",
+  "version": "2.9.8",
   "main": "./lib/index.js",
   "bin": {
     "godspeed": "./lib/index.js"
@@ -15,7 +15,7 @@
     "prepublishOnly": "npm run clean && npm run build:prod",
     "local": "sudo npm uninstall -g && sudo npm install -g && godspeed",
     "build:test": "tsc --project test/tsconfig.json --sourceMap --watch",
-    "test": " mocha dist-test/commands/index.js"
+    "test": "mocha dist-test/commands/index.js"
   },
   "dependencies": {
     "@adobe/inquirer-table-checkbox": "^1.2.0",
