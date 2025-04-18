@@ -8,7 +8,7 @@ import fs, {
   readSync,
   writeFileSync,
 } from "fs";
-import { execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import { cwd } from "process";
@@ -40,6 +40,156 @@ const program = new Command();
 
 type ModuleType = "DS" | "ES" | "BOTH";
 
+
+// Add this function before the addAction function
+async function manuallyConfigurePlugin(pluginName: string) {
+  console.log(`Manually configuring plugin: ${pluginName}`);
+  
+  // Extract the plugin type from the name
+  const pluginShortName = pluginName.split('/').pop()?.replace('plugins-', '')
+    .replace('-as-eventsource', '')
+    .replace('-as-datasource', '') || '';
+  
+  // Determine plugin type based on name
+  let moduleType = "ES"; // Default to EventSource
+  if (pluginName.includes('-as-datasource') && pluginName.includes('-as-eventsource')) {
+    moduleType = "BOTH";
+  } else if (pluginName.includes('-as-datasource')) {
+    moduleType = "DS";
+  }
+  
+  console.log(`Plugin type: ${moduleType}, name: ${pluginShortName}`);
+  
+  try {
+    switch (moduleType) {
+      case "BOTH":
+        {
+          mkdirSync(
+            path.join(process.cwd(), "src", "eventsources", "types"),
+            {
+              recursive: true,
+            }
+          );
+          mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+            recursive: true,
+          });
+
+          // Write EventSource files
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              "types",
+              `${pluginShortName}.ts`
+            ),
+            `
+import { EventSource } from '${pluginName}';
+export default EventSource;
+          `
+          );
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              `${pluginShortName}.yaml`
+            ),
+            yaml.dump({ type: pluginShortName })
+          );
+
+          // Write DataSource files
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "datasources",
+              "types",
+              `${pluginShortName}.ts`
+            ),
+            `
+import { DataSource } from '${pluginName}';
+export default DataSource;
+          `
+          );
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "datasources",
+              `${pluginShortName}.yaml`
+            ),
+            yaml.dump({ type: pluginShortName })
+          );
+        }
+        break;
+      case "DS":
+        {
+          mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+            recursive: true,
+          });
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "datasources",
+              "types",
+              `${pluginShortName}.ts`
+            ),
+            `
+import { DataSource } from '${pluginName}';
+export default DataSource;
+          `
+          );
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "datasources",
+              `${pluginShortName}.yaml`
+            ),
+            yaml.dump({ type: pluginShortName })
+          );
+        }
+        break;
+      case "ES":
+        {
+          mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
+            recursive: true,
+          });
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              "types",
+              `${pluginShortName}.ts`
+            ),
+            `
+import { EventSource } from '${pluginName}';
+export default EventSource;
+          `
+          );
+          writeFileSync(
+            path.join(
+              process.cwd(),
+              "src",
+              "eventsources",
+              `${pluginShortName}.yaml`
+            ),
+            yaml.dump({ type: pluginShortName })
+          );
+        }
+        break;
+    }
+    console.log(`✅ Plugin ${pluginName} manually configured.`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Error manually configuring plugin ${pluginName}:`, error);
+    return false;
+  }
+}
+
 const addAction = async (pluginsList: string[]) => {
   // install that package
   const spinner = ora({
@@ -53,178 +203,199 @@ const addAction = async (pluginsList: string[]) => {
   async function installPlugin(pluginsList: string[]) {
     try {
       spinner.start();
-
-      // Use spawnCommand instead of spawnSync
-      const child = spawnSync(
-        "npm",
-        [
-          "install",
-          ...pluginsList,
-          "--quiet",
-          "--no-warnings",
-          "--silent",
-          "--progress=false",
-        ],
-        {
-          stdio: "inherit", // Redirect output
-        }
-      );
-
-      await new Promise<void>((resolve) => {
-        child.on("close", () => {
+  
+      return new Promise<void>((resolve, reject) => {
+        const { exec } = require('child_process');
+        
+        const cmd = `npm install ${pluginsList.join(' ')} --quiet --no-warnings --silent --progress=false`;
+        
+        exec(cmd, { cwd: process.cwd() }, (error: any, stdout: any, stderr: any) => {
+          if (error) {
+            spinner.stop();
+            console.error("Error during installation:", error.message);
+            reject(error);
+            return;
+          }
+          
+          spinner.stop();
+          console.log("\nPlugins installed successfully!");
+          console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
           resolve();
         });
       });
-
-      spinner.stop(); // Stop the spinner when the installation is complete
-      console.log("\nPlugins installed successfully!");
-      console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
     } catch (error: any) {
-      spinner.stop(); // Stop the spinner in case of an error
+      spinner.stop();
       console.error("Error during installation:", error.message);
+      throw error;
     }
   }
 
-  // Call the installPlugin function
-  await installPlugin(pluginsList);
-
-  pluginsList.map(async (pluginName: string) => {
-    try {
-      const Module = await import(
-        path.join(process.cwd(), "node_modules", pluginName)
-      );
-
-      let moduleType = Module.SourceType as ModuleType;
-      let loaderFileName = Module.Type as string;
-      let yamlFileName = Module.CONFIG_FILE_NAME as string;
-      let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
-
-      switch (moduleType) { 
-        case "BOTH":
-          {
-            mkdirSync(
-              path.join(process.cwd(), "src", "eventsources", "types"),
+  try {
+    // Install the plugins first
+    await installPlugin(pluginsList);
+    
+    // Process each plugin
+    for (const pluginName of pluginsList) {
+      try {
+        let configSuccess = false;
+        
+        // First try the dynamic import
+        try {
+          console.log(`Trying to import and configure ${pluginName}...`);
+          const Module = await import(
+            path.join(process.cwd(), "node_modules", pluginName)
+          );
+    
+          let moduleType = Module.SourceType as ModuleType;
+          let loaderFileName = Module.Type as string;
+          let yamlFileName = Module.CONFIG_FILE_NAME as string;
+          let defaultConfig = Module.DEFAULT_CONFIG || ({} as PlainObject);
+    
+          switch (moduleType) { 
+            case "BOTH":
               {
-                recursive: true,
+                mkdirSync(
+                  path.join(process.cwd(), "src", "eventsources", "types"),
+                  {
+                    recursive: true,
+                  }
+                );
+                mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+                  recursive: true,
+                });
+    
+                writeFileSync(
+                  path.join(
+                    process.cwd(),
+                    "src",
+                    "eventsources",
+                    "types",
+                    `${loaderFileName}.ts`
+                  ),
+                  `
+        import { EventSource } from '${pluginName}';
+        export default EventSource;
+                  `
+                );
+                writeFileSync(
+                  path.join(
+                    process.cwd(),
+                    "src",
+                    "eventsources",
+                    `${yamlFileName}.yaml`
+                  ),
+                  yaml.dump({ type: loaderFileName, ...defaultConfig })
+                );
+    
+                writeFileSync(
+                  path.join(
+                    process.cwd(),
+                    "src",
+                    "datasources",
+                    "types",
+                    `${loaderFileName}.ts`
+                  ),
+                  `
+        import { DataSource } from '${pluginName}';
+        export default DataSource;
+                  `
+                );
+                writeFileSync(
+                  path.join(
+                    process.cwd(),
+                    "src",
+                    "datasources",
+                    `${yamlFileName}.yaml`
+                  ),
+                  yaml.dump({ type: loaderFileName, ...defaultConfig })
+                );
               }
-            );
-            mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
-              recursive: true,
-            });
-
-            writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "eventsources",
-                "types",
-                `${loaderFileName}.ts`
-              ),
-              `
-    import { EventSource } from '${pluginName}';
-    export default EventSource;
-              `
-            );
-            writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "eventsources",
-                `${yamlFileName}.yaml`
-              ),
-              yaml.dump({ type: loaderFileName, ...defaultConfig })
-            );
-
-            writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "datasources",
-                "types",
-                `${loaderFileName}.ts`
-              ),
-              `
-    import { DataSource } from '${pluginName}';
-    export default DataSource;
-              `
-            );
-            writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "datasources",
-                `${yamlFileName}.yaml`
-              ),
-              yaml.dump({ type: loaderFileName, ...defaultConfig })
-            );
-          }
-          break;
-        case "DS":
-          {
-            mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
-              recursive: true,
-            });
-            writeFileSync(
-              path.join(
-                process.cwd(),
-                "src",
-                "datasources",
-                "types",
-                `${loaderFileName}.ts`
-              ),
-              `
-    import { DataSource } from '${pluginName}';
-    export default DataSource;
-                `
-            );
-            // special case for prisma for now
-            // @ts-ignore
-            if (Module.Type !== "prisma") {
+              break;
+            case "DS":
+              {
+                mkdirSync(path.join(process.cwd(), "src", "datasources", "types"), {
+                  recursive: true,
+                });
+                writeFileSync(
+                  path.join(
+                    process.cwd(),
+                    "src",
+                    "datasources",
+                    "types",
+                    `${loaderFileName}.ts`
+                  ),
+                  `
+        import { DataSource } from '${pluginName}';
+        export default DataSource;
+                    `
+                );
+                // special case for prisma for now
+                if (Module.Type !== "prisma") {
+                  writeFileSync(
+                    path.join(
+                      process.cwd(),
+                      "src",
+                      "datasources",
+                      `${yamlFileName}.yaml`
+                    ),
+                    yaml.dump({ type: loaderFileName, ...defaultConfig })
+                  );
+                }
+              }
+              break;
+            case "ES": {
+              mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
+                recursive: true,
+              });
               writeFileSync(
                 path.join(
                   process.cwd(),
                   "src",
-                  "datasources",
+                  "eventsources",
+                  "types",
+                  `${loaderFileName}.ts`
+                ),
+                `
+        import { EventSource } from '${pluginName}';
+        export default EventSource;
+                    `
+              );
+              writeFileSync(
+                path.join(
+                  process.cwd(),
+                  "src",
+                  "eventsources",
                   `${yamlFileName}.yaml`
                 ),
                 yaml.dump({ type: loaderFileName, ...defaultConfig })
               );
             }
           }
-          break;
-        case "ES": {
-          mkdirSync(path.join(process.cwd(), "src", "eventsources", "types"), {
-            recursive: true,
-          });
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "eventsources",
-              "types",
-              `${loaderFileName}.ts`
-            ),
-            `
-    import { EventSource } from '${pluginName}';
-    export default EventSource;
-                `
-          );
-          writeFileSync(
-            path.join(
-              process.cwd(),
-              "src",
-              "eventsources",
-              `${yamlFileName}.yaml`
-            ),
-            yaml.dump({ type: loaderFileName, ...defaultConfig })
-          );
+          
+          configSuccess = true;
+          console.log(`✅ Plugin ${pluginName} dynamically configured.`);
+          
+        } catch (importError: any) {
+          console.log(`Dynamic import failed for ${pluginName}: ${importError?.message}`);
+          console.log("Falling back to manual configuration...");
+          
+          // If dynamic import fails, use the manual configuration as fallback
+          configSuccess = await manuallyConfigurePlugin(pluginName);
         }
+        
+        if (configSuccess) {
+          console.log(`✅ Plugin "${pluginName}" installed and configured.`);
+        } else {
+          console.warn(`⚠️ Plugin "${pluginName}" installed but configuration may be incomplete.`);
+        }
+        
+      } catch (error) {
+        console.error("Unable to configure plugin:", error);
       }
-    } catch (error) {
-      console.error("unable to import the module.", error);
     }
-  });
-  // create folder for eventsource or datasource respective file
+  } catch (error) {
+    console.error("Plugin installation failed:", error);
+  }
 };
 
 const add = program
