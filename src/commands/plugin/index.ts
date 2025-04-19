@@ -200,25 +200,110 @@ const addAction = async (pluginsList: string[]) => {
     },
   });
 
+  // async function installPlugin(pluginsList: string[]) {
+  //   try {
+  //     spinner.start();
+  
+  //     return new Promise<void>((resolve, reject) => {
+  //       const { exec } = require('child_process');
+        
+  //       const cmd = `npm install ${pluginsList.join(' ')} --quiet --no-warnings --silent --progress=false`;
+        
+  //       exec(cmd, { cwd: process.cwd() }, (error: any, stdout: any, stderr: any) => {
+  //         if (error) {
+  //           spinner.stop();
+  //           console.error("Error during installation:", error.message);
+  //           reject(error);
+  //           return;
+  //         }
+          
+  //         spinner.stop();
+  //         console.log("\nPlugins installed successfully!");
+  //         console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
+  //         resolve();
+  //       });
+  //     });
+  //   } catch (error: any) {
+  //     spinner.stop();
+  //     console.error("Error during installation:", error.message);
+  //     throw error;
+  //   }
+  // }
   async function installPlugin(pluginsList: string[]) {
     try {
+      console.log("Starting plugin installation...");
+      console.log(`Plugins to install: ${pluginsList.join(', ')}`);
+      
+      // Check if pnpm is available
+      console.log("Checking for available package managers...");
+      const hasPnpm = await checkCommandExists("pnpm");
+      
+      // Choose the best available package manager
+      const packageManager = hasPnpm ? "pnpm" : "npm";
+      console.log(`Using package manager: ${packageManager}`);
+      
+      spinner.text = `Installing plugins with ${packageManager}...`;
       spinner.start();
+  
+      // Add time tracking
+      const startTime = Date.now();
+      let dots = 0;
+      
+      // Update spinner with progress indicators
+      const intervalId = setInterval(() => {
+        dots = (dots + 1) % 4;
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        spinner.text = `Installing plugins with ${packageManager}${'.'.repeat(dots)} (${elapsed}s elapsed)`;
+      }, 1000);
   
       return new Promise<void>((resolve, reject) => {
         const { exec } = require('child_process');
         
-        const cmd = `npm install ${pluginsList.join(' ')} --quiet --no-warnings --silent --progress=false`;
+        let cmd = '';
+        if (packageManager === "pnpm") {
+          cmd = `pnpm add ${pluginsList.join(' ')} --reporter=silent`;
+        } else {
+          cmd = `npm install ${pluginsList.join(' ')} --quiet --no-warnings --silent --progress=false`;
+        }
         
-        exec(cmd, { cwd: process.cwd() }, (error: any, stdout: any, stderr: any) => {
-          if (error) {
+        console.log(`Executing command: ${cmd}`);
+        
+        const childProcess = exec(cmd, { cwd: process.cwd() });
+        
+        // Capture stdout for debugging
+        let stdoutData = '';
+        let stderrData = '';
+        
+        // Log output (even if minimal with silent flags)
+        childProcess.stdout?.on('data', (data: any) => {
+          stdoutData += data;
+          if (data.trim()) {
+            console.log(`[${packageManager} output]: ${data.trim()}`);
+          }
+        });
+        
+        childProcess.stderr?.on('data', (data: any) => {
+          stderrData += data;
+          if (data.trim()) {
+            console.error(`[${packageManager} error]: ${data.trim()}`);
+          }
+        });
+        
+        childProcess.on('exit', (code: number) => {
+          clearInterval(intervalId);
+          
+          if (code !== 0) {
             spinner.stop();
-            console.error("Error during installation:", error.message);
-            reject(error);
+            console.error(`Installation failed with exit code: ${code}`);
+            console.error("Error output:", stderrData || "No error output");
+            reject(new Error(`Process exited with code ${code}`));
             return;
           }
           
+          const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
           spinner.stop();
-          console.log("\nPlugins installed successfully!");
+          console.log(`\nPlugins installed successfully in ${totalTime}s!`);
+          console.log(`Installed plugins: ${pluginsList.join(', ')}`);
           console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
           resolve();
         });
@@ -229,7 +314,18 @@ const addAction = async (pluginsList: string[]) => {
       throw error;
     }
   }
-
+  
+  // Helper function to check if a command exists
+  async function checkCommandExists(command: string): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      const { exec } = require('child_process');
+      const checkCmd = process.platform === 'win32' ? 'where' : 'which';
+      
+      exec(`${checkCmd} ${command}`, (error: any) => {
+        resolve(!error);
+      });
+    });
+  }
   try {
     // Install the plugins first
     await installPlugin(pluginsList);
