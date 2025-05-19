@@ -278,32 +278,21 @@ export const installDependencies = async (
     // Choose the best available package manager
     const packageManager = (await checkCommandExists("pnpm")) ? "pnpm" : "npm";
 
-    spinner.text = `installing dependencies with ${packageManager} (this may take a minute)...`;
-
-    // Update spinner text periodically to show activity
-    const intervalId = setInterval(() => {
-      spinner.text = `still installing... (${new Date().toLocaleTimeString()})`;
-    }, 10000);
+    spinner.text = `installing dependencies with ${packageManager}...`;
+    spinner.stop();
 
     const installArgs =
       packageManager === "pnpm"
-        ? ["install", "--reporter=silent"]
-        : [
-            "install",
-            "--prefer-offline",
-            "--no-audit",
-            "--silent",
-            "--progress=false",
-          ];
+        ? ["install"]
+        : ["install", "--prefer-offline"];
 
     await new Promise<void>((resolve, reject) => {
       const child = spawnCommand(packageManager, installArgs, {
         cwd: projectDirPath,
-        stdio: "pipe",
+        stdio: "inherit", // Changed from "pipe" to "inherit" to show output
       });
 
       child.on("close", (code) => {
-        clearInterval(intervalId);
         if (code === 0) {
           resolve();
         } else {
@@ -312,13 +301,10 @@ export const installDependencies = async (
       });
 
       child.on("error", (err) => {
-        clearInterval(intervalId);
         reject(err);
       });
     });
 
-    spinner.stop();
-    console.log("\ndependencies installed successfully!");
     console.log(
       `${chalk.green("\nSuccessfully created the project")} ${chalk.yellow(
         projectName
@@ -332,7 +318,6 @@ export const installDependencies = async (
       )}`
     );
   } catch (error: any) {
-    spinner.stop();
     console.error("Error during installation:", error.message);
   }
 };
