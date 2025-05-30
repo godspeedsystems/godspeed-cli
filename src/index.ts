@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+process.env.SUPPRESS_NO_CONFIG_WARNING = "true";
 import * as dotenv from "dotenv";
 import chalk from "chalk";
 import { Command } from "commander";
@@ -21,7 +22,6 @@ import { readdir } from 'fs/promises';
 
 import { globSync } from "glob";
 import inquirer from "inquirer";
-
 // load .env
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
