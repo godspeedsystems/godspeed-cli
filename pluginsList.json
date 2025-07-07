@@ -4,7 +4,6 @@
         "name": "plugins-express-as-http",
         "description": "Express as HTTP server plugin for Godspeed Framework."
       },
-     
       {
         "value": "@godspeedsystems/plugins-cron-as-eventsource",
         "name": "plugins-cron-as-eventsource",
@@ -89,5 +88,15 @@
         "value": "@godspeedsystems/plugins-mem-cache-as-datasource",
         "name": "plugins-mem-cache-as-datasource",
         "description": "Mem cache as a datasource plugin for Godspeed Framework."
-      }
+      },
+      {
+        "value": "@godspeedsystems/plugins-mcp-as-eventsource",
+        "name": "plugins-mcp-as-eventsource",
+        "description": "MCP as eventsource plugin for Godspeed Framework."
+      },
+      {
+        "value": "@godspeedsystems/plugins-websocket-as-eventsource",
+        "name": "plugins-websocket-as-eventsource",
+        "description": "Websocket as eventsource plugin for Godspeed Framework."
+      }      
     ]
