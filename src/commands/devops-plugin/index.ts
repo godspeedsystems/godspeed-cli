@@ -18,11 +18,11 @@ const installAction = async (gsDevOpsPlugin: string) => {
     }
 
     if (!existsSync(path.join(gsDevopsPluginsDir, "package.json"))) {
-      spawnSync("npm", ["init", "--yes"], { cwd: gsDevopsPluginsDir });
+      spawnSync("pnpm", ["init"], { cwd: gsDevopsPluginsDir, stdio: 'ignore' });
     }
 
     // npm install <gsDevOpsPlugin> in the <gsDevopsPluginsDir> directory
-    spawnSync("npm", ["i", `${gsDevOpsPlugin}`], {
+    spawnSync("pnpm", ["add", `${gsDevOpsPlugin}`], {
       cwd: gsDevopsPluginsDir,
       stdio: "inherit",
     });
@@ -69,8 +69,8 @@ const list = program
     } else {
       // fetch the list of packages, maybe from the plugins repository
       let npmSearch = spawnSync(
-        "npm",
-        ["search", `@godspeedsystems/devops-plugin`, "--json"],
+        "pnpm",
+        ["search", "--json", `@godspeedsystems/devops-plugin`],
         { encoding: "utf-8" }
       );
       let availablePlugins:
@@ -149,7 +149,7 @@ const remove = program
     ]);
 
     // uninstallDevOpsPlugin(answer.gsDevOpsPlugin)
-    spawnSync("npm", ["uninstall", `${answer.gsDevOpsPlugin}`], {
+    spawnSync("pnpm", ["remove", `${answer.gsDevOpsPlugin}`], {
       cwd: gsDevopsPluginsDir,
       stdio: "inherit",
     });
@@ -195,7 +195,7 @@ const update = program
     ]);
 
     // npm install <gsDevOpsPlugin> in the <gsDevopsPluginsDir> directory
-    spawnSync("npm", ["install", `${answer.gsDevOpsPlugin}@latest`], {
+    spawnSync("pnpm", ["add", `${answer.gsDevOpsPlugin}@latest`], {
       cwd: gsDevopsPluginsDir,
       stdio: "inherit",
     });

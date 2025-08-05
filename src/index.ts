@@ -211,7 +211,7 @@ const updateServicesJson = async (add = true) => {
     .description("run godspeed development server.")
     .action(async () => {
       if (await isAGodspeedProject()) {
-        spawnSync("npm", ["run", "dev"], {
+        spawnSync("pnpm", ["run", "dev"], {
           stdio: "inherit",
         });
       }
@@ -222,7 +222,7 @@ const updateServicesJson = async (add = true) => {
     .description(`clean the previous build.`)
     .action(async (options) => {
       if (isAGodspeedProject()) {
-        spawnSync("npm", ["run", "clean"], {
+        spawnSync("pnpm", ["run", "clean"], {
           stdio: "inherit",
         });
       }
@@ -253,7 +253,7 @@ const updateServicesJson = async (add = true) => {
     )
     .action(async () => {
       if (isAGodspeedProject()) {
-        spawnSync("npm", ["run", "gen-crud-api"], { stdio: "inherit" });
+        spawnSync("pnpm", ["run", "gen-crud-api"], { stdio: "inherit" });
       }
     });
     program
@@ -271,7 +271,7 @@ const updateServicesJson = async (add = true) => {
     .description("build the godspeed project. create a production build.")
     .action(async (options) => {
       if (await isAGodspeedProject()) {
-        spawnSync("npm", ["run", "build"], {
+        spawnSync("pnpm", ["run", "build"], {
           stdio: "inherit",
           env: {
             // NODE_ENV: "production",
@@ -285,7 +285,7 @@ const updateServicesJson = async (add = true) => {
     .description("preview the production build.")
     .action(async (options) => {
       if (await isAGodspeedProject()) {
-        spawnSync("npm", ["run", "preview"], {
+        spawnSync("pnpm", ["run", "preview"], {
           stdio: "inherit",
           env: {
             // NODE_ENV: "production",
@@ -352,7 +352,7 @@ const updateServicesJson = async (add = true) => {
     .description("build and preview the production build in watch mode.")
     .action(async (options) => {
       if (await isAGodspeedProject()) {
-        spawnSync("npm", ["run", "serve"], {
+        spawnSync("pnpm", ["run", "serve"], {
           stdio: "inherit",
           env: {
             // NODE_ENV: "production",
