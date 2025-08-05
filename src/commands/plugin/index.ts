@@ -13,7 +13,6 @@ import inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import { cwd } from "process";
 import chalk from "chalk";
-import ora from "ora";
 
   const pluginsFilePath = path.resolve(__dirname, '../../../pluginsList.json');
   if (!fs.existsSync(pluginsFilePath)) {
@@ -176,14 +175,7 @@ export default EventSource;
 }
 
 const addAction = async (pluginsList: string[]) => {
-  const spinner = ora({
-    text: "Installing plugins... ",
-    spinner: {
-      frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
-      interval: 180,
-    },
-  });
-
+  console.log('Searching for plugin...');
   async function installPlugin(pluginsList: string[]) {
     try {
       console.log("Starting plugin installation...");
@@ -193,19 +185,9 @@ const addAction = async (pluginsList: string[]) => {
       
       const packageManager = hasPnpm ? "pnpm" : "npm";
       console.log(`Using package manager: ${packageManager}`);
-      
-      spinner.text = `Installing plugins with ${packageManager}...`;
-      spinner.start();
-  
+      console.log(`Installing plugins with ${packageManager}...`);
       const startTime = Date.now();
-      let dots = 0;
       
-      const intervalId = setInterval(() => {
-        dots = (dots + 1) % 4;
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        spinner.text = `Installing plugins with ${packageManager}${'.'.repeat(dots)} (${elapsed}s elapsed)`;
-      }, 1000);
-  
       return new Promise<void>((resolve, reject) => {
         const { exec } = require('child_process');
         
@@ -237,10 +219,8 @@ const addAction = async (pluginsList: string[]) => {
         });
         
         childProcess.on('exit', (code: number) => {
-          clearInterval(intervalId);
-          
           if (code !== 0) {
-            spinner.stop();
+      
             console.error(`Installation failed with exit code: ${code}`);
             console.error("Error output:", stderrData || "No error output");
             reject(new Error(`Process exited with code ${code}`));
@@ -248,15 +228,15 @@ const addAction = async (pluginsList: string[]) => {
           }
           
           const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-          spinner.stop();
-          console.log(`\nPlugins installed successfully in ${totalTime}s!`);
+    
+          console.log(`\n✓ All plugins installed successfully in ${totalTime}s!`);
           console.log(`Installed plugins: ${pluginsList.join(', ')}`);
           console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
           resolve();
         });
       });
     } catch (error: any) {
-      spinner.stop();
+
       console.error("Error during installation:", error.message);
       throw error;
     }
@@ -525,26 +505,16 @@ const add = program
   });
 
 const removeAction = async (pluginsList: string[]) => {
-  const spinner = ora({
-    text: "Uninstalling plugins... ",
-    spinner: {
-      frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
-      interval: 180,
-    },
-  });
   async function uninstallPlugin(pluginsList: string[]) {
     try {
-      spinner.start();
-
+      console.log("Uninstalling plugins...");
+      
       const child = spawnSync(
-        "npm",
+        "pnpm",
         [
-          "uninstall",
+          "remove",
           ...pluginsList,
-          "--quiet",
-          "--no-warnings",
-          "--silent",
-          "--progress=false",
+          "--reporter=silent"
         ],
         {
           stdio: "inherit",
@@ -557,11 +527,11 @@ const removeAction = async (pluginsList: string[]) => {
         });
       });
 
-      spinner.stop();
+
       console.log("\nPlugins uninstalled successfully!");
       console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
     } catch (error: any) {
-      spinner.stop();
+
       console.error("Error during installation:", error.message);
     }
   }
@@ -742,26 +712,16 @@ const update = program
       return;
     }
 
-    const spinner = ora({
-      text: "Updating plugins... ",
-      spinner: {
-        frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
-        interval: 180,
-      },
-    });
     async function updatePlugin(pluginsList: string[]) {
       try {
-        spinner.start();
-
+        console.log("Updating plugins...");
+        
         const child = spawnSync(
-          "npm",
+          "pnpm",
           [
             "update",
             ...pluginsList,
-            "--quiet",
-            "--no-warnings",
-            "--silent",
-            "--progress=false",
+            "--reporter=silent"
           ],
           {
             stdio: "inherit",
@@ -774,11 +734,11 @@ const update = program
           });
         });
 
-        spinner.stop();
+  
         console.log("\nPlugins updated successfully!");
         console.log(chalk.cyan.bold("Happy coding with Godspeed! 🚀🎉\n"));
       } catch (error: any) {
-        spinner.stop();
+  
         console.error("Error during updation:", error.message);
       }
     }

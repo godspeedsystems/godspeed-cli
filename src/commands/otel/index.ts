@@ -3,41 +3,29 @@ import spawnSync from "cross-spawn";
 import path from "path";
 import { readFile, writeFile } from "fs/promises"
 import fs from "fs";
-import ora from 'ora';
-// const projectDirPath = path.resolve(process.cwd(), projectName);
-    
 const program = new Command();
-const spinner = ora({
-  text: 'Installing packages... ',
-  spinner: {
-  frames: ['🌍 ', '🌎 ', '🌏 ', '🌐 ', '🌑 ', '🌒 ', '🌓 ', '🌔 '],
-    interval: 180,
-  },
-});
 
 const enableAction = async () => {
     // install that package
-    async  function installtracing(tracing:any) {
-      try {
-        spinner.start();
-    
-        const child = spawnSync('npm', ['install', `${tracing}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
-          stdio: 'inherit',
+    async function installtracing(tracing: string) {
+    console.log(`Installing ${tracing}...`);
+    try {
+      const child = spawnSync('pnpm', ['add', tracing, '--reporter=silent'], {
+        stdio: 'inherit',
+      });
+  
+      await new Promise<void>((resolve) => {
+        child.on('close', () => {
+          resolve();
         });
-    
-        await new Promise<void>((resolve) => {
-          child.on('close', () => {
-            resolve();
-          });
-        });
-    
-        spinner.stop();
-        console.log('\notel installed successfully!');
-      } catch (error:any) {
-        spinner.stop();
-        console.error('Error during installation:', error.message);
-      }
+      });
+  
+      console.log('\nOpenTelemetry installed successfully!');
+    } catch (error: any) {
+      console.error('Error during installation:', error.message);
+      throw error;
     }
+  }
       
       // Call the installPlugin function
       try {
@@ -67,28 +55,25 @@ const enableAction = async () => {
 
   const disableAction = async () => {
     // uninstall that package
-    async  function uninstalltracing(tracing:any) {
-      try {
-        spinner.start();
-    
-        // Use spawnCommand instead of spawnSync
-        const child = spawnSync('npm', ['uninstall', `${tracing}`, '--quiet', '--no-warnings', '--silent', '--progress=false'], {
-          stdio: 'inherit', // Redirect output
+    async function uninstalltracing(tracing: string) {
+    console.log(`Uninstalling ${tracing}...`);
+    try {
+      const child = spawnSync('pnpm', ['remove', tracing], {
+        stdio: 'inherit',
+      });
+  
+      await new Promise<void>((resolve) => {
+        child.on('close', () => {
+          resolve();
         });
-    
-        await new Promise<void>((resolve) => {
-          child.on('close', () => {
-            resolve();
-          });
-        });
-    
-        spinner.stop();
-        console.log('\notel uninstalled successfully!');
-      } catch (error:any) {
-        spinner.stop();
-        console.error('Error during uninstallation:', error.message);
-      }
+      });
+  
+      console.log('\nOpenTelemetry uninstalled successfully!');
+    } catch (error: any) {
+      console.error('Error during uninstallation:', error.message);
+      throw error;
     }
+  }
       
       // Call the uninstallPlugin function
   

@@ -10,7 +10,6 @@ import simpleGit from "simple-git";
 import chalk from "chalk";
 import { spawnSync } from "child_process";
 import spawnCommand from "cross-spawn";
-import ora from "ora";
 import {
   yamlLoader as loadYaml,
   generateSwaggerJSON,
@@ -252,35 +251,27 @@ export const installDependencies = async (
   projectDirPath: string,
   projectName: string
 ) => {
-  const spinner = ora({
-    spinner: {
-      frames: ["🌍 ", "🌎 ", "🌏 ", "🌐 ", "🌑 ", "🌒 ", "🌓 ", "🌔 "],
-      interval: 180,
-    },
-  }).start("checking package managers...");
-
   try {
     // Check if pnpm is already available
     const hasPnpm = await checkCommandExists("pnpm");
+    let packageManager = "npm";
 
     // If pnpm is not available, try to use corepack
     if (!hasPnpm) {
-      const hasCorepack = await checkCommandExists("corepack");
-
-      if (hasCorepack) {
-        spinner.text = "setting up pnpm via corepack...";
+      try {
+        console.log("Setting up pnpm via corepack...");
         await enableCorepackAndPnpm();
-      } else {
-        spinner.text = "falling back to npm (slower)...";
+        if (await checkCommandExists("pnpm")) {
+          packageManager = "pnpm";
+        }
+      } catch (error) {
+        console.log("Falling back to npm (slower)...");
       }
+    } else {
+      packageManager = "pnpm";
     }
 
-    // Choose the best available package manager
-    const packageManager = (await checkCommandExists("pnpm")) ? "pnpm" : "npm";
-
-    spinner.text = `installing dependencies with ${packageManager}...`;
-    spinner.stop();
-
+    console.log(`Installing dependencies with ${packageManager}...`);
     const installArgs =
       packageManager === "pnpm"
         ? ["install"]
