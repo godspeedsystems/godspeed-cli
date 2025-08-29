@@ -2,7 +2,7 @@
 process.env.SUPPRESS_NO_CONFIG_WARNING = "true";
 import * as dotenv from "dotenv";
 import chalk from "chalk";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import create from "./commands/create/index";
 // import update from "./commands/update/index";
 import path from "path";
@@ -13,12 +13,13 @@ import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 import prismaCommands from "./commands/prisma";
 import otelCommands from "./commands/otel";
-import {genGraphqlSchema} from "./utils/index";
+import { genGraphqlSchema } from "./utils/index";
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
 import fs, { readFileSync } from "fs";
 import { homedir } from "node:os";
-import { readdir } from 'fs/promises';
+import { readdir } from "fs/promises";
+import { JSONSchema7 } from "json-schema";
 
 import { globSync } from "glob";
 import inquirer from "inquirer";
@@ -42,6 +43,70 @@ const detectOSType = () => {
       return "UNKNOWN";
   }
 };
+
+function fetchToolsInfo(): Tool<JSONSchema7>[] {
+  const result = spawnSync.sync(
+    "npx",
+    ["@godspeedsystems/gs-tool", "list", "-m"],
+    {
+      shell: true,
+    }
+  );
+
+  try {
+    return JSON.parse(result.stdout?.toString() || "{}")?.data;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Convert JSON schema into Commander options
+ */
+function parseInputSchemaToCommander(schema: JSONSchema7, cmd: Command) {
+  if (!schema || schema.type !== "object" || !schema.properties) return;
+
+  for (const [prop, config] of Object.entries(schema.properties)) {
+    if (typeof config === "boolean") continue;
+
+    const desc = config.description || "";
+    const def = (config as any).default;
+
+    if (config.enum) {
+      const values = config.enum as string[];
+      const opt = new Option(`--${prop} <${prop}>`, `${desc}`).choices(values);
+
+      if (def !== undefined) opt.default(def);
+      cmd.addOption(opt);
+
+      // opt.attributeName = () => prop;
+      continue;
+    }
+
+    // Handle booleans
+    if (config.type === "boolean") {
+      cmd.option(`--${prop}`, desc, def);
+      continue;
+    }
+
+    // Handle strings/numbers etc.
+    const flag = `--${prop} <${prop}>`;
+
+    cmd.option(flag, desc, def);
+  }
+}
+
+function getRawOpts(cmd: Command) {
+  const opts = cmd.optsWithGlobals();
+  const result: Record<string, any> = {};
+  for (const opt of cmd.options) {
+    const key = opt.long?.replace(/^--/, ""); // e.g. foo-bar
+    if (key && opts[opt.attributeName()] !== undefined)
+      result[key] = opts[opt.attributeName()];
+  }
+  return result;
+}
+
 export const isAGodspeedProject = () => {
   // verify .godspeed file, only then, it is a godspeed project
   try {
@@ -391,38 +456,69 @@ const updateServicesJson = async (add = true) => {
     .addCommand(otelCommands.disable)
     .description("enable/disable Observability in Godspeed.");
 
-  program
-    .command("tools [args...]")
-    .description("Extra godspeed tools, pass `list` as args for all the list")
+  const toolsCmd = program
+    .command("tools")
+    .description("Extra godspeed tools")
     .allowUnknownOption(true)
-    .action(async (args) => {
-      const result = spawnSync.sync(
-        "npx",
-        ["@godspeedsystems/gs-tool", ...args],
-        {
-          stdio: "pipe",
-          shell: true,
+    .showHelpAfterError()
+    .showSuggestionAfterError(true)
+    .allowUnknownOption()
+    .allowExcessArguments();
+
+  if (process.argv.includes("tools")) {
+    const toolsList = fetchToolsInfo();
+
+    toolsList.forEach((tool) => {
+      const cmd = new Command(tool.name)
+        .description(tool.summary)
+        .version(tool.version)
+        .option("--input-json <input>", "input json file or json string");
+
+      parseInputSchemaToCommander(tool.inputjson, cmd);
+
+      cmd.action((_, thisCmd) => {
+        const options = getRawOpts(thisCmd);
+
+        const inputJsonValue = options["input-json"] || JSON.stringify(options);
+
+        const args = [
+          "--input-json-base64",
+          Buffer.from(inputJsonValue, "utf-8").toString("base64"),
+        ];
+
+        const result = spawnSync.sync(
+          "npx",
+          ["@godspeedsystems/gs-tool", tool.name, ...args],
+          {
+            stdio: "pipe",
+            shell: true,
+            cwd: process.cwd(),
+          }
+        );
+
+        const error = JSON.parse(result.stderr?.toString() || "{}");
+        const output = JSON.parse(result.stdout?.toString() || "{}");
+
+        if (error?.error?.message) {
+          console.error("\n" + chalk.red.bold(error.error.message));
         }
-      );
 
-      const error = JSON.parse(result.stderr.toString() || "{}");
-      const output = JSON.parse(result.stdout.toString() || "{}");
+        if (output?.data && Object.keys(output?.data).length) {
+          console.log("\n" + JSON.stringify(output.data, null, 2));
+        }
 
-      if (error?.error?.message) {
-        console.error("\n" + chalk.red.bold(error.error.message));
-      }
+        if (error?.message) {
+          console.log("\n" + chalk.cyan(error.message));
+        }
 
-      if (output?.data) {
-        console.log("\n" + JSON.stringify(output.data, null, 2));
-      }
+        if (output?.message) {
+          console.log("\n" + chalk.cyan(output.message));
+        }
+      });
 
-      if (error?.message) {
-        console.log("\n" + chalk.cyan(error.message));
-      }
-
-      if (output?.message) {
-        console.log("\n" + chalk.cyan(output.message));
-      }
+      toolsCmd.addCommand(cmd);
     });
+  }
+
   program.parse();
 })();
