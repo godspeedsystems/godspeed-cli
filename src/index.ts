@@ -391,5 +391,38 @@ const updateServicesJson = async (add = true) => {
     .addCommand(otelCommands.disable)
     .description("enable/disable Observability in Godspeed.");
 
+  program
+    .command("tools [args...]")
+    .description("Extra godspeed tools, pass `list` as args for all the list")
+    .allowUnknownOption(true)
+    .action(async (args) => {
+      const result = spawnSync.sync(
+        "npx",
+        ["@godspeedsystems/gs-tool", ...args],
+        {
+          stdio: "pipe",
+          shell: true,
+        }
+      );
+
+      const error = JSON.parse(result.stderr.toString() || "{}");
+      const output = JSON.parse(result.stdout.toString() || "{}");
+
+      if (error?.error?.message) {
+        console.error("\n" + chalk.red.bold(error.error.message));
+      }
+
+      if (output?.data) {
+        console.log("\n" + JSON.stringify(output.data, null, 2));
+      }
+
+      if (error?.message) {
+        console.log("\n" + chalk.cyan(error.message));
+      }
+
+      if (output?.message) {
+        console.log("\n" + chalk.cyan(output.message));
+      }
+    });
   program.parse();
 })();
