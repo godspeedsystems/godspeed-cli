@@ -1,5 +1,5 @@
 const fsExtras = require("fs-extra");
-import path from "path"
+import path from "path";
 
 // import interactiveMode from "../../utils/interactiveMode";
 // import {
@@ -9,7 +9,8 @@ import path from "path"
 // } from "../../utils/dockerUtility";
 // import checkPrerequisite from "../../utils/checkPrerequisite";
 import {
-  installDependencies, installPackage,
+  installDependencies,
+  installPackage,
   validateAndCreateProjectDirectory,
 } from "../../utils/index";
 import { copyingLocalTemplate } from "../../utils";
@@ -77,30 +78,31 @@ export default async function create(
   const gitFilePath = path.join(process.cwd(), projectName, ".git");
   fsExtras.removeSync(gitFilePath);
 
-
-
-if(options.fromExample === 'mongo-as-prisma'){
-  await installPackage(projectDirPath,'@godspeedsystems/plugins-prisma-as-datastore')
-}
+  if (options.fromExample === "mongo-as-prisma") {
+    await installPackage(
+      projectDirPath,
+      "@godspeedsystems/plugins-prisma-as-datastore"
+    );
+  }
   await installDependencies(projectDirPath, projectName);
 
+  // Delete .template folder in project folder.
+  const templateFilePath = path.join(process.cwd(), projectName, ".template");
+
+  if (fsExtras.existsSync(templateFilePath)) {
+    fsExtras.removeSync(templateFilePath);
+  }
 
   try {
     // the NEW flow [without containers]
-
-
     // const composeOptions = await getComposeOptions();
-
     // if (composeOptions.composeOptions) {
     //   composeOptions.composeOptions.push(`${projectName}_devcontainer`);
     // }
-
     // composeOptions.cwd = path.resolve(projectDirPath, ".devcontainer");
     // composeOptions.log = process.env.DEBUG ? Boolean(process.env.DEBUG) : false;
-
     // // check if there are already running resources
     // await prepareToStartContainers(projectName, composeOptions);
-
     // await buildContainers(
     //   projectName,
     //   godspeedOptions,

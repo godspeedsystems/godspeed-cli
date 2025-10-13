@@ -2,7 +2,7 @@
 process.env.SUPPRESS_NO_CONFIG_WARNING = "true";
 import * as dotenv from "dotenv";
 import chalk from "chalk";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import create from "./commands/create/index";
 // import update from "./commands/update/index";
 import path from "path";
@@ -13,12 +13,13 @@ import devOpsPluginCommands from "./commands/devops-plugin";
 import pluginCommands from "./commands/plugin";
 import prismaCommands from "./commands/prisma";
 import otelCommands from "./commands/otel";
-import {genGraphqlSchema} from "./utils/index";
+import { genGraphqlSchema } from "./utils/index";
 const fsExtras = require("fs-extra");
 import { cwd } from "process";
 import fs, { readFileSync } from "fs";
 import { homedir } from "node:os";
-import { readdir } from 'fs/promises';
+import { readdir } from "fs/promises";
+import { JSONSchema7 } from "json-schema";
 
 import { globSync } from "glob";
 import inquirer from "inquirer";
@@ -42,6 +43,97 @@ const detectOSType = () => {
       return "UNKNOWN";
   }
 };
+
+function fetchToolsInfo(): Tool<JSONSchema7>[] {
+  const result = spawnSync.sync(
+    "npx",
+    ["@godspeedsystems/gs-tool", "list", "-m"],
+    {
+      shell: true,
+    }
+  );
+
+  try {
+    return JSON.parse(result.stdout?.toString() || "{}")?.data;
+  } catch {
+    return [];
+  }
+}
+
+function extractJson(str: string) {
+  const json: object[] = [];
+
+  if (!str) return json;
+
+  // Step 1: Combine stdout + stderr for unified search
+  const text = str.trim();
+
+  // Step 2: Regex pattern to find possible JSON blocks
+  // It matches `{...}` or `[...]` at any nesting level
+  const jsonRegex = /(\{[\s\S]*\}|\[[\s\S]*\])/g;
+
+  // Step 3: Iterate through all matches, and try JSON.parse
+  const matches = text.match(jsonRegex);
+  if (!matches) return json;
+
+  for (const candidate of matches) {
+    try {
+      json.push(JSON.parse(candidate)); // return first valid JSON
+    } catch {
+      // not valid, continue
+    }
+  }
+
+  return json;
+}
+
+/**
+ * Convert JSON schema into Commander options
+ */
+function parseInputSchemaToCommander(schema: JSONSchema7, cmd: Command) {
+  if (!schema || schema.type !== "object" || !schema.properties) return;
+
+  for (const [prop, config] of Object.entries(schema.properties)) {
+    if (typeof config === "boolean") continue;
+
+    const desc = config.description || "";
+    const def = (config as any).default;
+
+    if (config.enum) {
+      const values = config.enum as string[];
+      const opt = new Option(`--${prop} <${prop}>`, `${desc}`).choices(values);
+
+      if (def !== undefined) opt.default(def);
+      cmd.addOption(opt);
+
+      // opt.attributeName = () => prop;
+      continue;
+    }
+
+    // Handle booleans
+    if (config.type === "boolean") {
+      cmd.option(`--${prop}`, desc, def);
+      continue;
+    }
+
+    // Handle strings/numbers etc.
+    const flag = `--${prop} <${prop}>`;
+
+    cmd.option(flag, desc, def);
+  }
+}
+
+function getRawOpts(cmd: Command) {
+  const opts = cmd.optsWithGlobals();
+  const result: Record<string, any> = {};
+  for (const opt of cmd.options) {
+    const key = opt.long?.replace(/^--/, ""); // e.g. foo-bar
+    if (key && opts[opt.attributeName()] !== undefined)
+      result[key] = opts[opt.attributeName()];
+  }
+  return result;
+}
+
 export const isAGodspeedProject = () => {
   // verify .godspeed file, only then, it is a godspeed project
   try {
@@ -96,19 +188,31 @@ const updateServicesJson = async (add = true) => {
     };
 
     if (add) {
-      const exists = servicesData.services.some((service: any) => service.path === process.cwd());
+      const exists = servicesData.services.some(
+        (service: any) => service.path === process.cwd()
+      );
       if (!exists) servicesData.services.push(currentProject);
     } else {
-      servicesData.services = servicesData.services.filter((service: any) => service.path !== process.cwd());
+      servicesData.services = servicesData.services.filter(
+        (service: any) => service.path !== process.cwd()
+      );
     }
 
-    await fs.promises.writeFile(servicesFile, JSON.stringify(servicesData, null, 2), "utf-8");
+    await fs.promises.writeFile(
+      servicesFile,
+      JSON.stringify(servicesData, null, 2),
+      "utf-8"
+    );
     console.log(chalk.green("Project data updated successfully."));
   } catch (error: any) {
     if (error.code === "EACCES") {
       const action = add ? "link" : "unlink";
-      console.error("\x1b[31mPermission denied: Cannot write to services.json\x1b[0m");
-      console.error(`\x1b[33mTry running: \x1b[1msudo godspeed ${action}\x1b[0m`);
+      console.error(
+        "\x1b[31mPermission denied: Cannot write to services.json\x1b[0m"
+      );
+      console.error(
+        `\x1b[33mTry running: \x1b[1msudo godspeed ${action}\x1b[0m`
+      );
     } else {
       console.error("\x1b[31mAn error occurred:\x1b[0m", error);
     }
@@ -205,7 +309,6 @@ const updateServicesJson = async (add = true) => {
   //     }
   //   });
 
-
   program
     .command("dev")
     .description("run godspeed development server.")
@@ -228,19 +331,21 @@ const updateServicesJson = async (add = true) => {
       }
     });
 
-    program
+  program
     .command("link")
-    .description("Link a local Godspeed project to the global environment for development in godspeed-daemon.")
+    .description(
+      "Link a local Godspeed project to the global environment for development in godspeed-daemon."
+    )
     .action(async () => {
       if (await isAGodspeedProject()) {
         updateServicesJson(true);
       }
     });
-  
+
   program
     .command("unlink")
     .description("Unlink a local Godspeed project from the global environment.")
-    .action(async() => {
+    .action(async () => {
       if (await isAGodspeedProject()) {
         updateServicesJson(false);
       }
@@ -256,14 +361,12 @@ const updateServicesJson = async (add = true) => {
         spawnSync("pnpm", ["run", "gen-crud-api"], { stdio: "inherit" });
       }
     });
-    program
+  program
     .command("gen-graphql-schema")
-    .description(
-      "scans your graphql events and generate graphql schema"
-    )
+    .description("scans your graphql events and generate graphql schema")
     .action(async () => {
       if (isAGodspeedProject()) {
-        await genGraphqlSchema()
+        await genGraphqlSchema();
       }
     });
   program
@@ -296,28 +399,28 @@ const updateServicesJson = async (add = true) => {
     });
 
   // fetch the list of installed devops-plugins
-  const pluginPath = path.resolve(homedir(), `.godspeed/devops-plugins/node_modules/@godspeedsystems/`);
+  const pluginPath = path.resolve(
+    homedir(),
+    `.godspeed/devops-plugins/node_modules/@godspeedsystems/`
+  );
 
-  const devopsPluginSubCommand = program.command('devops-plugin')
-    .description(`manages godspeed devops-plugins.`)
+  const devopsPluginSubCommand = program
+    .command("devops-plugin")
+    .description(`manages godspeed devops-plugins.`);
 
-  devopsPluginSubCommand
-    .addCommand(devOpsPluginCommands.install);
+  devopsPluginSubCommand.addCommand(devOpsPluginCommands.install);
 
-  devopsPluginSubCommand
-    .addCommand(devOpsPluginCommands.list);    
-  
-  devopsPluginSubCommand
-    .addCommand(devOpsPluginCommands.remove);
-  
-  devopsPluginSubCommand
-    .addCommand(devOpsPluginCommands.update);  
+  devopsPluginSubCommand.addCommand(devOpsPluginCommands.list);
+
+  devopsPluginSubCommand.addCommand(devOpsPluginCommands.remove);
+
+  devopsPluginSubCommand.addCommand(devOpsPluginCommands.update);
 
   const devopsPluginHelp = `
   To see help for any installed devops plugin, you can run:
   <plugin-name> help
   `;
-  devopsPluginSubCommand.on('--help', () => {
+  devopsPluginSubCommand.on("--help", () => {
     console.log(devopsPluginHelp);
   });
 
@@ -330,19 +433,25 @@ const updateServicesJson = async (add = true) => {
         .description("installed godspeed devops plugin")
         .allowUnknownOption(true)
         .action(async () => {
-          const installedPluginPath = path.resolve(pluginPath, installedPluginName, "dist/index.js");
+          const installedPluginPath = path.resolve(
+            pluginPath,
+            installedPluginName,
+            "dist/index.js"
+          );
 
           // check if installedPluginPath exists.
           if (!fs.existsSync(installedPluginPath)) {
-            console.error(`${installedPluginName} is not installed properly. Please make sure ${installedPluginPath} exists.`);
+            console.error(
+              `${installedPluginName} is not installed properly. Please make sure ${installedPluginPath} exists.`
+            );
             return;
           }
 
           const args = process.argv.slice(4);
 
           // Spawn the plugin with all arguments and options
-          spawnSync('node', [installedPluginPath, ...args], {
-            stdio: 'inherit',
+          spawnSync("node", [installedPluginPath, ...args], {
+            stdio: "inherit",
           });
         });
     }
@@ -390,6 +499,70 @@ const updateServicesJson = async (add = true) => {
     .addCommand(otelCommands.enable)
     .addCommand(otelCommands.disable)
     .description("enable/disable Observability in Godspeed.");
+
+  const toolsCmd = program
+    .command("tools")
+    .description("Extra godspeed tools")
+    .allowUnknownOption(true)
+    .showHelpAfterError()
+    .showSuggestionAfterError(true)
+    .allowUnknownOption()
+    .allowExcessArguments();
+
+  if (process.argv.includes("tools")) {
+    const toolsList = fetchToolsInfo();
+
+    toolsList.forEach((tool) => {
+      const cmd = new Command(tool.name)
+        .description(tool.summary)
+        .version(tool.version)
+        .option("--input-json <input>", "input json file or json string");
+
+      parseInputSchemaToCommander(tool.inputjson, cmd);
+
+      cmd.action((_, thisCmd) => {
+        const options = getRawOpts(thisCmd);
+
+        const inputJsonValue = options["input-json"] || JSON.stringify(options);
+
+        const args = [
+          "--input-json-base64",
+          Buffer.from(inputJsonValue, "utf-8").toString("base64"),
+        ];
+
+        const result = spawnSync.sync(
+          "npx",
+          ["@godspeedsystems/gs-tool", tool.name, ...args],
+          {
+            stdio: "pipe",
+            shell: true,
+            cwd: process.cwd(),
+          }
+        );
+
+        const error = extractJson(result.stderr?.toString() || "{}")[0] as any;
+        const output = extractJson(result.stdout?.toString() || "{}")[0] as any;
+
+        if (error?.error?.message) {
+          console.error("\n" + chalk.red.bold(error.error.message));
+        }
+
+        if (output?.data && Object.keys(output?.data).length) {
+          console.log("\n" + JSON.stringify(output.data, null, 2));
+        }
+
+        if (error?.message) {
+          console.log("\n" + chalk.cyan(error.message));
+        }
+
+        if (output?.message) {
+          console.log("\n" + chalk.cyan(output.message));
+        }
+      });
+
+      toolsCmd.addCommand(cmd);
+    });
+  }
 
   program.parse();
 })();

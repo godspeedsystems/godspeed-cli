@@ -47,3 +47,10 @@ interface GodspeedOptions {
     cliVersionWhileLastUpdate: string;
   };
 }
+
+type Tool<InputJSON> = {
+  name: string;
+  summary: string;
+  version: string;
+  inputjson: InputJSON;
+};

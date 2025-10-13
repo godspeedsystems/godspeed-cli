@@ -58,6 +58,7 @@ Once installed, run godspeed from your terminal to see the available commands an
   | plugins                 |                   | manage eventsource and datasource plugins for godspeed.                                                 |
   | gen-crud-api          |                   | scans your prisma datasources and generate CRUD APIs events and workflows           |
   | gen-graphql-schema          |                   | scans your graphql events and generate graphql schema .        |
+  | tools          |                   | Extra godspeed tools.        |
 
 
 ## 📖 Documentation <a name="Documentation"></a>
